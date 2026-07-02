@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import "../styling/Footer.css"
+
 export default function Footer({ isAr, footer, Logo }) {
   const { t } = useTranslation();
   const shared = t('shared', { returnObjects: true });
@@ -23,7 +25,9 @@ export default function Footer({ isAr, footer, Logo }) {
             <h5>{col.title}</h5>
             <ul>
               {col.links.map((link, j) => (
-                <li key={j}><a href="#">{link}</a></li>
+                <li key={j}>
+                  <Link to={link.path}>{link.label}</Link>
+                </li>
               ))}
             </ul>
           </div>
