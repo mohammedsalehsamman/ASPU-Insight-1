@@ -12,8 +12,10 @@ export default function OTPPage({ lang, preAuthToken, onSuccess }) {
 
   const handleChange = (index, value) => {
     if (!/^\d?$/.test(value)) return;
-    const next = [...otp]; next[index] = value; setOtp(next);
-    if (value && index < 5) document.getElementById(`otp-${index + 1}`)?.focus();
+    const next = [...otp];
+    next[index] = value; setOtp(next);
+    if (value && index < 5)
+      document.getElementById(`otp-${index + 1}`)?.focus();
   };
 
   const handleKeyDown = (index, e) => {
@@ -41,7 +43,8 @@ export default function OTPPage({ lang, preAuthToken, onSuccess }) {
         ? await verify2FA(preAuthToken, code)
         : await confirm2FA(code);
       onSuccess(data);
-    } catch (e) {
+    }
+     catch (e) {
       const msg = e?.response?.data;
       if (typeof msg === "object") {
         const first = Object.values(msg).flat()[0];

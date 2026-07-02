@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getPaper, deletePaper } from '../api/research';
+import { getPaper } from '../api/research';
+import DeletePaperButton from '../components/DeletePaperButton';
 import '../styling/PaperDetail.css';
+import {
+  FaFileAlt, FaSearch, FaFlagCheckered, FaExclamationTriangle,
+  FaLockOpen, FaDownload, FaFolderOpen, FaCheck, FaEdit,
+  FaClipboard,
+} from 'react-icons/fa';
 
 /* ── Status config ── */
 const STATUS_CONFIG = {
@@ -32,14 +38,14 @@ const TIMELINE_STEPS = [
     en: 'Submitted',
     subAr: 'تم التقديم بنجاح',
     subEn: 'Successfully submitted',
-    icon: '📝',
+    icon: <FaFileAlt />,
   },
   {
     ar: 'قيد المراجعة',
     en: 'Under Review',
     subAr: 'قيد مراجعة المحكمين',
     subEn: 'Awaiting peer review',
-    icon: '🔍',
+    icon: <FaSearch />,
   },
   {
     ar: 'القرار النهائي',
@@ -48,13 +54,13 @@ const TIMELINE_STEPS = [
       status === 'approved' ? 'تم القبول والنشر' : status === 'rejected' ? 'تم رفض البحث' : 'في انتظار القرار',
     subEn: (status) =>
       status === 'approved' ? 'Accepted & published' : status === 'rejected' ? 'Paper was rejected' : 'Awaiting decision',
-    icon: '🏁',
+    icon: <FaFlagCheckered />,
   },
 ];
 
 /* ── Helper: resolve step dot class ── */
 function getStepDotCls(stepIndex, status) {
-  const activeIdx = status === 'pending' ? 1 : 2; // submitted=0 always done; pending stops at 1; approved/rejected at 2
+  const activeIdx = status === 'pending' ? 1 : 2;
   if (stepIndex === 0) return 'pd-st-dot--done';
   if (stepIndex < activeIdx) return 'pd-st-dot--done';
   if (stepIndex === activeIdx) return 'pd-st-dot--active';
@@ -68,10 +74,9 @@ export default function PaperDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [paper, setPaper]     = useState(null);
+  const [paper, setPaper] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState(null);
 
   /* ── Fetch ── */
   useEffect(() => {
@@ -87,28 +92,12 @@ export default function PaperDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
-  /* ── Delete handler ── */
-  const handleDelete = async () => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا البحث؟')) return;
-    setDeleting(true);
-    try {
-      await deletePaper(id);
-      navigate('/papers');
-    } catch (err) {
-      alert('فشل الحذف: ' + (err.message || 'خطأ غير معروف'));
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   /* ── Copy link ── */
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
   };
 
-  /* ────────────────────────────────────
-     LOADING STATE
-  ──────────────────────────────────── */
+  /* LOADING STATE */
   if (loading) {
     return (
       <div className="pd-state-center">
@@ -118,13 +107,11 @@ export default function PaperDetail() {
     );
   }
 
-  /* ────────────────────────────────────
-     ERROR STATE
-  ──────────────────────────────────── */
+  /* ERROR STATE */
   if (error) {
     return (
       <div className="pd-state-center">
-        <span className="pd-error-ico">⚠️</span>
+        <span className="pd-error-ico"><FaExclamationTriangle /></span>
         <span className="pd-error-msg">{error}</span>
         <button className="pd-retry-btn" onClick={() => window.location.reload()}>
           إعادة المحاولة
@@ -137,16 +124,13 @@ export default function PaperDetail() {
 
   const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
 
-  /* ────────────────────────────────────
-     RENDER
-  ──────────────────────────────────── */
+  /* RENDER */
   return (
     <>
       {/* ── PAGE HEADER ── */}
       <div className="pd-page-header">
         <div className="pd-ph-inner">
 
-          {/* Breadcrumb */}
           <nav className="pd-breadcrumb" aria-label="breadcrumb">
             <Link to="/">الرئيسية</Link>
             <span className="pd-breadcrumb-sep">›</span>
@@ -155,7 +139,6 @@ export default function PaperDetail() {
             <span>تفاصيل البحث</span>
           </nav>
 
-          {/* Badges */}
           <div className="pd-badges">
             <span className={`pd-status-badge ${st.badgeCls}`}>
               <span className="pd-badge-dot" />
@@ -163,16 +146,14 @@ export default function PaperDetail() {
             </span>
 
             {paper.is_paid_open_access && (
-              <span className="pd-oa-badge">🔓 وصول مفتوح مدفوع</span>
+              <span className="pd-oa-badge"><FaLockOpen size={12} /> وصول مفتوح مدفوع</span>
             )}
 
             <span className="pd-paper-id"># PAPER-{String(paper.id).padStart(4, '0')}</span>
           </div>
 
-          {/* Title */}
           <h1 className="pd-title">{paper.title}</h1>
 
-          {/* Author */}
           <div className="pd-author-row">
             <div className="pd-author-chip">
               <span className="pd-chip-dot" />
@@ -187,43 +168,40 @@ export default function PaperDetail() {
       {/* ── PAGE BODY ── */}
       <div className="pd-page-body">
 
-        {/* ── MAIN COLUMN ── */}
         <div className="pd-main-col">
 
-          {/* Abstract */}
           <div className="pd-detail-card">
             <div className="pd-section-label">الملخص</div>
             <p className="pd-abstract-text">{paper.abstract}</p>
           </div>
 
-          {/* PDF File */}
           <div className="pd-detail-card">
             <div className="pd-section-label">ملف البحث</div>
             {paper.pdf_file ? (
               <div className="pd-pdf-available">
-                <div className="pd-pdf-icon">📄</div>
+                <div className="pd-pdf-icon"><FaFileAlt /></div>
                 <div className="pd-pdf-info">
                   <div className="pd-pdf-name">{paper.pdf_file}</div>
                   <div className="pd-pdf-sub">ملف PDF مرفق</div>
                 </div>
+                
                 <a
                   href={paper.pdf_file}
                   target="_blank"
                   rel="noreferrer"
                   className="pd-pdf-download-btn"
                 >
-                  ⬇ تحميل
+                  <FaDownload size={12} /> تحميل
                 </a>
               </div>
             ) : (
               <div className="pd-pdf-missing">
-                <span className="pd-pdf-missing-icon">📂</span>
+                <span className="pd-pdf-missing-icon"><FaFolderOpen /></span>
                 <span>لم يتم إرفاق ملف PDF بعد</span>
               </div>
             )}
           </div>
 
-          {/* Rejection reason — only when rejected */}
           {paper.status === 'rejected' && paper.rejection_reason && (
             <div className="pd-rejection-box">
               <div className="pd-rejection-label">سبب الرفض</div>
@@ -233,10 +211,8 @@ export default function PaperDetail() {
 
         </div>
 
-        {/* ── SIDEBAR ── */}
         <div className="pd-side-col">
 
-          {/* Metadata card */}
           <div className="pd-meta-card">
             <div className="pd-section-label">معلومات البحث</div>
 
@@ -254,7 +230,7 @@ export default function PaperDetail() {
               <span className="pd-meta-key">نوع الوصول</span>
               <span className="pd-meta-val">
                 {paper.is_paid_open_access ? (
-                  <span className="pd-oa-indicator pd-oa-yes">🔓 مفتوح مدفوع</span>
+                  <span className="pd-oa-indicator pd-oa-yes"><FaLockOpen size={12} /> مفتوح مدفوع</span>
                 ) : (
                   <span className="pd-oa-indicator pd-oa-no">مغلق</span>
                 )}
@@ -269,12 +245,15 @@ export default function PaperDetail() {
             <div className="pd-meta-row">
               <span className="pd-meta-key">ملف PDF</span>
               <span className="pd-meta-val">
-                {paper.pdf_file ? 'متوفر ✓' : 'غير مرفق'}
+                {paper.pdf_file ? (
+                  <>متوفر <FaCheck size={11} /></>
+                ) : (
+                  'غير مرفق'
+                )}
               </span>
             </div>
           </div>
 
-          {/* Status timeline */}
           <div className="pd-meta-card">
             <div className="pd-section-label">مسار الحالة</div>
             <div className="pd-status-track">
@@ -288,7 +267,7 @@ export default function PaperDetail() {
                 return (
                   <div className="pd-st-step" key={i}>
                     <div className={`pd-st-dot ${dotCls}`}>
-                      {dotCls === 'pd-st-dot--done' ? '✓' : step.icon}
+                      {dotCls === 'pd-st-dot--done' ? <FaCheck /> : step.icon}
                     </div>
                     <div className="pd-st-info">
                       <div className="pd-st-name">{step.ar}</div>
@@ -300,7 +279,6 @@ export default function PaperDetail() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="pd-action-card">
             <div className="pd-section-label">الإجراءات</div>
 
@@ -308,7 +286,7 @@ export default function PaperDetail() {
               className="pd-action-btn pd-btn-secondary"
               onClick={() => navigate(`/papers/${id}/edit`)}
             >
-              <span>✏️</span>
+              <span><FaEdit /></span>
               <span>تعديل البحث</span>
             </button>
 
@@ -316,18 +294,11 @@ export default function PaperDetail() {
               className="pd-action-btn pd-btn-secondary"
               onClick={handleCopyLink}
             >
-              <span>📋</span>
+              <span><FaClipboard /></span>
               <span>نسخ الرابط</span>
             </button>
 
-            <button
-              className="pd-action-btn pd-btn-danger"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              <span>🗑</span>
-              <span>{deleting ? 'جاري الحذف…' : 'حذف البحث'}</span>
-            </button>
+            <DeletePaperButton id={id} redirectTo="/papers" />
           </div>
 
         </div>

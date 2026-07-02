@@ -2,29 +2,25 @@ import api from './client';
 
 
 //خالص
-// جلب كل الأبحاث (مع دعم الفلترة والبحث عبر query params)
 export const getPapers = async (params = {}) => {
   const { data } = await api.get('/api/research/researchAspu2004/papers/', { params });
   return data;
 };
 
-// تقديم بحث جديد
 //خالص
 export const createPaper = async (payload) => {
   const { data } = await api.post('/api/research/researchAspu2004/papers/', payload, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
-  return data;
+  return data;0
 };
 
-// جلب بحث محدد
 //خالص
 export const getPaper = async (id) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${id}`);
   return data;
 };
 
-// تعديل بحث كامل
 export const updatePaper = async (id, payload) => {
   const { data } = await api.put(`/api/research/researchAspu2004/papers/${id}/`, payload, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -46,7 +42,7 @@ export const getAssistantReview = async (paperId) => {
   return data;
 };
 
-// طلب مراجعة الذكاء الاصطناعي لبحث معين
+//خالص
 export const requestAssistantReview = async (paperId, payload = {}) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/assistant-review/`, payload);
   return data;
@@ -54,13 +50,13 @@ export const requestAssistantReview = async (paperId, payload = {}) => {
 
 // ══ EDITOR REVIEW — INITIAL ══
 
-// جلب المراجعة الأولية من المحرر
+//خالص
 export const getEditorReviewInitial = async (paperId) => {
   const { data } = await api.get(`/api/research/papers/${paperId}/editor-review/initial/`);
   return data;
 };
 
-// إرسال المراجعة الأولية من المحرر
+//خالص
 export const submitEditorReviewInitial = async (paperId, payload) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/editor-review/initial/`, payload);
   return data;
@@ -85,5 +81,58 @@ export const submitEditorReviewFinal = async (paperId, payload) => {
 // نشر البحث (بعد اكتمال المراجعة)
 export const publishPaper = async (paperId) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/publish/`);
+  return data;
+};
+
+
+
+// ══ AUTHOR DASHBOARD ══
+
+// جلب داشبورد المؤلف
+export const getAuthorDashboard = async () => {
+  const { data } = await api.get('/api/research/researchAspu2004/author/dashboard/');
+  return data;
+};
+
+// ══ DOWNLOAD ══
+
+// تحميل ملف البحث
+export const downloadPaper = async (id) => {
+  const { data } = await api.get(`/api/research/researchAspu2004/papers/${id}/download/`, {
+    responseType: 'blob',
+  });
+  return data;
+};
+
+// ══ PLAGIARISM REPORT ══
+
+// جلب تقرير الانتحال
+export const getPlagiarismReport = async (paperId) => {
+  const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/plagiarism-report/`);
+  return data;
+};
+
+// ══ SUBMIT ASSISTANT REPORT ══
+
+//خالص
+export const submitAssistantReport = async (paperId, payload) => {
+  const { data } = await api.post(`/api/research/researchAspu2004/papers/${paperId}/submit-assistant-report/`, payload);
+  return data;
+};
+
+// جلب المراجعين المتاحين لبحث معين
+export const getAvailableReviewers = async (paperId) => {
+  const { data } = await api.get( 
+    `/api/v1/committees-app/papers/${paperId}/available-reviewers/`
+  );
+  return data;
+};
+
+// إنشاء لجنة للبحث
+export const createCommittee = async (paperId, payload = {}) => {
+  const { data } = await api.post(
+    `/api/v1/committees-app/papers/${paperId}/committee/create/`,
+    payload
+  );
   return data;
 };

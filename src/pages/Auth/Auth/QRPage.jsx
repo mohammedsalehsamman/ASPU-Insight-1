@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { enable2FA } from "../../../api/auth";
 import Button from "../../../components/Button";
 import ErrorBox from "../../../components/ErrorBox";
+import { FaSpinner } from "react-icons/fa";
 
 export default function QRPage({ lang, onNext }) {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export default function QRPage({ lang, onNext }) {
       <ErrorBox message={error} />
       <div className="auth-qr-wrapper">
         {loading
-          ? <div className="auth-qr-placeholder">⏳ {t('auth.qr.loading')}</div>
+          ? <div className="auth-qr-placeholder"><FaSpinner className="spin-icon" /> {t('auth.qr.loading')}</div>
           : qrUrl ? <div className="auth-qr-box"><QRCodeSVG value={qrUrl} size={200} /></div> : null}
         <div className="auth-qr-steps">
           {steps.map((s, i) => (

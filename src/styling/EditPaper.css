@@ -1,0 +1,129 @@
+.ep-page {
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.ep-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border, #eee);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.ep-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ep-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ep-cancel-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #999;
+  text-decoration: none;
+}
+
+.ep-error-box {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ep-field {
+  margin-bottom: 18px;
+}
+
+.ep-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ep-input,
+.ep-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.ep-textarea {
+  resize: vertical;
+}
+
+.ep-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ep-file-drop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1.5px dashed var(--border, #ccc);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.ep-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ep-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ac, #C4A55A);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ep-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ep-cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #ddd);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.ep-state-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40vh;
+}

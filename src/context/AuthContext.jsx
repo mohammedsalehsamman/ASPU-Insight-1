@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
   const clearError = useCallback(() => setError(null), []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, setUser, loading, error, login, logout, clearError, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

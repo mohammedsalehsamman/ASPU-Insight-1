@@ -194,7 +194,14 @@ body, #aspu-root {
   padding: 36px clamp(16px,5%,80px) 80px;
   display: grid; grid-template-columns: 280px 1fr;
   gap: 28px; align-items: start;
+  grid-template-columns: 1fr 280px;   /* content أولاً، sidebar ثانياً */
+  grid-template-areas: "content sidebar";
 }
+
+.content-area {
+  grid-area: content;
+}
+ 
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -445,6 +452,11 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer; text-align: start;
   align-items: center; justify-content: space-between;
   margin-bottom: 12px; transition: border-color .2s;
+  grid-area: sidebar
+}
+
+aside.sidebar {
+  grid-area: sidebar;
 }
 .filter-toggle:hover { border-color: var(--ac); }
 .ft-arrow { font-size: 16px; transition: transform .3s; }
@@ -478,4 +490,77 @@ input[type="range"]::-webkit-slider-thumb {
   .rcp-stat:last-child { border-bottom: none; }
   .popup-summary { grid-template-columns: 1fr; }
   .popup-box { max-height: 90vh; }
+}
+
+/* ── EMPTY STATE — مركز كامل ── */
+.rr-state-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 64px 24px;
+  min-height: 320px;
+}
+ 
+.rr-empty-ico {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--glow);
+  border: 1px solid var(--bd2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+ 
+.rr-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tx);
+}
+ 
+.rr-empty-sub {
+  font-size: 13px;
+  color: var(--tx3);
+  margin-top: -4px;
+  max-width: 280px;
+  line-height: 1.6;
+}
+ 
+/* ── زر نشر بحث جديد ── */
+.rr-submit-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ac);
+  color: #1A1510;
+  padding: 12px 26px;
+  border-radius: 3px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.4px;
+  font-family: inherit;
+  margin-top: 8px;
+  transition: filter 0.22s, transform 0.22s, box-shadow 0.22s;
+}
+ 
+.rr-submit-cta:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
+}
+ 
+/* ── Responsive: موبايل ── */
+@media (max-width: 960px) {
+  .page-body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "sidebar"
+      "content";
+  }
 }

@@ -6,8 +6,9 @@ import InputBox from "../../../components/InputBox";
 import Button from "../../../components/Button";
 import EyeBtn from "../../../components/EyeBtn";
 import ErrorBox from "../../../components/ErrorBox";
+import { FaEnvelope, FaLock } from "react-icons/fa";
 
-export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequired, onGoToRegister }) {
+export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequired, onGoToRegister, onSuccess }) {
     const navigate = useNavigate();
     const [email, setEmail] = useState(prefillEmail || "");
     const [password, setPassword] = useState("");
@@ -24,8 +25,11 @@ export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequi
         try {
             setLoading(true);
             const data = await login(email, password);
-            if (data.requires_2fa === false) { onQRRequired(); }
-            else { onOTPRequired(data.pre_auth_token); }
+            if (data.requires_2fa === false) {
+                onQRRequired();
+            } else {
+                onOTPRequired(data.pre_auth_token);
+            }
         } catch (e) {
             const msg = e?.response?.data;
             if (typeof msg === "object") {
@@ -39,7 +43,7 @@ export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequi
         <div className="auth-fields">
             <ErrorBox message={error} />
             <InputBox
-                icon="✉"
+                icon={<FaEnvelope />}
                 label={tLogin.email}
                 type="email"
                 value={email}
@@ -48,7 +52,7 @@ export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequi
                 autoComplete="email"
             />
             <InputBox
-                icon="🔑"
+                icon={<FaLock />}
                 label={tLogin.password}
                 type={showPw ? "text" : "password"}
                 value={password}
