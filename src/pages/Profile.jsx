@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "../styling/Profile.css";
 import { updateProfile, changePassword } from "../api/auth";
-import api from "../api/client";
+import api, { BASE_URL } from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
@@ -71,6 +71,12 @@ const ACT_LABELS = [
     { ar: "يوليو", en: "Jul" }, { ar: "أكتوبر", en: "Oct" },
     { ar: "الآن", en: "Now" },
 ];
+
+/* ══ RESOLVE MEDIA URL ══ */
+function resolveMediaUrl(url) {
+    if (!url) return null;
+    return /^https?:\/\//i.test(url) ? url : `${BASE_URL}${url}`;
+}
 
 /* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
@@ -421,7 +427,6 @@ export default function StudentProfile() {
         orcid_id: "",
         bio: "",
         preferred_language: "ar",
-        profile_picture_url: "",
         role: "author",
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -459,7 +464,6 @@ export default function StudentProfile() {
             orcid_id: profile.orcid_id || "",
             bio: profile.bio || "",
             preferred_language: profile.preferred_language || "ar",
-            profile_picture_url: profile.profile_picture_url || "",
             role: profile.role || "author",
         });
         setAvatarPreview(null);
@@ -507,7 +511,7 @@ export default function StudentProfile() {
                 Object.keys(changed).forEach(key => {
                     formData.append(key, changed[key]);
                 });
-                formData.append("profile_picture", avatarFile, avatarFile.name);
+                formData.append("profile_picture_url", avatarFile, avatarFile.name);
                 updated = await updateProfile(formData);
             } else {
                 updated = await updateProfile(changed);
@@ -608,7 +612,7 @@ export default function StudentProfile() {
         nameAr: profile.full_name || "",
         nameEn: profile.full_name || "",
         avatarInitial: (profile.full_name || "؟")[0].toUpperCase(),
-        avatarUrl: profile.profile_picture_url || null,
+        avatarUrl: resolveMediaUrl(profile.profile_picture_url),
         roleAr: profile.role === "محرر" ? "طالب" : profile.role,
         roleEn: profile.role === "author" ? "Student" : profile.role,
         universityAr: profile.institution || "جامعة الشام الخاصة",
