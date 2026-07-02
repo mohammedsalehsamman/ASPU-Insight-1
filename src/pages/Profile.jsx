@@ -7,6 +7,71 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
 
+const MOCK_STATS = [
+    { n: "12", labelAr: "بحث منشور", labelEn: "Published", deltaAr: "3 هذا العام", deltaEn: "3 this year" },
+    { n: "4,821", labelAr: "مرة قُرئت الأبحاث", labelEn: "Total Reads", deltaAr: "+18%", deltaEn: "+18%" },
+    { n: "37", labelAr: "اقتباس علمي", labelEn: "Citations", deltaAr: null, deltaEn: null },
+    { n: "94", labelAr: "نقطة تقييم", labelEn: "Reputation Score", deltaAr: "مرتبة ممتاز", deltaEn: "Excellent rank" },
+];
+
+const MOCK_RESEARCH = [
+    {
+        typeAr: "بحث علمي / تقني", typeEn: "Scientific / Technical",
+        titleAr: "نموذج تنبؤي لاكتشاف الاحتيال المالي باستخدام خوارزميات التعلم العميق",
+        titleEn: "Predictive Model for Financial Fraud Detection Using Deep Learning",
+        dateAr: "مارس 2025", dateEn: "March 2025",
+        reads: "1,240", citations: 14, status: "published", trending: true,
+    },
+    {
+        typeAr: "رسالة دكتوراه", typeEn: "PhD Dissertation",
+        titleAr: "تحليل الأنماط السلوكية في شبكات التواصل الاجتماعي باستخدام معالجة اللغة الطبيعية",
+        titleEn: "Behavioural Pattern Analysis in Social Networks Using NLP",
+        dateAr: "يناير 2025", dateEn: "Jan 2025",
+        reads: "980", citations: 9, status: "published", trending: false,
+    },
+    {
+        typeAr: "بحث علمي", typeEn: "Scientific Paper",
+        titleAr: "تحسين أداء خوارزميات التجميع في قواعد البيانات الضخمة",
+        titleEn: "Optimising Clustering Algorithms in Large-Scale Databases",
+        dateAr: "سبتمبر 2024", dateEn: "Sep 2024",
+        reads: "430", citations: 6, status: "review", trending: false,
+    },
+    {
+        typeAr: "مشروع تخرج", typeEn: "Graduation Project",
+        titleAr: "نظام ذكي لإدارة المختبرات الجامعية",
+        titleEn: "Smart University Lab Management System",
+        dateAr: "يونيو 2024", dateEn: "Jun 2024",
+        reads: "2,171", citations: null, status: "draft", trending: false,
+    },
+];
+
+const MOCK_LEVEL = {
+    nameAr: "مستوى: باحث متقدم", nameEn: "Advanced Researcher",
+    badge: "LV. 4", pts: 94, ptsAr: "94 نقطة", ptsEn: "94 pts",
+    nextAr: "150 للترقي", nextEn: "150 to next", percent: 63,
+    milestones: [
+        { done: true, ar: "أول نشر", en: "First Publish" },
+        { done: true, ar: "5 أبحاث", en: "5 Papers" },
+        { done: true, ar: "100 قراءة", en: "100 Reads" },
+        { done: false, ar: "20 اقتباس", en: "20 Citations" },
+    ],
+};
+
+const MOCK_SKILLS = ["Machine Learning", "NLP", "Deep Learning", "Data Mining", "Python", "TensorFlow"];
+
+const MOCK_SOCIAL = [
+    { ico: "✉", label: "email" },
+    { ico: "🔬", label: "ResearchGate" },
+    { ico: "📚", label: "Google Scholar" },
+    { ico: "💼", label: "LinkedIn" },
+];
+
+const ACT_LABELS = [
+    { ar: "يناير", en: "Jan" }, { ar: "أبريل", en: "Apr" },
+    { ar: "يوليو", en: "Jul" }, { ar: "أكتوبر", en: "Oct" },
+    { ar: "الآن", en: "Now" },
+];
+
 /* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
     const cols = [];
@@ -45,10 +110,10 @@ function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
             <div className="empty-state-ico">⚠️</div>
-            <div className="empty-state-t">{t("profile.error.loadFailed")}</div>
+            <div className="empty-state-t">{t("auth.profile.error.loadFailed")}</div>
             <div className="empty-state-s">{message}</div>
-            <button onClick={onRetry} style={{ marginTop: 16, padding: "8px 20px", border: "1px solid var(--ac)", color: "var(--ac)", background: "transparent", borderRadius: 4, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-                {t("profile.action.retry")}
+            <button onClick={onRetry} className="edit-btn" style={{ marginTop: 16, display: "inline-flex" }}>
+                {t("auth.profile.action.retry")}
             </button>
         </div>
     );
@@ -57,52 +122,23 @@ function ProfileError({ message, onRetry, t }) {
 /* ══ INLINE EDIT FIELD ══ */
 function EditField({ label, value, onChange, type = "text", placeholder = "" }) {
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-            <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>{label}</label>
+        <div className="field-group">
+            <label className="field-label">{label}</label>
             {type === "textarea" ? (
                 <textarea
+                    className="field-input"
                     value={value}
                     onChange={e => onChange(e.target.value)}
                     placeholder={placeholder}
                     rows={3}
-                    style={{
-                        background: "var(--surf2)",
-                        border: "1px solid var(--bdr)",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        color: "var(--tx1)",
-                        fontSize: 14,
-                        fontFamily: "inherit",
-                        resize: "vertical",
-                        outline: "none",
-                        transition: "border-color 0.2s",
-                        width: "100%",
-                        boxSizing: "border-box",
-                    }}
-                    onFocus={e => e.target.style.borderColor = "var(--ac)"}
-                    onBlur={e => e.target.style.borderColor = "var(--bdr)"}
                 />
             ) : (
                 <input
+                    className="field-input"
                     type={type}
                     value={value}
                     onChange={e => onChange(e.target.value)}
                     placeholder={placeholder}
-                    style={{
-                        background: "var(--surf2)",
-                        border: "1px solid var(--bdr)",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        color: "var(--tx1)",
-                        fontSize: 14,
-                        fontFamily: "inherit",
-                        outline: "none",
-                        transition: "border-color 0.2s",
-                        width: "100%",
-                        boxSizing: "border-box",
-                    }}
-                    onFocus={e => e.target.style.borderColor = "var(--ac)"}
-                    onBlur={e => e.target.style.borderColor = "var(--bdr)"}
                 />
             )}
         </div>
@@ -122,15 +158,15 @@ function ChangePasswordModal({ onClose, t }) {
         setError("");
 
         if (!oldPassword || !newPassword || !confirmPassword) {
-            setError(t("profile.modal.error.emptyFields"));
+            setError(t("auth.profile.modal.error.emptyFields"));
             return;
         }
         if (newPassword !== confirmPassword) {
-            setError(t("profile.modal.error.mismatch"));
+            setError(t("auth.profile.modal.error.mismatch"));
             return;
         }
         if (newPassword.length < 8) {
-            setError(t("profile.modal.error.shortPassword"));
+            setError(t("auth.profile.modal.error.shortPassword"));
             return;
         }
 
@@ -144,7 +180,7 @@ function ChangePasswordModal({ onClose, t }) {
             setError(
                 errData
                     ? Object.values(errData).flat().join(" ")
-                    : t("profile.modal.error.submitFailed")
+                    : t("auth.profile.modal.error.submitFailed")
             );
         } finally {
             setLoading(false);
@@ -164,72 +200,186 @@ function ChangePasswordModal({ onClose, t }) {
                 style={{
                     background: "var(--surf1)", borderRadius: 12, padding: 28,
                     width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+                    border: "1px solid var(--bd)",
                 }}
                 onClick={e => e.stopPropagation()}
             >
                 <div style={{ fontSize: 17, fontWeight: 700, color: "var(--tx1)", marginBottom: 20 }}>
-                    {t("profile.modal.title")}
+                    {t("auth.profile.modal.title")}
                 </div>
 
                 <EditField
-                    label={t("profile.modal.oldPassword")}
+                    label={t("auth.profile.modal.oldPassword")}
                     type="password"
                     value={oldPassword}
                     onChange={setOldPassword}
-                    placeholder={t("profile.modal.oldPasswordPlaceholder")}
+                    placeholder={t("auth.profile.modal.oldPasswordPlaceholder")}
                 />
                 <EditField
-                    label={t("profile.modal.newPassword")}
+                    label={t("auth.profile.modal.newPassword")}
                     type="password"
                     value={newPassword}
                     onChange={setNewPassword}
-                    placeholder={t("profile.modal.newPasswordPlaceholder")}
+                    placeholder={t("auth.profile.modal.newPasswordPlaceholder")}
                 />
                 <EditField
-                    label={t("profile.modal.confirmPassword")}
+                    label={t("auth.profile.modal.confirmPassword")}
                     type="password"
                     value={confirmPassword}
                     onChange={setConfirmPassword}
-                    placeholder={t("profile.modal.confirmPasswordPlaceholder")}
+                    placeholder={t("auth.profile.modal.confirmPasswordPlaceholder")}
                 />
 
-                {error && (
-                    <div style={{ fontSize: 12, color: "#C0542A", marginBottom: 10, padding: "8px 12px", background: "rgba(192,84,42,0.08)", borderRadius: 6 }}>
-                        {error}
-                    </div>
-                )}
-                {success && (
-                    <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
-                        {t("profile.modal.success")}
-                    </div>
-                )}
+                {error && <div className="form-msg error">{error}</div>}
+                {success && <div className="form-msg success">{t("auth.profile.modal.success")}</div>}
 
                 <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        style={{
-                            padding: "9px 22px", background: "var(--ac)", color: "#fff",
-                            border: "none", borderRadius: 8,
-                            cursor: loading ? "not-allowed" : "pointer",
-                            fontSize: 13, fontFamily: "inherit", fontWeight: 600,
-                            opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
-                        }}
-                    >
-                        {loading ? t("profile.action.saving") : t("profile.modal.title")}
+                    <button onClick={handleSubmit} disabled={loading} className="edit-btn primary">
+                        {loading ? t("auth.profile.action.saving") : t("auth.profile.modal.title")}
                     </button>
-                    <button
-                        onClick={onClose}
-                        disabled={loading}
-                        style={{
-                            padding: "9px 22px", background: "transparent", color: "var(--tx2)",
-                            border: "1px solid var(--bdr)", borderRadius: 8,
-                            cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-                            transition: "border-color 0.2s",
-                        }}
-                    >
-                        {t("profile.action.cancel")}
+                    <button onClick={onClose} disabled={loading} className="edit-btn">
+                        {t("auth.profile.action.cancel")}
                     </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ══ ACTIVITY TAB CONTENT ══ */
+function ActivityTab({ grid, isAr, t }) {
+    return (
+        <div>
+            <div className="section-label">{t("auth.profile.activity.title", { defaultValue: isAr ? "النشاط خلال 12 شهراً" : "Activity — Last 12 Months" })}</div>
+            <div className="info-card">
+                <div className="activity-grid">
+                    {grid.map((col, i) => (
+                        <div key={i} className="act-col">
+                            {col.map((cls, j) => (
+                                <div key={j} className={`act-cell ${cls}`} />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+                <div className="act-labels">
+                    {ACT_LABELS.map((l, i) => <span key={i}>{isAr ? l.ar : l.en}</span>)}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ══ INFO TAB CONTENT (بيانات حقيقية من الـ API) ══ */
+function InfoTab({ student, isAr, t }) {
+    return (
+        <div>
+            <div className="section-label">{isAr ? "المعلومات الأساسية" : "Basic Information"}</div>
+            <div className="info-card">
+                <div className="info-card-title">
+                    🎓 <span>{isAr ? "المعلومات الأكاديمية" : "Academic Info"}</span>
+                </div>
+                <div className="info-grid">
+                    <div className="info-item">
+                        <div className="info-item-label">{isAr ? "الدور" : "Role"}</div>
+                        <div className="info-item-val ac">{isAr ? student.roleAr : student.roleEn}</div>
+                    </div>
+                    <div className="info-item">
+                        <div className="info-item-label">{isAr ? "الجامعة / المؤسسة" : "Institution"}</div>
+                        <div className="info-item-val">{isAr ? student.universityAr : student.universityEn}</div>
+                    </div>
+                    <div className="info-item">
+                        <div className="info-item-label">ORCID iD</div>
+                        <div className="info-item-val">{student.orcid_id || "—"}</div>
+                    </div>
+                    <div className="info-item">
+                        <div className="info-item-label">{isAr ? "البريد الإلكتروني" : "Email"}</div>
+                        <div className="info-item-val">{student.email || "—"}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ══ RESEARCH TAB (موك داتا) ══ */
+function ResearchTab({ isAr, t }) {
+    return (
+        <div>
+            <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
+            <div className="research-list">
+                {MOCK_RESEARCH.map((r, i) => (
+                    <div key={i} className="research-item">
+                        <div>
+                            <div className="ri-type">{isAr ? r.typeAr : r.typeEn}</div>
+                            <div className="ri-title">{isAr ? r.titleAr : r.titleEn}</div>
+                            <div className="ri-meta">
+                                <div className="ri-meta-item">📅 {isAr ? r.dateAr : r.dateEn}</div>
+                                <div className="ri-meta-item">👁 {r.reads} {isAr ? "قراءة" : "reads"}</div>
+                                {r.citations != null && (
+                                    <div className="ri-meta-item">🔗 {r.citations} {isAr ? "اقتباس" : "citations"}</div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="ri-status">
+                            <div className={`ri-badge ${r.status}`}>
+                                {r.status === "published" && (isAr ? "منشور" : "Published")}
+                                {r.status === "review" && (isAr ? "قيد المراجعة" : "Under Review")}
+                                {r.status === "draft" && (isAr ? "مسودة" : "Draft")}
+                            </div>
+                            {r.trending && <div className="ri-reads">⬆ {isAr ? "رائج هذا الأسبوع" : "Trending"}</div>}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ══ SIDEBAR (موك داتا) ══ */
+function ProfileSidebar({ isAr }) {
+    return (
+        <div>
+            <div className="level-section">
+                <div className="section-label">{isAr ? "المستوى الأكاديمي" : "Academic Level"}</div>
+                <div className="level-card">
+                    <div className="level-header">
+                        <div className="level-name">{isAr ? MOCK_LEVEL.nameAr : MOCK_LEVEL.nameEn}</div>
+                        <div className="level-badge">{MOCK_LEVEL.badge}</div>
+                    </div>
+                    <div className="level-bar-wrap">
+                        <div className="level-bar-labels">
+                            <span>{isAr ? MOCK_LEVEL.ptsAr : MOCK_LEVEL.ptsEn}</span>
+                            <span>{isAr ? MOCK_LEVEL.nextAr : MOCK_LEVEL.nextEn}</span>
+                        </div>
+                        <div className="level-bar-bg">
+                            <div className="level-bar-fill" style={{ width: `${MOCK_LEVEL.percent}%` }} />
+                        </div>
+                    </div>
+                    <div className="level-milestones">
+                        {MOCK_LEVEL.milestones.map((m, i) => (
+                            <div key={i} className={`milestone ${m.done ? "done" : ""}`}>
+                                {m.done ? "✓" : "⬡"} {isAr ? m.ar : m.en}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="side-card">
+                <div className="side-card-title">{isAr ? "مجالات البحث" : "Research Areas"}</div>
+                <div className="skills-list">
+                    {MOCK_SKILLS.map((s, i) => <span key={i} className="skill-tag">{s}</span>)}
+                </div>
+            </div>
+
+            <div className="side-card">
+                <div className="side-card-title">{isAr ? "التواصل" : "Contact"}</div>
+                <div className="social-links">
+                    {MOCK_SOCIAL.map((s, i) => (
+                        <a key={i} href="#" className="social-link">
+                            <span className="social-ico">{s.ico}</span> {s.label}
+                        </a>
+                    ))}
                 </div>
             </div>
         </div>
@@ -238,7 +388,7 @@ function ChangePasswordModal({ onClose, t }) {
 
 /* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
-    const { t, i18n } = useTranslation();
+    const { t, i18n, ready } = useTranslation();
     const lang = i18n.language || "ar";
     const setLang = (l) => {
         i18n.changeLanguage(l);
@@ -248,8 +398,8 @@ export default function StudentProfile() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [hoveredMenu, setHoveredMenu] = useState(null);
-    const [activeTab, setActiveTab] = useState("research");
     const [activityGrid] = useState(generateActivityGrid);
+    const [activeTab, setActiveTab] = useState("research");
     const cursorRef = useRef(null);
 
     // ══ API STATE ══
@@ -378,7 +528,7 @@ export default function StudentProfile() {
             setSaveError(
                 errData
                     ? Object.values(errData).flat().join(" ")
-                    : t("profile.error.saveFailed")
+                    : t("auth.profile.error.saveFailed")
             );
         } finally {
             setSaveLoading(false);
@@ -391,11 +541,11 @@ export default function StudentProfile() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            setSaveError(t("profile.error.imageType"));
+            setSaveError(t("auth.profile.error.imageType"));
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            setSaveError(t("profile.error.imageSize"));
+            setSaveError(t("auth.profile.error.imageSize"));
             return;
         }
 
@@ -442,11 +592,16 @@ export default function StudentProfile() {
         };
     }, []);
 
+    // ══ لسا الترجمة ما جهزت → إظهار سكيلتون بدل أي محاولة قراءة مفاتيح ══
+    if (!ready) {
+        return <ProfileSkeleton />;
+    }
+
     const isAr = lang === "ar";
-    const tProfile = t("profile", { returnObjects: true });
-    const navT = t("nav", { returnObjects: true });
-    const menuT = t("menu", { returnObjects: true });
-    const footer = t("footer", { returnObjects: true });
+    const tProfile = t("auth.profile", { returnObjects: true }) || {};
+    const navT = t("nav", { returnObjects: true }) || {};
+    const menuT = t("menu", { returnObjects: true }) || {};
+    const footer = t("footer", { returnObjects: true }) || {};
 
     // ══ MAP API → UI ══
     const student = profile ? {
@@ -465,7 +620,7 @@ export default function StudentProfile() {
     } : null;
 
     return (
-        <>
+        <div className="profile-page">
             <div className="cursor-glow" ref={cursorRef} />
 
             <Navbar
@@ -483,15 +638,15 @@ export default function StudentProfile() {
 
             {!loading && !error && profile && (
                 <>
-                    {/* PROFILE HERO */}
+                    {/* ══ PROFILE HERO ══ */}
                     <div className="profile-hero">
                         <div className="hero-glow-1" />
                         <div className="hero-glow-2" />
                         <div className="hero-inner">
                             <div className="ph-breadcrumb">
-                                <a href="/">{tProfile.breadcrumb.home}</a>
+                                <a href="/">{tProfile?.breadcrumb?.home}</a>
                                 <span className="ph-sep">›</span>
-                                <span>{tProfile.breadcrumb.profile}</span>
+                                <span>{tProfile?.breadcrumb?.profile}</span>
                             </div>
 
                             <div className="profile-card-top">
@@ -532,52 +687,39 @@ export default function StudentProfile() {
                                 <div className="profile-info">
                                     {isEditing ? (
                                         /* ══ وضع التعديل ══ */
-                                        <div style={{ display: "flex", flexDirection: "column", gap: 0, minWidth: 280 }}>
+                                        <div style={{ minWidth: 280 }}>
                                             <EditField
-                                                label={tProfile.field.fullName}
+                                                label={tProfile?.field?.fullName}
                                                 value={editForm.full_name}
                                                 onChange={v => setEditForm(f => ({ ...f, full_name: v }))}
-                                                placeholder={tProfile.placeholder.fullName}
+                                                placeholder={tProfile?.placeholder?.fullName}
                                             />
                                             <EditField
-                                                label={tProfile.field.institution}
+                                                label={tProfile?.field?.institution}
                                                 value={editForm.institution}
                                                 onChange={v => setEditForm(f => ({ ...f, institution: v }))}
-                                                placeholder={tProfile.placeholder.institution}
+                                                placeholder={tProfile?.placeholder?.institution}
                                             />
                                             <EditField
-                                                label={tProfile.field.orcid}
+                                                label={tProfile?.field?.orcid}
                                                 value={editForm.orcid_id}
                                                 onChange={v => setEditForm(f => ({ ...f, orcid_id: v }))}
-                                                placeholder={tProfile.placeholder.orcid}
+                                                placeholder={tProfile?.placeholder?.orcid}
                                             />
 
                                             {/* الدور */}
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                                                <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
-                                                    {tProfile.field.role}
-                                                </label>
-                                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                            <div className="field-group">
+                                                <label className="field-label">{tProfile?.field?.role}</label>
+                                                <div className="pill-row">
                                                     {[
-                                                        { val: "author", label: tProfile.roleOptions.author },
-                                                        { val: "reviewer", label: tProfile.roleOptions.reviewer },
-                                                        { val: "editor", label: tProfile.roleOptions.editor },
+                                                        { val: "author", label: tProfile?.roleOptions?.author },
+                                                        { val: "reviewer", label: tProfile?.roleOptions?.reviewer },
+                                                        { val: "editor", label: tProfile?.roleOptions?.editor },
                                                     ].map(opt => (
                                                         <button
                                                             key={opt.val}
                                                             onClick={() => setEditForm(f => ({ ...f, role: opt.val }))}
-                                                            style={{
-                                                                padding: "7px 18px",
-                                                                borderRadius: 6,
-                                                                border: "1px solid",
-                                                                borderColor: editForm.role === opt.val ? "var(--ac)" : "var(--bdr)",
-                                                                background: editForm.role === opt.val ? "var(--ac)" : "transparent",
-                                                                color: editForm.role === opt.val ? "#fff" : "var(--tx2)",
-                                                                cursor: "pointer",
-                                                                fontSize: 13,
-                                                                fontFamily: "inherit",
-                                                                transition: "all 0.2s",
-                                                            }}
+                                                            className={`pill-btn ${editForm.role === opt.val ? "on" : ""}`}
                                                         >
                                                             {opt.label}
                                                         </button>
@@ -586,35 +728,22 @@ export default function StudentProfile() {
                                             </div>
 
                                             <EditField
-                                                label={tProfile.field.bio}
+                                                label={tProfile?.field?.bio}
                                                 value={editForm.bio}
                                                 onChange={v => setEditForm(f => ({ ...f, bio: v }))}
                                                 type="textarea"
-                                                placeholder={tProfile.placeholder.bio}
+                                                placeholder={tProfile?.placeholder?.bio}
                                             />
 
                                             {/* اللغة المفضلة */}
-                                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                                                <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
-                                                    {tProfile.field.preferredLanguage}
-                                                </label>
-                                                <div style={{ display: "flex", gap: 8 }}>
-                                                    {[{ val: "ar", label: tProfile.languageOptions.ar }, { val: "en", label: tProfile.languageOptions.en }].map(opt => (
+                                            <div className="field-group">
+                                                <label className="field-label">{tProfile?.field?.preferredLanguage}</label>
+                                                <div className="pill-row">
+                                                    {[{ val: "ar", label: tProfile?.languageOptions?.ar }, { val: "en", label: tProfile?.languageOptions?.en }].map(opt => (
                                                         <button
                                                             key={opt.val}
                                                             onClick={() => setEditForm(f => ({ ...f, preferred_language: opt.val }))}
-                                                            style={{
-                                                                padding: "7px 18px",
-                                                                borderRadius: 6,
-                                                                border: "1px solid",
-                                                                borderColor: editForm.preferred_language === opt.val ? "var(--ac)" : "var(--bdr)",
-                                                                background: editForm.preferred_language === opt.val ? "var(--ac)" : "transparent",
-                                                                color: editForm.preferred_language === opt.val ? "#fff" : "var(--tx2)",
-                                                                cursor: "pointer",
-                                                                fontSize: 13,
-                                                                fontFamily: "inherit",
-                                                                transition: "all 0.2s",
-                                                            }}
+                                                            className={`pill-btn ${editForm.preferred_language === opt.val ? "on" : ""}`}
                                                         >
                                                             {opt.label}
                                                         </button>
@@ -623,82 +752,97 @@ export default function StudentProfile() {
                                             </div>
 
                                             {/* رسائل الخطأ / النجاح */}
-                                            {saveError && (
-                                                <div style={{ fontSize: 12, color: "#C0542A", marginBottom: 10, padding: "8px 12px", background: "rgba(192,84,42,0.08)", borderRadius: 6 }}>
-                                                    {saveError}
-                                                </div>
-                                            )}
-                                            {saveSuccess && (
-                                                <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
-                                                    {tProfile.action.saved}
-                                                </div>
-                                            )}
+                                            {saveError && <div className="form-msg error">{saveError}</div>}
+                                            {saveSuccess && <div className="form-msg success">{tProfile?.action?.saved}</div>}
 
                                             {/* أزرار الحفظ والإلغاء */}
                                             <div style={{ display: "flex", gap: 10 }}>
-                                                <button
-                                                    onClick={handleSave}
-                                                    disabled={saveLoading}
-                                                    style={{
-                                                        padding: "9px 22px",
-                                                        background: "var(--ac)",
-                                                        color: "#fff",
-                                                        border: "none",
-                                                        borderRadius: 8,
-                                                        cursor: saveLoading ? "not-allowed" : "pointer",
-                                                        fontSize: 13,
-                                                        fontFamily: "inherit",
-                                                        fontWeight: 600,
-                                                        opacity: saveLoading ? 0.7 : 1,
-                                                        transition: "opacity 0.2s",
-                                                    }}
-                                                >
-                                                    {saveLoading ? tProfile.action.saving : tProfile.action.save}
+                                                <button onClick={handleSave} disabled={saveLoading} className="edit-btn primary">
+                                                    {saveLoading ? tProfile?.action?.saving : tProfile?.action?.saveChanges}
                                                 </button>
-                                                <button
-                                                    onClick={handleCancelEdit}
-                                                    disabled={saveLoading}
-                                                    style={{
-                                                        padding: "9px 22px", background: "transparent", color: "var(--tx2)",
-                                                        border: "1px solid var(--bdr)", borderRadius: 8,
-                                                        cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-                                                        transition: "border-color 0.2s",
-                                                    }}
-                                                >
-                                                    {tProfile.action.cancel}
+                                                <button onClick={handleCancelEdit} disabled={saveLoading} className="edit-btn">
+                                                    {tProfile?.action?.cancel}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
                                         /* ══ الوضع الطبيعي (عرض البيانات) ══ */
                                         <div>
-                                            <h2>{isAr ? student.nameAr : student.nameEn}</h2>
-                                            <p>{isAr ? student.roleAr : student.roleEn} - {isAr ? student.universityAr : student.universityEn}</p>
-                                            <p style={{ marginTop: 8, color: "var(--tx2)" }}>{student.bio}</p>
-                                            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-                                                <button 
-                                                    onClick={handleStartEdit}
-                                                    style={{ padding: "8px 16px", background: "var(--ac)", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
-                                                >
-                                                    {tProfile.action.edit}
-                                                </button>
-                                                <button 
-                                                    onClick={() => setShowPasswordModal(true)}
-                                                    style={{ padding: "8px 16px", background: "transparent", color: "var(--tx2)", border: "1px solid var(--bdr)", borderRadius: 6, cursor: "pointer" }}
-                                                >
-                                                    {t("profile.modal.title")}
-                                                </button>
+                                            <div className="profile-role-tag">
+                                                <span>●</span>
+                                                <span>{isAr ? student.roleAr : student.roleEn}</span>
                                             </div>
+                                            <div className="profile-name">{isAr ? student.nameAr : student.nameEn}</div>
+                                            <div className="profile-meta">
+                                                <div className="profile-meta-item">🏛️ {isAr ? student.universityAr : student.universityEn}</div>
+                                                {student.email && (
+                                                    <>
+                                                        <div className="profile-meta-dot" />
+                                                        <div className="profile-meta-item">✉ {student.email}</div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {student.bio && <div className="profile-bio">{student.bio}</div>}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Edit actions */}
+                                {!isEditing && (
+                                    <div className="hero-actions">
+                                        <button onClick={handleStartEdit} className="edit-btn">
+                                            {tProfile?.action?.editProfile}
+                                        </button>
+                                        <button onClick={() => setShowPasswordModal(true)} className="edit-btn">
+                                            {tProfile?.action?.changePassword}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
+
+                        {/* ══ STATS STRIP ══ */}
+                        <div className="stats-strip">
+                            {MOCK_STATS.map((s, i) => (
+                                <div key={i} className="stat-cell">
+                                    <div className="stat-n">{s.n}</div>
+                                    <div className="stat-l">{isAr ? s.labelAr : s.labelEn}</div>
+                                    {s.deltaAr && <div className="stat-delta">▲ {isAr ? s.deltaAr : s.deltaEn}</div>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ══ TABS ══ */}
+                    <div className="profile-tabs">
+                        <button className={`ptab ${activeTab === "research" ? "on" : ""}`} onClick={() => setActiveTab("research")}>
+                            {isAr ? "الأبحاث" : "Research"}
+                        </button>
+                        <button className={`ptab ${activeTab === "info" ? "on" : ""}`} onClick={() => setActiveTab("info")}>
+                            {isAr ? "المعلومات الأساسية" : "Basic Info"}
+                        </button>
+                        <button className={`ptab ${activeTab === "activity" ? "on" : ""}`} onClick={() => setActiveTab("activity")}>
+                            {isAr ? "النشاط" : "Activity"}
+                        </button>
+                    </div>
+
+                    {/* ══ PAGE BODY ══ */}
+                    <div className="page-body">
+                        <div>
+                            {activeTab === "research" && <ResearchTab isAr={isAr} t={t} />}
+                            {activeTab === "info" && <InfoTab student={student} isAr={isAr} t={t} />}
+                            {activeTab === "activity" && <ActivityTab grid={activityGrid} isAr={isAr} t={t} />}
+                        </div>
+                        <ProfileSidebar isAr={isAr} />
                     </div>
                 </>
             )}
 
-            <Footer footerT={footer} />
-        </>
+            {showPasswordModal && (
+                <ChangePasswordModal onClose={() => setShowPasswordModal(false)} t={t} />
+            )}
+
+            <Footer isAr={isAr} footer={footer} Logo={Logo} />
+        </div>
     );
 }

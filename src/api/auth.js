@@ -58,11 +58,13 @@ export const changePassword = async (oldPassword, newPassword, confirmPassword) 
   return data;
 };
 
+//خالص
 export const requestPasswordReset = async (email) => {
   const { data } = await api.post('/api/auth/ASPU-2004/password-reset/', { email });
   return data;
 };
 
+//خالص
 export const confirmPasswordReset = async (token, newPassword, confirmPassword) => {
   const { data } = await api.post('/api/auth/ASPU-2004/password-reset/confirm/', {
     token,
@@ -72,6 +74,7 @@ export const confirmPasswordReset = async (token, newPassword, confirmPassword) 
   return data;
 };
 
+//خالص
 export const verifyEmail = async (token) => {
   const { data } = await api.post('/api/auth/ASPU-2004/verify-email/', { token });
   return data;

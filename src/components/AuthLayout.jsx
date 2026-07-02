@@ -10,7 +10,7 @@ export default function AuthLayout({ lang, setLang, children, step, activeTab, o
   const showTabs = step === "login" || step === "register";
 
   return (
-    <div className="auth-root" dir={dir} data-theme="light">
+    <div className="auth-root" dir={dir}>
       <TopBar lang={lang} setLang={setLang} />
       <main className="auth-page">
         <div className="auth-container">
