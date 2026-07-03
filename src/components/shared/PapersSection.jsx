@@ -1,6 +1,8 @@
 import PaperCard from './PaperCard';
+import { FiSearch } from 'react-icons/fi';
+import { BsHourglassSplit } from 'react-icons/bs';
+import { AiOutlineExclamationCircle, AiOutlineFrown } from 'react-icons/ai';
 
-// ← شريط الفلاتر + البحث + شبكة الأبحاث (loading / error / فاضي / نتائج) — مطابق بالصفحتين
 export default function PapersSection({
   t, lang, filtered, loading, error,
   activeFilter, setActiveFilter, searchQuery, setSearchQuery, onOpenDetail,
@@ -28,9 +30,7 @@ export default function PapersSection({
         ))}
         <div className="filter-space" />
         <div className="search-mini">
-          <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="6.5" cy="6.5" r="5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
-          </svg>
+          <FiSearch size={14} />
           <input
             type="text"
             placeholder={t('search_ph')}
@@ -43,14 +43,14 @@ export default function PapersSection({
       <div className="papers-grid">
         {loading && (
           <div className="empty-state">
-            <div className="empty-ico">⏳</div>
+            <div className="empty-ico"><BsHourglassSplit size={28} /></div>
             <div className="empty-title">{t('loading')}</div>
           </div>
         )}
 
         {!loading && error && (
           <div className="empty-state">
-            <div className="empty-ico">⚠️</div>
+            <div className="empty-ico"><AiOutlineExclamationCircle size={28} /></div>
             <div className="empty-title">{t('error')}</div>
             <p className="empty-sub">{error.message}</p>
           </div>
@@ -58,7 +58,7 @@ export default function PapersSection({
 
         {!loading && !error && filtered.length === 0 && (
           <div className="empty-state">
-            <div className="empty-ico">🔍</div>
+            <div className="empty-ico"><AiOutlineFrown size={28} /></div>
             <div className="empty-title">{t('no_results')}</div>
             <p className="empty-sub">{t('no_sub')}</p>
           </div>

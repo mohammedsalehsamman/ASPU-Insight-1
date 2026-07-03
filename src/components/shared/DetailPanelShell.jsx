@@ -1,5 +1,3 @@
-// ← الهيكل العام لِلوحة التفاصيل (overlay + panel + header فيه زر رجوع وتاغ نوع التحكيم)
-// المحتوى الخاص بكل صفحة بينمرر عن طريق children
 export default function DetailPanelShell({ open, onClose, activePaper, lang, t, children }) {
   return (
     <>

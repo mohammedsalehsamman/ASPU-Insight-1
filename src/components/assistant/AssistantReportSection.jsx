@@ -1,11 +1,10 @@
-// ← خاص بصفحة "مساعد المحرر" بس: عرض/إضافة تقرير مساعد المحرر (submitAssistantReport / getAssistantReview)
-// هاد الجزء مش موجود بصفحة "المحرر" (اللي عندها initial review + decision + لجنة بدلاً منه)
 export default function AssistantReportSection({
   hasReport, t,
   reviewData, loadingReview, loadReview, reviewError,
   noteEditorOpen, setNoteEditorOpen, noteText, setNoteText,
   savingNote, saveError, setSaveError, saveNote,
-}) {
+}) 
+{
   return (
     <>
       <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('notes_l')}</div>

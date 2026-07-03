@@ -7,10 +7,8 @@ import {
   submitEditorReviewInitial,
   getAvailableReviewers,
   createCommittee,
-  // getEditorReviewFinal,      // ⏸ معطّل مؤقتاً — رح يترجع لما تصير اللجنة جاهزة
-  // submitEditorReviewFinal,   // ⏸ معطّل مؤقتاً — رح يترجع لما تصير اللجنة جاهزة
 } from "../../api/research";
-import { EditorDict, createLocalT } from '../../i18n'; // ← كل الترجمات صارت هون
+import { EditorDict, createLocalT } from '../../i18n';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
@@ -67,7 +65,6 @@ export default function Editor() {
     root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   }, [theme, lang]);
 
-  /* ── Fetch papers from API ── */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -90,7 +87,6 @@ export default function Editor() {
     return () => { cancelled = true; };
   }, []);
 
-  /* ── Escape key ── */
   useEffect(() => {
     const handler = e => {
       if (e.key === 'Escape') {
@@ -102,7 +98,6 @@ export default function Editor() {
     return () => document.removeEventListener('keydown', handler);
   }, [menuOpen, detailOpen]);
 
-  /* ── جلب الملاحظات الأولية عند فتح البحث ── */
   async function loadReviews(paperId) {
     setLoadingInitialReview(true);
     setInitialReviewError(null);
@@ -114,7 +109,6 @@ export default function Editor() {
         : (data ?? null);
       setInitialReview(normalized);
     } catch (err) {
-      // 404 = لا يوجد تقرير أولي بعد، هاد مش خطأ حقيقي
       if (err?.response?.status === 404) setInitialReview(null);
       else setInitialReviewError(err);
     } finally {
@@ -122,7 +116,6 @@ export default function Editor() {
     }
   }
 
-  /* ── Detail panel ── */
   function openDetail(id) {
     const p = papers.find(x => x.id === id);
     if (!p) return;
@@ -155,7 +148,6 @@ export default function Editor() {
     setCommitteeSuccess(false);
   }
 
-  /* ── فتح محرر التقرير الأولي ── */
   function openReviewEditor() {
     setNoteEditorOpen(true);
     setNoteText('');
@@ -170,7 +162,6 @@ export default function Editor() {
     setSaveError(null);
   }
 
-  /* ── إرسال التقرير الأولي (notes + decision) ── */
   async function submitReview() {
     if (!activePaper || !noteText.trim() || !decision) return;
 
@@ -192,7 +183,6 @@ export default function Editor() {
     }
   }
 
-  /* ── جلب المراجعين المتاحين لهاد البحث ── */
   async function openCommitteePanel() {
     if (!activePaper) return;
     setCommitteePanelOpen(true);
@@ -222,7 +212,6 @@ export default function Editor() {
     );
   }
 
-  /* ── إنشاء اللجنة ── */
   async function handleCreateCommittee() {
     if (!activePaper || selectedReviewerIds.length === 0) return;
 
@@ -241,7 +230,6 @@ export default function Editor() {
     }
   }
 
-  /* ── Filtering ── */
   const filtered = papers.filter(p => {
     if (activeFilter === 'noted' && !p.is_reviewed_by_assistant) return false;
     if (activeFilter === 'pending' && p.is_reviewed_by_assistant) return false;
@@ -260,10 +248,8 @@ export default function Editor() {
 
   const displayName = currentUser?.full_name || (lang === 'ar' ? 'بدون اسم' : 'Editor');
 
-  // ← الدالة نفسها صارت سطر واحد بس؛ القاموس كامل صار بملف الترجمة i18n.js
   const t = createLocalT(EditorDict, lang);
 
-  /* ══════════ RENDER ══════════ */
   return (
     <div className={`ea-root theme-${theme} lang-${lang}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <CursorGlow />
@@ -301,7 +287,6 @@ export default function Editor() {
 
       <Footer isAr={lang === 'ar'} footer={getFooterContent(lang)} Logo={Logo} />
 
-      {/* ══ DETAIL PANEL ══ */}
       <DetailPanelShell open={detailOpen} onClose={closeDetail} activePaper={activePaper} lang={lang} t={t}>
         {activePaper && (
           <>
@@ -312,7 +297,6 @@ export default function Editor() {
               isReviewed={!!activePaper.is_reviewed_by_assistant}
             />
 
-            {/* ══ Editor Report — Initial only (Final مؤجّلة لحد ما تصير اللجنة جاهزة) ══ */}
             <AssistantReportReadOnly activePaper={activePaper} t={t} />
 
             <InitialReviewSection

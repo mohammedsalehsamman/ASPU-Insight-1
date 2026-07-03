@@ -1,8 +1,10 @@
 import { getStatus } from './statusHelpers';
+import { FiUnlock, FiLock, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 // ← كرت البحث الواحد بالشبكة — مطابق تماماً بالصفحتين
 export default function PaperCard({ paper, lang, index, onOpen }) {
   const s = getStatus(paper);
+  const isRtl = lang === 'ar';
   return (
     <div
       className="paper-card"
@@ -17,8 +19,8 @@ export default function PaperCard({ paper, lang, index, onOpen }) {
         </span>
         <span className="pc-date">
           {paper.is_paid_open_access
-            ? (lang === 'ar' ? '🔓 مفتوح' : '🔓 Open Access')
-            : (lang === 'ar' ? '🔒 مقيّد' : '🔒 Restricted')}
+            ? <><FiUnlock size={12} /> {lang === 'ar' ? 'مفتوح' : 'Open Access'}</>
+            : <><FiLock size={12} /> {lang === 'ar' ? 'مقيّد' : 'Restricted'}</>}
         </span>
       </div>
 
@@ -38,9 +40,7 @@ export default function PaperCard({ paper, lang, index, onOpen }) {
           {lang === 'ar' ? s.ar : s.en}
         </span>
         <span className="pc-arrow">
-          <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-            <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          {isRtl ? <FiChevronLeft size={12} /> : <FiChevronRight size={12} />}
         </span>
       </div>
     </div>

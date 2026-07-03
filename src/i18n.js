@@ -831,7 +831,6 @@ export const PaperDetailDict = {
   available: { ar: 'متوفر', en: 'Available' },
   not_attached: { ar: 'غير مرفق', en: 'Not attached' },
 
-  // Sidebar — status track
   status_track_label: { ar: 'مسار الحالة', en: 'Status Track' },
   timeline_submitted: { ar: 'تقديم البحث', en: 'Submitted' },
   timeline_submitted_sub: { ar: 'تم التقديم بنجاح', en: 'Successfully submitted' },
@@ -842,12 +841,10 @@ export const PaperDetailDict = {
   timeline_decision_rejected: { ar: 'تم رفض البحث', en: 'Paper was rejected' },
   timeline_decision_pending: { ar: 'في انتظار القرار', en: 'Awaiting decision' },
 
-  // Sidebar — actions
   actions_label: { ar: 'الإجراءات', en: 'Actions' },
   edit_paper: { ar: 'تعديل البحث', en: 'Edit Paper' },
   copy_link: { ar: 'نسخ الرابط', en: 'Copy Link' },
 
-  // Loading / error states
   loading: { ar: 'جاري التحميل…', en: 'Loading…' },
   retry: { ar: 'إعادة المحاولة', en: 'Retry' },
   default_error: { ar: 'حدث خطأ في جلب البيانات', en: 'An error occurred while fetching the data' },

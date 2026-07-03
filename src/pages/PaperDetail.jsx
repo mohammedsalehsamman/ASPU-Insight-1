@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { getPaper } from '../api/research';
-import { PaperDetailDict, createLocalT } from '../i18n'; // ← كل الترجمات صارت هون
+import { PaperDetailDict, createLocalT } from '../i18n'; 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Logo from '../components/Logo';
@@ -17,7 +17,6 @@ import {
   FaClipboard,
 } from 'react-icons/fa';
 
-/* ── Helper: resolve step dot class (مش نص، منطق فقط) ── */
 function getStepDotCls(stepIndex, status) {
   const activeIdx = status === 'pending' ? 1 : 2;
   if (stepIndex === 0) return 'pd-st-dot--done';
@@ -26,29 +25,20 @@ function getStepDotCls(stepIndex, status) {
   return 'pd-st-dot--idle';
 }
 
-/* ═══════════════════════════════════════
-   COMPONENT
-═══════════════════════════════════════ */
 export default function PaperDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  // ← الثيم واللغة من نفس المصدر المشترك يلي بتستخدمه باقي الصفحات
   const { theme } = useTheme();
   const { i18n } = useTranslation();
   const lang = i18n.language || 'ar';
   const t = createLocalT(PaperDetailDict, lang);
-
   const [paper, setPaper] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // ← حالة الناف بار المشتركة
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const navScrolled = useNavScroll();
 
-  /* ── Theme / Lang / Dir applied to root ── */
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
@@ -57,7 +47,6 @@ export default function PaperDetail() {
     root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   }, [theme, lang]);
 
-  /* ── Fetch ── */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -71,12 +60,10 @@ export default function PaperDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
-  /* ── Copy link ── */
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
   };
 
-  // ← Status config: مبني من الترجمة + كلاسات الـ CSS بس
   const STATUS_CONFIG = {
     pending:  { label: t('status_pending'),  badgeCls: 'pd-sb-pending',  metaCls: 'pd-meta-val--gold' },
     approved: { label: t('status_approved'), badgeCls: 'pd-sb-approved', metaCls: 'pd-meta-val--green' },
@@ -85,7 +72,6 @@ export default function PaperDetail() {
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
-  /* LOADING STATE */
   if (loading) {
     return (
       <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
@@ -101,12 +87,10 @@ export default function PaperDetail() {
           <div className="pd-spinner" />
           <span>{t('loading')}</span>
         </div>
-        <Footer isAr={lang === 'ar'} footer={getFooterContent(lang)} Logo={Logo} />
       </div>
     );
   }
 
-  /* ERROR STATE */
   if (error) {
     return (
       <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
@@ -135,7 +119,6 @@ export default function PaperDetail() {
 
   const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
 
-  // ← Timeline: مبني من الترجمة + الأيقونات بس
   const TIMELINE_STEPS = [
     {
       name: t('timeline_submitted'),
@@ -157,7 +140,6 @@ export default function PaperDetail() {
     },
   ];
 
-  /* RENDER */
   return (
     <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
       <Navbar
@@ -169,7 +151,6 @@ export default function PaperDetail() {
         Logo={Logo}
       />
 
-      {/* ── PAGE HEADER ── */}
       <div className="pd-page-header">
         <div className="pd-ph-inner">
 
@@ -203,11 +184,9 @@ export default function PaperDetail() {
               <span className="pd-chip-email">{paper.author_name}</span>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* ── PAGE BODY ── */}
       <div className="pd-page-body">
 
         <div className="pd-main-col">

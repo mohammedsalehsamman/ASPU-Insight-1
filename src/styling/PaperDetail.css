@@ -1,9 +1,3 @@
-/* ══════════════════════════════════════
-   PaperDetail.css — ASPU Insight
-   Follows design tokens from global theme
-══════════════════════════════════════ */
-
-/* ── PAGE HEADER ── */
 .pd-page-header {
   padding: 108px clamp(16px, 5%, 80px) 52px;
   background: var(--bg);
@@ -32,7 +26,6 @@
   margin: 0 auto;
 }
 
-/* Breadcrumb */
 .pd-breadcrumb {
   display: flex;
   align-items: center;
@@ -56,7 +49,6 @@
   opacity: .4;
 }
 
-/* Badges row */
 .pd-badges {
   display: flex;
   align-items: center;
@@ -134,7 +126,6 @@
   background: var(--tx3);
 }
 
-/* Title */
 .pd-title {
   font-size: clamp(1.9rem, 4.5vw, 3.4rem);
   font-weight: 800;
@@ -144,7 +135,6 @@
   font-family: 'IBM Plex Sans Arabic', sans-serif;
 }
 
-/* Author chip */
 .pd-author-row {
   display: flex;
   align-items: center;
@@ -177,7 +167,6 @@
   font-weight: 600;
 }
 
-/* ── PAGE BODY ── */
 .pd-page-body {
   max-width: 1200px;
   margin: 0 auto;
@@ -194,14 +183,12 @@
   }
 }
 
-/* ── MAIN COLUMN ── */
 .pd-main-col {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Detail card */
 .pd-detail-card {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -228,7 +215,6 @@
   opacity: 1;
 }
 
-/* Section label */
 .pd-section-label {
   font-size: 10px;
   font-weight: 800;
@@ -248,7 +234,6 @@
   background: var(--bd);
 }
 
-/* Abstract */
 .pd-abstract-text {
   font-size: 15px;
   line-height: 2;
@@ -257,7 +242,6 @@
   padding-inline-start: 18px;
 }
 
-/* PDF states */
 .pd-pdf-available {
   display: flex;
   align-items: center;
@@ -337,7 +321,6 @@
   opacity: .5;
 }
 
-/* Rejection box */
 .pd-rejection-box {
   background: rgba(239, 68, 68, .05);
   border: 1px solid rgba(239, 68, 68, .2);
@@ -360,7 +343,6 @@
   line-height: 1.7;
 }
 
-/* Loading & Error states */
 .pd-state-center {
   display: flex;
   flex-direction: column;
@@ -413,7 +395,6 @@
   color: var(--ac);
 }
 
-/* ── SIDEBAR ── */
 .pd-side-col {
   display: flex;
   flex-direction: column;
@@ -429,7 +410,6 @@
   padding: 22px;
 }
 
-/* Meta rows */
 .pd-meta-row {
   display: flex;
   justify-content: space-between;
@@ -468,7 +448,6 @@
 .pd-meta-val--green { color: #22C55E; }
 .pd-meta-val--red   { color: #F87171; }
 
-/* OA indicator pill */
 .pd-oa-indicator {
   display: inline-flex;
   align-items: center;
@@ -491,7 +470,6 @@
   color: var(--tx3);
 }
 
-/* ── STATUS TRACK ── */
 .pd-status-track {
   display: flex;
   flex-direction: column;
@@ -509,7 +487,6 @@
   position: absolute;
   inset-inline-end: auto;
   inset-inline-start: auto;
-  /* RTL: line goes from the dot downward */
   right: auto;
   left: auto;
   top: 42px;
@@ -576,8 +553,6 @@
   font-size: 11px;
   color: var(--tx3);
 }
-
-/* ── ACTION CARD ── */
 .pd-action-card {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -627,7 +602,6 @@
   background: rgba(239, 68, 68, .08);
 }
 
-/* ── RESPONSIVE ── */
 @media (max-width: 600px) {
   .pd-title {
     font-size: 1.6rem;

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-// ← تأثير الهالة يلي بتتبع الماوس، معطّل تلقائياً على الشاشات اللمسية
 export default function CursorGlow() {
   const cgRef = useRef(null);
 

@@ -72,7 +72,6 @@ const ACT_LABELS = [
     { ar: "الآن", en: "Now" },
 ];
 
-/* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
     const cols = [];
     for (let col = 0; col < 12; col++) {
@@ -87,7 +86,6 @@ function generateActivityGrid() {
     return cols;
 }
 
-/* ══ LOADING SKELETON ══ */
 function ProfileSkeleton() {
     return (
         <div className="profile-hero" style={{ minHeight: 320 }}>
@@ -105,11 +103,9 @@ function ProfileSkeleton() {
     );
 }
 
-/* ══ ERROR STATE ══ */
 function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
-            <div className="empty-state-ico">⚠️</div>
             <div className="empty-state-t">{t("auth.profile.error.loadFailed")}</div>
             <div className="empty-state-s">{message}</div>
             <button onClick={onRetry} className="edit-btn" style={{ marginTop: 16, display: "inline-flex" }}>
@@ -119,7 +115,6 @@ function ProfileError({ message, onRetry, t }) {
     );
 }
 
-/* ══ INLINE EDIT FIELD ══ */
 function EditField({ label, value, onChange, type = "text", placeholder = "" }) {
     return (
         <div className="field-group">
@@ -145,7 +140,6 @@ function EditField({ label, value, onChange, type = "text", placeholder = "" }) 
     );
 }
 
-/* ══ CHANGE PASSWORD MODAL ══ */
 function ChangePasswordModal({ onClose, t }) {
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -246,7 +240,6 @@ function ChangePasswordModal({ onClose, t }) {
     );
 }
 
-/* ══ ACTIVITY TAB CONTENT ══ */
 function ActivityTab({ grid, isAr, t }) {
     return (
         <div>
@@ -386,7 +379,6 @@ function ProfileSidebar({ isAr }) {
     );
 }
 
-/* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
     const { t, i18n, ready } = useTranslation();
     const lang = i18n.language || "ar";
@@ -402,15 +394,12 @@ export default function StudentProfile() {
     const [activeTab, setActiveTab] = useState("research");
     const cursorRef = useRef(null);
 
-    // ══ API STATE ══
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Guard يمنع الاستدعاء المزدوج في React StrictMode
     const hasFetched = useRef(false);
 
-    // ══ EDIT STATE ══
     const [isEditing, setIsEditing] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const [saveError, setSaveError] = useState("");
@@ -428,10 +417,8 @@ export default function StudentProfile() {
     const [avatarFile, setAvatarFile] = useState(null);
     const avatarInputRef = useRef(null);
 
-    // ══ CHANGE PASSWORD MODAL STATE ══
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-    // ══ FETCH PROFILE ══
     const fetchProfile = async () => {
         setLoading(true);
         setError(null);
@@ -451,7 +438,6 @@ export default function StudentProfile() {
         fetchProfile();
     }, []);
 
-    // ══ عند فتح وضع التعديل ══
     const handleStartEdit = () => {
         setEditForm({
             full_name: profile.full_name || "",
@@ -469,7 +455,6 @@ export default function StudentProfile() {
         setIsEditing(true);
     };
 
-    // ══ إلغاء التعديل ══
     const handleCancelEdit = () => {
         setIsEditing(false);
         setSaveError("");
@@ -478,7 +463,6 @@ export default function StudentProfile() {
         setAvatarFile(null);
     };
 
-    // ══ حفظ التعديلات ══
     const handleSave = async () => {
         setSaveLoading(true);
         setSaveError("");
@@ -535,7 +519,6 @@ export default function StudentProfile() {
         }
     };
 
-    // ══ معالجة اختيار الصورة ══
     const handleAvatarChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -554,7 +537,6 @@ export default function StudentProfile() {
         setSaveError("");
     };
 
-    // ══ SIDE EFFECTS ══
     useEffect(() => {
         document.documentElement.setAttribute("data-lang", lang);
         document.documentElement.setAttribute("lang", lang);
@@ -592,7 +574,6 @@ export default function StudentProfile() {
         };
     }, []);
 
-    // ══ لسا الترجمة ما جهزت → إظهار سكيلتون بدل أي محاولة قراءة مفاتيح ══
     if (!ready) {
         return <ProfileSkeleton />;
     }
@@ -603,7 +584,6 @@ export default function StudentProfile() {
     const menuT = t("menu", { returnObjects: true }) || {};
     const footer = t("footer", { returnObjects: true }) || {};
 
-    // ══ MAP API → UI ══
     const student = profile ? {
         nameAr: profile.full_name || "",
         nameEn: profile.full_name || "",
@@ -638,7 +618,6 @@ export default function StudentProfile() {
 
             {!loading && !error && profile && (
                 <>
-                    {/* ══ PROFILE HERO ══ */}
                     <div className="profile-hero">
                         <div className="hero-glow-1" />
                         <div className="hero-glow-2" />
@@ -650,7 +629,6 @@ export default function StudentProfile() {
                             </div>
 
                             <div className="profile-card-top">
-                                {/* Avatar */}
                                 <div
                                     className="avatar-wrap"
                                     style={{ cursor: isEditing ? "pointer" : "default" }}
@@ -683,10 +661,8 @@ export default function StudentProfile() {
                                     />
                                 </div>
 
-                                {/* Info */}
                                 <div className="profile-info">
                                     {isEditing ? (
-                                        /* ══ وضع التعديل ══ */
                                         <div style={{ minWidth: 280 }}>
                                             <EditField
                                                 label={tProfile?.field?.fullName}
@@ -707,7 +683,6 @@ export default function StudentProfile() {
                                                 placeholder={tProfile?.placeholder?.orcid}
                                             />
 
-                                            {/* الدور */}
                                             <div className="field-group">
                                                 <label className="field-label">{tProfile?.field?.role}</label>
                                                 <div className="pill-row">
@@ -735,7 +710,6 @@ export default function StudentProfile() {
                                                 placeholder={tProfile?.placeholder?.bio}
                                             />
 
-                                            {/* اللغة المفضلة */}
                                             <div className="field-group">
                                                 <label className="field-label">{tProfile?.field?.preferredLanguage}</label>
                                                 <div className="pill-row">
@@ -751,11 +725,9 @@ export default function StudentProfile() {
                                                 </div>
                                             </div>
 
-                                            {/* رسائل الخطأ / النجاح */}
                                             {saveError && <div className="form-msg error">{saveError}</div>}
                                             {saveSuccess && <div className="form-msg success">{tProfile?.action?.saved}</div>}
 
-                                            {/* أزرار الحفظ والإلغاء */}
                                             <div style={{ display: "flex", gap: 10 }}>
                                                 <button onClick={handleSave} disabled={saveLoading} className="edit-btn primary">
                                                     {saveLoading ? tProfile?.action?.saving : tProfile?.action?.saveChanges}
@@ -766,7 +738,6 @@ export default function StudentProfile() {
                                             </div>
                                         </div>
                                     ) : (
-                                        /* ══ الوضع الطبيعي (عرض البيانات) ══ */
                                         <div>
                                             <div className="profile-role-tag">
                                                 <span>●</span>
@@ -787,7 +758,6 @@ export default function StudentProfile() {
                                     )}
                                 </div>
 
-                                {/* Edit actions */}
                                 {!isEditing && (
                                     <div className="hero-actions">
                                         <button onClick={handleStartEdit} className="edit-btn">
@@ -801,7 +771,6 @@ export default function StudentProfile() {
                             </div>
                         </div>
 
-                        {/* ══ STATS STRIP ══ */}
                         <div className="stats-strip">
                             {MOCK_STATS.map((s, i) => (
                                 <div key={i} className="stat-cell">
@@ -813,7 +782,6 @@ export default function StudentProfile() {
                         </div>
                     </div>
 
-                    {/* ══ TABS ══ */}
                     <div className="profile-tabs">
                         <button className={`ptab ${activeTab === "research" ? "on" : ""}`} onClick={() => setActiveTab("research")}>
                             {isAr ? "الأبحاث" : "Research"}
@@ -826,7 +794,6 @@ export default function StudentProfile() {
                         </button>
                     </div>
 
-                    {/* ══ PAGE BODY ══ */}
                     <div className="page-body">
                         <div>
                             {activeTab === "research" && <ResearchTab isAr={isAr} t={t} />}

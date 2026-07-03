@@ -29,7 +29,6 @@
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
 
-/* الديلاي بيصير بس أثناء الفتح، مو أثناء التسكير */
 .aspu-menu.open .aspu-menu-top.visible {
   transition-delay: 0.3s;
 }
@@ -263,7 +262,6 @@
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
 
-/* الديلاي بيصير بس أثناء الفتح، مو أثناء التسكير */
 .aspu-menu.open .aspu-menu-foot.visible {
   transition-delay: 0.55s;
 }
@@ -331,9 +329,6 @@
   background: rgba(196, 165, 90, 0.1);
 }
 
-/* ════════════════════════════════════════════════
-   NAVBAR
-════════════════════════════════════════════════ */
 .aspu-nav {
   position: fixed;
   inset: 0 0 auto;
@@ -424,9 +419,6 @@
 .aspu-nav-menu-btn.is-open .l2 { opacity: 0; transform: scaleX(0); }
 .aspu-nav-menu-btn.is-open .l3 { transform: translateY(-6px) rotate(-45deg); }
 
-/* ════════════════════════════════════════════════
-   RESPONSIVE — Navbar / Fullscreen Menu only
-════════════════════════════════════════════════ */
 @media (max-width: 700px) {
   .aspu-menu-links { grid-template-columns: 1fr; }
   .aspu-menu-links .aspu-ml-wrap:nth-child(odd)  .aspu-menu-link { border-inline-end: none; padding-inline-end: 0; }

@@ -1,4 +1,3 @@
-// Input with icon on the left (visual left = inner-end in RTL)
 export default function InputBox({ icon, label, type = "text", value, onChange, placeholder, autoComplete, extra }) {
   return (
     <div className="auth-field">

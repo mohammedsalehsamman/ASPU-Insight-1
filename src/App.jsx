@@ -13,6 +13,7 @@ import ResetPasswordPage from './pages/Auth/Auth/ResetPasswordPage';
 import Submit from './pages/Submit';
 import EditorAssistant from './pages/A-editor/EditorAssistant';
 import Editor from './pages/Editor/Editor';
+import EditPaper from './pages/EditPaper';
 function App() {
   return (
     <ThemeProvider>
@@ -26,6 +27,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/research_review" element={<ResearchReview />} />
             <Route path="/papers/:id" element={<PaperDetail />} />
+            <Route path="/papers/:id/edit" element={<EditPaper />} />
+
             <Route
               path="/Profile"
               element={

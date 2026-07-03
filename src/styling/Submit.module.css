@@ -1,12 +1,3 @@
-/* ══ TOKENS — imported from global :root / [data-theme] ══
-   هاد الملف بيفترض إنه عندك في index.css أو global.css:
-   --bg, --bg2, --surf, --surf2, --bd, --bd2,
-   --tx, --tx2, --tx3, --ac, --ac2,
-   --glow, --inp-bg, --inp-bd
-   بنفس القيم اللي بملف الـ HTML
-   ══════════════════════════════════════════════════════ */
-
-/* ══ PAGE CONTAINER ══ */
 .pageContainer {
   min-height: 100vh;
   background: var(--bg);
@@ -15,7 +6,6 @@
   line-height: 1.75;
 }
 
-/* ══ HERO HEADER ══ */
 .heroHeader {
   position: relative;
   padding: 108px clamp(16px, 5%, 80px) 48px;
@@ -70,7 +60,6 @@
   margin-bottom: 14px;
 }
 
-/* ══ FORM CARD ══ */
 .formCard {
   max-width: 780px;
   margin: 36px auto 80px;
@@ -80,7 +69,6 @@
   gap: 20px;
 }
 
-/* النسخة العريضة: تحتوي الشريط الجانبي + الفورم */
 .formCardWide {
   max-width: 1300px;
 }
@@ -105,7 +93,6 @@
   gap: 20px;
 }
 
-/* ══ PAGE HEADER TITLE ══ */
 .rr{
   padding-top: 100px;
 }
@@ -128,7 +115,6 @@
   margin-bottom: 8px;
 }
 
-/* ══ ERROR ALERT ══ */
 .errorAlert {
   background: rgba(192, 84, 42, 0.08);
   border: 1px solid rgba(192, 84, 42, 0.35);
@@ -140,7 +126,6 @@
   line-height: 1.6;
 }
 
-/* ══ MAIN FORM ══ */
 .mainForm {
   display: flex;
   flex-direction: column;
@@ -148,7 +133,6 @@
   counter-reset: section-counter;
 }
 
-/* ══ FORM SECTION (accordion card) ══ */
 .section {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -156,7 +140,6 @@
   overflow: hidden;
 }
 
-/* Section title — هي الزر اللي بيفتح/يسكر القسم */
 .sectionTitle {
   display: flex;
   align-items: center;
@@ -228,7 +211,6 @@ margin-top: 50px;
   transform: rotate(180deg);
 }
 
-/* ══ SECTION BODY ══ */
 .section > div {
   padding: 24px;
   display: flex;
@@ -236,7 +218,6 @@ margin-top: 50px;
   gap: 18px;
 }
 
-/* ══ INPUT GROUP ══ */
 .inputGroup {
   display: flex;
   flex-direction: column;
@@ -295,7 +276,6 @@ margin-top: 50px;
   line-height: 1.5;
 }
 
-/* Char counter */
 .charCount {
   font-size: 11px;
   color: var(--tx3);
@@ -304,7 +284,6 @@ margin-top: 50px;
   display: block;
 }
 
-/* ══ KEYWORDS SECTION ══ */
 .keywordWrapper {
   display: flex;
   gap: 8px;
@@ -356,7 +335,6 @@ margin-top: 50px;
   color: var(--ac);
 }
 
-/* Tags container */
 .tagsContainer {
   display: flex;
   flex-wrap: wrap;
@@ -395,7 +373,6 @@ margin-top: 50px;
   opacity: 1;
 }
 
-/* ══ FILE UPLOAD ZONE ══ */
 .fileUploadZone {
   position: relative;
 }
@@ -451,7 +428,6 @@ margin-top: 50px;
   word-break: break-all;
 }
 
-/* ══ SUMMARY BOX ══ */
 .summaryBox {
   background: var(--surf2);
   border: 1px solid var(--bd);
@@ -506,7 +482,6 @@ margin-top: 50px;
   margin: 4px 0;
 }
 
-/* ══ ACTION ROW ══ */
 .actionRow {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -542,7 +517,6 @@ margin-top: 50px;
   flex-wrap: wrap;
 }
 
-/* Primary submit button */
 .submitBtn {
   display: inline-flex;
   align-items: center;
@@ -582,7 +556,6 @@ margin-top: 50px;
   transform: translateX(-4px);
 }
 
-/* Reset button */
 .resetBtn {
   display: inline-flex;
   align-items: center;
@@ -609,7 +582,6 @@ margin-top: 50px;
   pointer-events: none;
 }
 
-/* ══ SIDEBAR ══ */
 .sidebarCol {
   min-width: 0;
 }
@@ -642,7 +614,6 @@ margin-top: 50px;
   background: var(--bd);
 }
 
-/* بطاقات نوع الناشر */
 .roleGrid {
   display: flex;
   flex-direction: column;
@@ -707,7 +678,6 @@ margin-top: 50px;
   margin-top: 1px;
 }
 
-/* نوع البحث */
 .rtypeGrid {
   display: flex;
   flex-direction: column;
@@ -782,7 +752,6 @@ margin-top: 50px;
   background: rgba(29, 158, 117, 0.08);
 }
 
-/* التخصص */
 .discGrid {
   display: flex;
   flex-direction: column;
@@ -822,7 +791,6 @@ margin-top: 50px;
   color: var(--tx3);
 }
 
-/* خطوات النشر */
 .stepsList {
   display: flex;
   flex-direction: column;
@@ -897,7 +865,6 @@ margin-top: 50px;
   margin-top: 1px;
 }
 
-/* زر الشريط الجانبي على الموبايل */
 .filterToggle {
   display: none;
   width: 100%;
@@ -957,7 +924,6 @@ margin-top: 50px;
   }
 }
 
-/* ══ SUCCESS OVERLAY ══ */
 .overlay {
   position: fixed;
   inset: 0;
@@ -1052,12 +1018,10 @@ margin-top: 50px;
   box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
 }
 
-/* ══ SCROLLBAR ══ */
 .pageContainer ::-webkit-scrollbar { width: 5px; }
 .pageContainer ::-webkit-scrollbar-track { background: transparent; }
 .pageContainer ::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--bd2); }
 
-/* ══ RESPONSIVE ══ */
 @media (max-width: 600px) {
   .formCard {
     padding: 0 16px;

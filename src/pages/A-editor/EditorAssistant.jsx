@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { getPapers, submitAssistantReport, getAssistantReview } from "../../api/research";
-import { EditorAssistantDict, createLocalT } from '../../i18n'; // ← كل الترجمات صارت هون
+import { EditorAssistantDict, createLocalT } from '../../i18n'; 
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Logo from '../../components/Logo';
@@ -49,7 +49,6 @@ export default function EditorAssistant() {
     root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   }, [theme, lang]);
 
-  /* ── Fetch papers from API ── */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -72,7 +71,6 @@ export default function EditorAssistant() {
     return () => { cancelled = true; };
   }, []);
 
-  /* ── Escape key ── */
   useEffect(() => {
     const handler = e => {
       if (e.key === 'Escape') {
@@ -84,7 +82,6 @@ export default function EditorAssistant() {
     return () => document.removeEventListener('keydown', handler);
   }, [menuOpen, detailOpen]);
 
-  /* ── Detail panel ── */
   function openDetail(id) {
     const p = papers.find(x => x.id === id);
     if (!p) return;
@@ -97,7 +94,6 @@ export default function EditorAssistant() {
     setReviewError(null);
     document.body.style.overflow = 'hidden';
 
-    // ← إذا البحث أصلاً فيه تقرير محفوظ (رجع من getPapers)، منجهزه فوراً
     if (hasAssistantReport(p) && p.assistant_editor_report) {
       setReviewData([{ id: `local-${p.id}`, report: p.assistant_editor_report }]);
     }
@@ -114,7 +110,6 @@ export default function EditorAssistant() {
     document.body.style.overflow = '';
   }
 
-  /* ── جلب التقرير المخزّن عند الطلب (GET assistant-review) ── */
   async function loadReview() {
     if (!activePaper) return;
     setLoadingReview(true);
@@ -138,7 +133,6 @@ export default function EditorAssistant() {
     }
   }
 
-  /* ── Save note ── */
   async function saveNote() {
     if (!activePaper || !noteText.trim()) return;
 
@@ -167,7 +161,6 @@ export default function EditorAssistant() {
     }
   }
 
-  /* ── Filtering ── */
   const filtered = papers.filter(p => {
     if (activeFilter === 'noted' && !hasAssistantReport(p)) return false;
     if (activeFilter === 'pending' && hasAssistantReport(p)) return false;
@@ -184,12 +177,10 @@ export default function EditorAssistant() {
   const statPending = papers.filter(p => !hasAssistantReport(p)).length;
   const statNoted = papers.filter(p => hasAssistantReport(p)).length;
 
-  const displayName = currentUser?.full_name || (lang === 'ar' ? 'بدون اسم' : 'Editor');
+  const displayName = currentUser?.full_name || (lang === 'ar' ? 'مساعد المحرر' : 'Assistant Editor');
 
-  // ← الدالة نفسها صارت سطر واحد بس؛ القاموس كامل صار بملف الترجمة i18n.js
   const t = createLocalT(EditorAssistantDict, lang);
 
-  /* ══════════ RENDER ══════════ */
   return (
     <div className={`ea-root theme-${theme} lang-${lang}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <CursorGlow />
@@ -227,7 +218,6 @@ export default function EditorAssistant() {
 
       <Footer isAr={lang === 'ar'} footer={getFooterContent(lang)} Logo={Logo} />
 
-      {/* ══ DETAIL PANEL ══ */}
       <DetailPanelShell open={detailOpen} onClose={closeDetail} activePaper={activePaper} lang={lang} t={t}>
         {activePaper && (
           <>
