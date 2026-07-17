@@ -1,0 +1,267 @@
+/* ══════════════════════════════════════
+   ADMIN LAYOUT — Sidebar + Main
+   يستخدم توكنز index.css (--bg/--surf/--bd/--ac/--ac2/--tx)
+══════════════════════════════════════ */
+
+.admin-root {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+[dir="rtl"] .admin-root { direction: rtl; }
+[dir="ltr"] .admin-root { direction: ltr; }
+
+/* ── Sidebar ──
+   position: fixed بدل sticky-in-flex — أضمن وأبسط، ما بينكسر بسبب overflow/transform
+   على أي عنصر أب (مشكلة شائعة بالـ sticky)، ومستقل تماماً عن تخطيط المحتوى الرئيسي. */
+.admin-sidebar {
+  width: 264px;
+  background: var(--surf);
+  border-inline-end: 1px solid var(--bd);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset-inline-start: 0;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 40;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 20px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.admin-brand-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--tx);
+}
+
+.admin-brand-sub {
+  font-size: 11.5px;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  flex: 1;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: var(--tx2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .2s, color .2s;
+}
+
+.admin-nav-link:hover {
+  background: var(--bg2);
+  color: var(--tx);
+}
+
+.admin-nav-link.active {
+  background: var(--glow);
+  color: var(--ac);
+  font-weight: 700;
+}
+
+.admin-sidebar-foot {
+  padding: 16px;
+  border-top: 1px solid var(--bd);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.admin-toggle-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--bd2);
+  margin: 0 2px;
+}
+
+.admin-tpill-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--tx2);
+  padding: 6px 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, color .2s;
+}
+
+.admin-tpill-btn.on {
+  background: var(--surf);
+  color: var(--ac);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ac);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.admin-user-info { min-width: 0; }
+
+.admin-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-email {
+  font-size: 11.5px;
+  color: var(--tx2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--bd2);
+  background: transparent;
+  color: #EF4444;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.admin-logout-btn:hover { background: rgba(239, 68, 68, .08); }
+
+/* ── Mobile topbar ── */
+.admin-mobile-bar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--bd);
+}
+
+.admin-burger {
+  border: 1px solid var(--bd2);
+  background: var(--surf);
+  color: var(--tx);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.admin-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.admin-sidebar-overlay {
+  display: none;
+}
+
+/* ── Main ──
+   الـ sidebar بقى fixed خارج تدفّق المستند، فلازم نعوّض عرضه بـ margin
+   على الجهة يلي هو فيها (inline-start) بدل الاعتماد على flex. */
+.admin-main {
+  min-width: 0;
+  margin-inline-start: 264px;
+}
+
+.admin-main-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px 60px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .admin-mobile-bar { display: flex; }
+
+  .admin-main { margin-inline-start: 0; }
+
+  .admin-sidebar {
+    transform: translateX(-105%);
+    transition: transform .3s ease;
+  }
+  [dir="rtl"] .admin-sidebar { transform: translateX(105%); }
+
+  .admin-sidebar.open { transform: translateX(0); }
+
+  .admin-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 39;
+  }
+
+  .admin-main-inner { padding: 20px 16px 48px; }
+}
