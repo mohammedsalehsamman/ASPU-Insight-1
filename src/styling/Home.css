@@ -165,14 +165,17 @@ body::after{
 .menu-login-btn{border:1.5px solid #C4A55A;color:#C4A55A;padding:8px 18px;border-radius:9px;background:transparent;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.6px;text-transform:uppercase;font-family:inherit;transition:background .22s}
 .menu-login-btn:hover{background:rgba(196,165,90,.1)}
 
-/* ══ NAVBAR ══ */
-nav{
+/* ══ NAVBAR ══
+   ملاحظة: كانت هاي القاعدة مكتوبة بمحدد عنصر خام nav{} بدون كلاس، وهيك كانت
+   عم تنطبق على أي <nav> بالصفحة كلها (حتى بصفحات تانية) بمجرد ما هالملف يتحمّل
+   بالـ SPA — صار محدد بـ .aspu-nav متل باقي نسخ هالقاعدة بالمشروع. */
+.aspu-nav{
   position:fixed;inset:0 0 auto;z-index:200;height:68px;
   display:flex;align-items:center;
   padding:0 clamp(16px,5%,80px);
   transition:all var(--tr);
 }
-nav.scrolled{background:var(--nav-bg);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid var(--bd)}
+.aspu-nav.scrolled{background:var(--nav-bg);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid var(--bd)}
 .nav-logo{display:flex;align-items:center;gap:11px;text-decoration:none}
 .logo-mark{width:38px;height:38px;flex-shrink:0;display:block}
 .logo-n{font-size:14px;font-weight:700;color:var(--tx);font-family:'Playfair Display',serif}
@@ -566,7 +569,7 @@ nav.scrolled{background:var(--nav-bg);backdrop-filter:blur(20px) saturate(1.4);b
 @keyframes mscroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 
 /* ══ FOOTER ══ */
-footer{background:var(--surf);border-top:1px solid var(--bd);padding:52px clamp(16px,5%,80px) 28px}
+.aspu-footer{background:var(--surf);border-top:1px solid var(--bd);padding:52px clamp(16px,5%,80px) 28px}
 .ft-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
 .ft-brand p{font-size:13px;color:var(--tx3);line-height:1.85;margin-top:12px;max-width:250px}
 .ft-col h5{font-size:11px;font-weight:700;color:var(--ac);margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase}

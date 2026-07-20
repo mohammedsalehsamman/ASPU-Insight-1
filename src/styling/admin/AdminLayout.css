@@ -14,20 +14,28 @@
 [dir="ltr"] .admin-root { direction: ltr; }
 
 /* ── Sidebar ──
-   position: fixed بدل sticky-in-flex — أضمن وأبسط، ما بينكسر بسبب overflow/transform
-   على أي عنصر أب (مشكلة شائعة بالـ sticky)، ومستقل تماماً عن تخطيط المحتوى الرئيسي. */
+   position: fixed بدل sticky-in-flex. مستخدمين right/left صريحة بدل
+   inset-inline-start عشان نتجنب أي التباس بحساب المتصفح للاتجاه المنطقي. */
 .admin-sidebar {
   width: 264px;
   background: var(--surf);
-  border-inline-end: 1px solid var(--bd);
+  border-left: 1px solid var(--bd);
   display: flex;
   flex-direction: column;
   position: fixed;
-  inset-inline-start: 0;
+  right: 0;
+  left: auto;
   top: 0;
   height: 100vh;
   overflow-y: auto;
   z-index: 40;
+}
+
+[dir="ltr"] .admin-sidebar {
+  right: auto;
+  left: 0;
+  border-left: none;
+  border-right: 1px solid var(--bd);
 }
 
 .admin-sidebar-brand {
@@ -51,8 +59,10 @@
 }
 
 .admin-nav {
+  position: static;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 4px;
   padding: 16px 12px;
   flex: 1;
@@ -229,10 +239,16 @@
 
 /* ── Main ──
    الـ sidebar بقى fixed خارج تدفّق المستند، فلازم نعوّض عرضه بـ margin
-   على الجهة يلي هو فيها (inline-start) بدل الاعتماد على flex. */
+   صريح على نفس جهة الـ sidebar (يمين بالـ RTL) بدل الاعتماد على flex. */
 .admin-main {
   min-width: 0;
-  margin-inline-start: 264px;
+  margin-right: 264px;
+  margin-left: 0;
+}
+
+[dir="ltr"] .admin-main {
+  margin-right: 0;
+  margin-left: 264px;
 }
 
 .admin-main-inner {
@@ -245,7 +261,7 @@
 @media (max-width: 900px) {
   .admin-mobile-bar { display: flex; }
 
-  .admin-main { margin-inline-start: 0; }
+  .admin-main { margin-right: 0; margin-left: 0; }
 
   .admin-sidebar {
     transform: translateX(-105%);
