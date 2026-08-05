@@ -1,23 +1,7 @@
-/* ════════════════════════════════════════════════
-   ASPU INSIGHT — COMPLETE CSS  (fixed scroll-hijack)
-   Light mode default · Dark mode via [data-theme="dark"]
-   RTL Arabic default · LTR English via dir="ltr"
-════════════════════════════════════════════════ */
-
-/* ── GOOGLE FONTS ──
-   Add to your index.html <head>:
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-*/
-
-/* ════════════════════════════════════════════════
-   CSS DESIGN TOKENS
-════════════════════════════════════════════════ */
 :root {
   --tr: 0.38s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* LIGHT (DEFAULT) */
 [data-theme="light"],
 .aspu-root:not([data-theme="dark"]) {
   --bg:       #FAF8F4;
@@ -37,7 +21,6 @@
   --serif:    'Playfair Display', Georgia, serif;
 }
 
-/* DARK */
 [data-theme="dark"] {
   --bg:       #0A0C0F;
   --bg2:      #0E1115;
@@ -56,9 +39,6 @@
   --serif:    'Playfair Display', Georgia, serif;
 }
 
-/* ════════════════════════════════════════════════
-   RESET & BASE
-════════════════════════════════════════════════ */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -78,7 +58,6 @@ html { scroll-behavior: smooth; }
   min-height: 100vh;
 }
 
-/* Noise texture overlay */
 .aspu-noise {
   position: fixed;
   inset: 0;
@@ -87,10 +66,6 @@ html { scroll-behavior: smooth; }
   opacity: 0.018;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-
-/* ════════════════════════════════════════════════
-   CURSOR GLOW
-════════════════════════════════════════════════ */
 .aspu-cursor-glow {
   position: fixed;
   pointer-events: none;
@@ -107,9 +82,6 @@ html { scroll-behavior: smooth; }
   );
 }
 
-/* ════════════════════════════════════════════════
-   FULLSCREEN MENU
-════════════════════════════════════════════════ */
 .aspu-menu {
   position: fixed;
   inset: 0;
@@ -432,9 +404,6 @@ html { scroll-behavior: smooth; }
   background: rgba(196, 165, 90, 0.1);
 }
 
-/* ════════════════════════════════════════════════
-   NAVBAR
-════════════════════════════════════════════════ */
 .aspu-nav {
   position: fixed;
   inset: 0 0 auto;
@@ -525,9 +494,6 @@ html { scroll-behavior: smooth; }
 .aspu-nav-menu-btn.is-open .l2 { opacity: 0; transform: scaleX(0); }
 .aspu-nav-menu-btn.is-open .l3 { transform: translateY(-6px) rotate(-45deg); }
 
-/* ════════════════════════════════════════════════
-   HERO
-════════════════════════════════════════════════ */
 .aspu-hero {
   min-height: 100svh;
   display: flex;
@@ -757,9 +723,6 @@ html { scroll-behavior: smooth; }
   animation: scrollDown 2s ease infinite;
 }
 
-/* ════════════════════════════════════════════════
-   STATS BAR
-════════════════════════════════════════════════ */
 .aspu-stats-bar {
   background: var(--surf);
   border-top: 1px solid var(--bd);
@@ -798,9 +761,6 @@ html { scroll-behavior: smooth; }
   color: var(--tx3);
 }
 
-/* ════════════════════════════════════════════════
-   SEARCH ZONE
-════════════════════════════════════════════════ */
 .aspu-search-zone {
   padding: 56px clamp(16px, 5%, 80px);
   background: var(--bg2);
@@ -902,9 +862,6 @@ html { scroll-behavior: smooth; }
   background: var(--glow);
 }
 
-/* ════════════════════════════════════════════════
-   CINEMATIC TEXT SECTIONS
-════════════════════════════════════════════════ */
 .aspu-herotext-wrap { background: var(--bg); }
 
 .aspu-ht-section {
@@ -1046,20 +1003,9 @@ html { scroll-behavior: smooth; }
   transform: translateX(0);
 }
 
-/* ════════════════════════════════════════════════
-   SCROLL HIJACK  — FIXED
-   المبدأ:
-   • wrapper يأخذ height = 100vh × N
-     (أول vh هو الـ sticky نفسها + (N-1)×vh مسافة سكرول)
-   • sticky top:0 height:100svh — تبقى ثابتة طول الـ scroll distance
-   • strip direction:ltr دايماً — نتجنب عكس الترتيب في RTL
-   • translateX دايماً سالب (يسار) بغض النظر عن الـ dir
-   • gap على strip = 0 — أي gap يكسر حسابات الـ offset
-════════════════════════════════════════════════ */
 .aspu-sh-wrapper {
   position: relative;
   background: var(--bg2);
-  /* لا overflow:hidden هنا — يقتل sticky */
 }
 
 .aspu-sh-sticky {
@@ -1149,12 +1095,10 @@ html { scroll-behavior: smooth; }
   transition: width 0.08s linear;
 }
 
-/* Track — يخفي ما يطلع عن العرض */
 .aspu-sh-track {
   flex: 1;
   overflow: hidden;
   position: relative;
-  /* fade الحواف */
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0%,
@@ -1171,32 +1115,23 @@ html { scroll-behavior: smooth; }
   );
 }
 
-/*
-  Strip — دايماً LTR حتى لو الصفحة RTL
-  بدون هاد، flex في RTL يعكس ترتيب الكروت
-  وكمان translateX يروح بالاتجاه الغلط
-*/
 .aspu-sh-strip {
   display: flex;
-  direction: ltr;           /* ← مفتاح الإصلاح */
-  gap: 0;                   /* ← ضروري: أي gap يكسر حسابات الـ offset */
+  direction: ltr;           
+  gap: 0;                   
   height: 100%;
-  will-change: transform;   /* hint للـ browser للـ GPU compositing */
+  will-change: transform;   
 }
 
-/* كل slide يأخذ عرض الـ track بالضبط (يُحسب بـ JS) */
 .aspu-sh-slide {
   flex-shrink: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
-  /* الـ padding هون بدل ما يكون على الـ strip */
   padding: 14px clamp(16px, 5%, 80px);
-  /* dir للمحتوى الداخلي يرجع لاتجاه الصفحة */
   direction: inherit;
 }
 
-/* نعيد الـ dir للمحتوى الداخلي عشان العربي/الإنجليزي يشتغل صح */
 [dir="rtl"] .aspu-sh-slide { direction: rtl; }
 [dir="ltr"] .aspu-sh-slide { direction: ltr; }
 
@@ -1213,9 +1148,6 @@ html { scroll-behavior: smooth; }
   color: var(--tx3);
 }
 
-/* ════════════════════════════════════════════════
-   RESEARCH CARD
-════════════════════════════════════════════════ */
 .aspu-r-card {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -1223,13 +1155,11 @@ html { scroll-behavior: smooth; }
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  /* يملأ الـ slide كاملاً */
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
   transition: border-color 0.25s;
-  /* يسمح بالسكرول الداخلي لو كان المحتوى أكبر من الـ slide */
   overflow-y: auto;
 }
 
@@ -1390,9 +1320,6 @@ html { scroll-behavior: smooth; }
 
 .aspu-r-stars { color: var(--ac); font-size: 12px; letter-spacing: -1px; }
 
-/* ════════════════════════════════════════════════
-   GALLERY
-════════════════════════════════════════════════ */
 .aspu-gallery-sec {
   padding: 80px clamp(16px, 5%, 80px);
   background: var(--bg);
@@ -1541,9 +1468,6 @@ html { scroll-behavior: smooth; }
   letter-spacing: 0.8px;
 }
 
-/* ════════════════════════════════════════════════
-   FEATURES
-════════════════════════════════════════════════ */
 .aspu-feat-sec {
   padding: 80px clamp(16px, 5%, 80px);
   background: var(--bg2);
@@ -1647,9 +1571,6 @@ html { scroll-behavior: smooth; }
   letter-spacing: 0.5px;
 }
 
-/* ════════════════════════════════════════════════
-   FOOTER
-════════════════════════════════════════════════ */
 .aspu-footer {
   background: var(--surf);
   border-top: 1px solid var(--bd);
@@ -1714,16 +1635,10 @@ html { scroll-behavior: smooth; }
   color: var(--tx3);
 }
 
-/* ════════════════════════════════════════════════
-   SCROLLBAR
-════════════════════════════════════════════════ */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--bd2); }
 
-/* ════════════════════════════════════════════════
-   KEYFRAMES
-════════════════════════════════════════════════ */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: none; }
@@ -1736,9 +1651,6 @@ html { scroll-behavior: smooth; }
   100% { transform: scaleY(0); transform-origin: bottom; }
 }
 
-/* ════════════════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .aspu-ft-grid { grid-template-columns: 1fr 1fr; }
 }

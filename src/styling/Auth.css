@@ -1,14 +1,11 @@
-/* ── ASPU Insight — Auth CSS ─────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&family=Bebas+Neue&display=swap');
 
-/* ── Variables ───────────────────────────────────────────────────────────── */
 :root {
   --ac:     #C4A55A;
   --ac2:    #5A8FA0;
   --g:      #22C55E;
   --tr:     .35s cubic-bezier(.4,0,.2,1);
 
-  /* Light theme — matches screenshots */
   --bg:     #F7F3EC;
   --surf:   #FFFFFF;
   --surf2:  #F0EBE0;
@@ -24,7 +21,6 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Root ────────────────────────────────────────────────────────────────── */
 .auth-root {
   min-height: 100vh;
   background: var(--bg);
@@ -45,7 +41,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ── Top Bar ─────────────────────────────────────────────────────────────── */
 .auth-topbar {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -112,18 +107,16 @@
   box-shadow: 0 1px 4px rgba(0,0,0,.12);
 }
 
-/* ── Page wrapper ────────────────────────────────────────────────────────── */
 .auth-page {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 78px clamp(16px, 4%, 40px) 40px;
+  padding: calc(58px + 24px) clamp(16px, 4%, 40px) 40px;
   position: relative;
   z-index: 1;
 }
 
-/* ── Container ───────────────────────────────────────────────────────────── */
 .auth-container {
   width: 100%;
   max-width: 940px;
@@ -140,7 +133,6 @@
   .auth-accent    { display: none; }
 }
 
-/* ── Accent Panel ────────────────────────────────────────────────────────── */
 .auth-accent {
   background: var(--ac);
   padding: 52px 40px;
@@ -244,21 +236,17 @@
   margin-top: 2px;
 }
 
-/* ── Form Panel ──────────────────────────────────────────────────────────── */
 .auth-form-panel {
   background: var(--surf);
   padding: 44px 40px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow-y: auto;
-  max-height: 96vh;
 }
 
 .auth-form-panel::-webkit-scrollbar { width: 3px; }
 .auth-form-panel::-webkit-scrollbar-thumb { background: var(--bd2); border-radius: 2px; }
 
-/* Back link */
 .auth-back {
   display: inline-flex;
   align-items: center;
@@ -278,7 +266,6 @@
 
 .auth-back:hover { color: var(--ac); }
 
-/* Tabs */
 .auth-tabs {
   display: flex;
   border-bottom: 1px solid var(--bd);
@@ -305,7 +292,6 @@
 .auth-tab.active { color: var(--ac); border-bottom-color: var(--ac); }
 .auth-tab:hover:not(.active) { color: var(--tx); }
 
-/* Form heading */
 .auth-fh { margin-bottom: 24px; }
 
 .auth-ftitle {
@@ -323,7 +309,6 @@
   line-height: 1.6;
 }
 
-/* Fields */
 .auth-fields {
   display: flex;
   flex-direction: column;
@@ -448,7 +433,6 @@
 
 .auth-textarea::placeholder { color: var(--tx3); }
 
-/* Two-column row */
 .auth-r2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -457,7 +441,6 @@
 
 @media (max-width: 400px) { .auth-r2 { grid-template-columns: 1fr; } }
 
-/* Forgot password */
 .auth-forgot {
   font-size: 11px;
   color: var(--tx3);
@@ -473,7 +456,6 @@
 
 .auth-forgot:hover { color: var(--ac); }
 
-/* Submit btn */
 .auth-btn {
   width: 100%;
   padding: 13px 20px;
@@ -520,7 +502,6 @@
   filter: none;
 }
 
-/* Switch */
 .auth-switch {
   text-align: center;
   margin-top: 16px;
@@ -537,7 +518,6 @@
 
 .auth-switch-link:hover { text-decoration: underline; }
 
-/* Feedback */
 .auth-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -560,7 +540,6 @@
   text-align: center;
 }
 
-/* QR */
 .auth-qr-wrapper {
   display: flex;
   flex-direction: column;
@@ -612,7 +591,6 @@
   flex-shrink: 0;
 }
 
-/* OTP */
 .auth-otp-row {
   display: flex;
   gap: 10px;
@@ -645,7 +623,6 @@
   margin-bottom: 10px;
 }
 
-/* Done */
 .auth-done {
   display: flex;
   flex-direction: column;
@@ -674,7 +651,6 @@
 .auth-done-title { font-size: 1.5rem; font-weight: 800; color: var(--tx); }
 .auth-done-desc { font-size: 13px; color: var(--tx2); max-width: 270px; line-height: 1.7; }
 
-/* Panel animation */
 .auth-panel { animation: panel-in .28s ease both; }
 
 @keyframes panel-in {

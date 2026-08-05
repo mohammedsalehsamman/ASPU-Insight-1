@@ -21,6 +21,7 @@ export const getPaper = async (id) => {
   return data;
 };
 
+//خالص
 export const updatePaper = async (id, payload) => {
   const { data } = await api.put(`/api/research/researchAspu2004/papers/${id}/`, payload, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -18,6 +18,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminPapers from './pages/admin/Papers';
 import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
+import EditPaper from './pages/EditPaper';
 function App() {
   return (
     <ThemeProvider>
@@ -31,6 +32,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/research_review" element={<ResearchReview />} />
             <Route path="/papers/:id" element={<PaperDetail />} />
+            <Route path="/papers/:id/edit" element={<EditPaper />} />
+
             <Route
               path="/Profile"
               element={

@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPaper } from '../api/research';
+import { getProfile } from '../api/auth';
 import styles from '../styling/Submit.module.css';
 import Navbar from '../components/Navbar.jsx';
 import Logo from '../components/Logo.jsx';
 import {
-  GraduationCap,
-  ChalkboardTeacher,
-  Bank,
   Robot,
   LockKey,
   Globe,
@@ -19,14 +17,14 @@ import {
   X,
   ArrowLeft,
   CaretDown,
+  User,
 } from '@phosphor-icons/react';
 
-/* ── خيارات الـ sidebar ── */
-const ROLE_OPTIONS = [
-  { value: 'student', icon: GraduationCap, name: 'طالب', desc: 'بكالوريوس / ماجستير / دكتوراه' },
-  { value: 'professor', icon: ChalkboardTeacher, name: 'أستاذ / دكتور', desc: 'عضو هيئة تدريس' },
-  { value: 'other', icon: Bank, name: 'جهة علمية', desc: 'مركز بحثي أو مؤسسة' },
-];
+const ROLE_LABELS = {
+  author: 'باحث',
+  reviewer: 'مراجع',
+  editor: 'محرر',
+};
 
 const RTYPE_OPTIONS = [
   { value: 'technical', label: 'بحث علمي / تقني', badge: 'للجميع', badgeClass: 'rbBoth' },
@@ -65,7 +63,10 @@ const Submit = () => {
   const [error, setError] = useState('');
 
   const [openSection, setOpenSection] = useState(1);
-  const [publisher, setPublisher] = useState('student');
+  const [publisher, setPublisher] = useState('');
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
   const [rtype, setRtype] = useState('technical');
   const [discipline, setDiscipline] = useState('ai');
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
@@ -80,6 +81,22 @@ const Submit = () => {
     window.addEventListener('scroll', onScroll);
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // ✅ جلب بيانات المستخدم الحالي وتحديد الناشر تلقائياً من role
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getProfile();
+        setProfile(data);
+        setPublisher(data.role || '');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    fetchProfile();
   }, []);
 
   const fileInputRef = useRef(null);
@@ -157,7 +174,7 @@ const Submit = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const roleLabel = ROLE_OPTIONS.find((r) => r.value === publisher)?.name || '';
+  const roleLabel = ROLE_LABELS[publisher] || publisher || '';
   const rtypeLabel = RTYPE_OPTIONS.find((r) => r.value === rtype)?.label || '';
   const discLabel = DISCIPLINE_OPTIONS.find((d) => d.value === discipline)?.name || '';
 
@@ -211,6 +228,21 @@ const Submit = () => {
             </button>
 
             <div className={`${styles.sidebar} ${sidebarMobileOpen ? styles.mobileOpen : ''}`}>
+              {/* ✅ الناشر — للعرض فقط، مأخوذ من بروفايل المستخدم */}
+              <div>
+                <div className={styles.filterLabel}>الناشر</div>
+                <div className={styles.discItem} style={{ cursor: 'default' }}>
+                  <span className={styles.discIco}>
+                    <User size={14} weight="duotone" />
+                  </span>
+                  <span>
+                    {profileLoading
+                      ? 'جارٍ التحميل...'
+                      : `${profile?.full_name || '—'} (${roleLabel})`}
+                  </span>
+                </div>
+              </div>
+
               {/* خطوات النشر */}
               <div>
                 <div className={styles.filterLabel}>خطوات النشر</div>
@@ -228,34 +260,6 @@ const Submit = () => {
                       </div>
                     );
                   })}
-                </div>
-              </div>
-
-              {/* نوع الناشر */}
-              <div>
-                <div className={styles.filterLabel}>نوع الناشر</div>
-                <div className={styles.roleGrid}>
-                  {ROLE_OPTIONS.map((r) => (
-                    <label
-                      key={r.value}
-                      className={`${styles.roleCard} ${publisher === r.value ? styles.selected : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="publisher"
-                        value={r.value}
-                        checked={publisher === r.value}
-                        onChange={() => setPublisher(r.value)}
-                      />
-                      <span className={styles.roleCardIco}>
-                        <r.icon size={18} weight="duotone" />
-                      </span>
-                      <div>
-                        <div className={styles.roleCardName}>{r.name}</div>
-                        <div className={styles.roleCardDesc}>{r.desc}</div>
-                      </div>
-                    </label>
-                  ))}
                 </div>
               </div>
 

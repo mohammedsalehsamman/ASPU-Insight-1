@@ -277,7 +277,6 @@
   }
 }
 
-/* ══ STATS STRIP ══ */
 .stats-strip {
   border-top: 1px solid var(--bd);
   border-bottom: 1px solid var(--bd);
@@ -325,7 +324,6 @@
   margin-top: 2px;
 }
 
-/* ══ TABS BAR ══ */
 .profile-tabs {
   max-width: 1200px;
   margin: 0 auto;
@@ -362,7 +360,6 @@
   color: var(--tx1);
 }
 
-/* ══ PAGE BODY ══ */
 .page-body {
   max-width: 1200px;
   margin: 0 auto;
@@ -378,7 +375,6 @@
   }
 }
 
-/* ══ SECTION LABEL ══ */
 .section-label {
   font-size: 10px;
   font-weight: 800;
@@ -397,7 +393,6 @@
   background: var(--bd);
 }
 
-/* ══ INFO CARD ══ */
 .info-card {
   background: var(--surf1);
   border: 1px solid var(--bd);
@@ -445,7 +440,6 @@
   font-weight: 600;
 }
 
-/* ══ LEVEL CARD ══ */
 .level-section {
   margin-bottom: 20px;
 }
@@ -522,7 +516,6 @@
   background: rgba(196, 165, 90, 0.06);
 }
 
-/* ══ RESEARCH LIST ══ */
 .research-list {
   display: flex;
   flex-direction: column;
@@ -608,7 +601,6 @@
   gap: 4px;
 }
 
-/* ══ SIDEBAR ══ */
 .side-card {
   background: var(--surf1);
   border: 1px solid var(--bd);
@@ -722,7 +714,6 @@
   font-size: 13px;
 }
 
-/* ══ EMPTY STATE ══ */
 .empty-state {
   text-align: center;
   padding: 48px 24px;

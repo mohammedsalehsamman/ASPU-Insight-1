@@ -93,7 +93,6 @@ function generateActivityGrid() {
     return cols;
 }
 
-/* ══ LOADING SKELETON ══ */
 function ProfileSkeleton() {
     return (
         <div className="profile-hero" style={{ minHeight: 320 }}>
@@ -111,7 +110,6 @@ function ProfileSkeleton() {
     );
 }
 
-/* ══ ERROR STATE ══ */
 function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
@@ -125,7 +123,6 @@ function ProfileError({ message, onRetry, t }) {
     );
 }
 
-/* ══ INLINE EDIT FIELD ══ */
 function EditField({ label, value, onChange, type = "text", placeholder = "" }) {
     return (
         <div className="field-group">
@@ -151,7 +148,6 @@ function EditField({ label, value, onChange, type = "text", placeholder = "" }) 
     );
 }
 
-/* ══ CHANGE PASSWORD MODAL ══ */
 function ChangePasswordModal({ onClose, t }) {
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -408,15 +404,12 @@ export default function StudentProfile() {
     const [activeTab, setActiveTab] = useState("research");
     const cursorRef = useRef(null);
 
-    // ══ API STATE ══
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Guard يمنع الاستدعاء المزدوج في React StrictMode
     const hasFetched = useRef(false);
 
-    // ══ EDIT STATE ══
     const [isEditing, setIsEditing] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const [saveError, setSaveError] = useState("");
@@ -433,10 +426,8 @@ export default function StudentProfile() {
     const [avatarFile, setAvatarFile] = useState(null);
     const avatarInputRef = useRef(null);
 
-    // ══ CHANGE PASSWORD MODAL STATE ══
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-    // ══ FETCH PROFILE ══
     const fetchProfile = async () => {
         setLoading(true);
         setError(null);
@@ -456,7 +447,6 @@ export default function StudentProfile() {
         fetchProfile();
     }, []);
 
-    // ══ عند فتح وضع التعديل ══
     const handleStartEdit = () => {
         setEditForm({
             full_name: profile.full_name || "",
@@ -473,7 +463,6 @@ export default function StudentProfile() {
         setIsEditing(true);
     };
 
-    // ══ إلغاء التعديل ══
     const handleCancelEdit = () => {
         setIsEditing(false);
         setSaveError("");
@@ -482,7 +471,6 @@ export default function StudentProfile() {
         setAvatarFile(null);
     };
 
-    // ══ حفظ التعديلات ══
     const handleSave = async () => {
         setSaveLoading(true);
         setSaveError("");
@@ -539,7 +527,6 @@ export default function StudentProfile() {
         }
     };
 
-    // ══ معالجة اختيار الصورة ══
     const handleAvatarChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -558,7 +545,6 @@ export default function StudentProfile() {
         setSaveError("");
     };
 
-    // ══ SIDE EFFECTS ══
     useEffect(() => {
         document.documentElement.setAttribute("data-lang", lang);
         document.documentElement.setAttribute("lang", lang);
@@ -607,7 +593,6 @@ export default function StudentProfile() {
     const menuT = t("menu", { returnObjects: true }) || {};
     const footer = t("footer", { returnObjects: true }) || {};
 
-    // ══ MAP API → UI ══
     const student = profile ? {
         nameAr: profile.full_name || "",
         nameEn: profile.full_name || "",
@@ -654,7 +639,6 @@ export default function StudentProfile() {
                             </div>
 
                             <div className="profile-card-top">
-                                {/* Avatar */}
                                 <div
                                     className="avatar-wrap"
                                     style={{ cursor: isEditing ? "pointer" : "default" }}
@@ -687,7 +671,6 @@ export default function StudentProfile() {
                                     />
                                 </div>
 
-                                {/* Info */}
                                 <div className="profile-info">
                                     {isEditing ? (
                                         /* ══ وضع التعديل ══ */
@@ -759,7 +742,6 @@ export default function StudentProfile() {
                                             {saveError && <div className="form-msg error">{saveError}</div>}
                                             {saveSuccess && <div className="form-msg success">{tProfile?.action?.saved}</div>}
 
-                                            {/* أزرار الحفظ والإلغاء */}
                                             <div style={{ display: "flex", gap: 10 }}>
                                                 <button onClick={handleSave} disabled={saveLoading} className="edit-btn primary">
                                                     {saveLoading ? tProfile?.action?.saving : tProfile?.action?.saveChanges}
@@ -770,7 +752,6 @@ export default function StudentProfile() {
                                             </div>
                                         </div>
                                     ) : (
-                                        /* ══ الوضع الطبيعي (عرض البيانات) ══ */
                                         <div>
                                             <div className="profile-role-tag">
                                                 <span>●</span>

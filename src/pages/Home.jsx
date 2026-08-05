@@ -8,7 +8,6 @@ import Footer from '../components/Footer.jsx'
 import Logo from '../components/Logo.jsx'
 
 
-// ══ ANIMATED COUNTER ══
 function useCounter(target, suffix, inView) {
   const [val, setVal] = useState(0);
   const ran = useRef(false);
@@ -27,7 +26,6 @@ function useCounter(target, suffix, inView) {
   return val.toLocaleString() + suffix;
 }
 
-// ══ INTERSECTION HOOK ══
 function useInView(threshold = 0.15) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -44,7 +42,6 @@ function useInView(threshold = 0.15) {
   return [ref, inView];
 }
 
-// ══ STAT ITEM ══
 function StatItem({ stat }) {
   const [ref, inView] = useInView(0.3);
   const display = useCounter(stat.n, stat.s, inView);
@@ -56,7 +53,6 @@ function StatItem({ stat }) {
   );
 }
 
-// ══ REVEAL TEXT SECTION ══
 function RevealSection({ sec, isAr }) {
   const [ref, inView] = useInView(0.2);
   return (
@@ -87,7 +83,6 @@ function RevealSection({ sec, isAr }) {
   );
 }
 
-// ══ RESEARCH CARD ══
 function ResearchCard({ card, isAr, tr }) {
   const ok = card.approved;
   return (
@@ -135,14 +130,13 @@ function ResearchCard({ card, isAr, tr }) {
   );
 }
 
-// ══ SCROLL HIJACK — منطق مطابق 100% للـ HTML الشغال ══
 function ScrollHijack({ isAr, t }) {
   const wrapRef = useRef(null);
   const stripRef = useRef(null);
 
   const N = RESEARCH_CARDS.length;
-  const SPC = 420;               // مسافة سكرول ثابتة per card — نفس الـ HTML
-  const TOT = SPC * (N - 1);    // إجمالي مسافة السكرول
+  const SPC = 420;               
+  const TOT = SPC * (N - 1);   
 
   const [idx, setIdx] = useState(0);
   const [pct, setPct] = useState(0);
@@ -152,7 +146,6 @@ function ScrollHijack({ isAr, t }) {
     const strip = stripRef.current;
     if (!wrapper || !strip) return;
 
-    // ← نفس الـ HTML: height = 100vh + TOT (مش 100vh × N)
     wrapper.style.height = `calc(100vh + ${TOT}px)`;
 
     function setSizes() {
@@ -175,13 +168,10 @@ function ScrollHijack({ isAr, t }) {
       const clamped = Math.min(TOT, scrolled);
       const trackW = strip.parentElement.offsetWidth;
 
-      // ← نفس الـ HTML: target = (clamped / SPC) * trackW
       const target = (clamped / SPC) * trackW;
 
-      // lerp ناعم
       off += (target - off) * 0.1;
 
-      // ← RTL/LTR awareness — نفس الـ HTML
       const isRtl = document.documentElement.getAttribute("dir") === "rtl";
       strip.style.transform = `translateX(${(isRtl ? 1 : -1) * off}px)`;
 
@@ -209,7 +199,6 @@ function ScrollHijack({ isAr, t }) {
     <div ref={wrapRef} className="aspu-sh-wrapper">
       <div className="aspu-sh-sticky">
 
-        {/* Header */}
         <div className="aspu-sh-header">
           <div>
             <div className="aspu-sh-ey">{tr.eyebrow}</div>
@@ -228,9 +217,7 @@ function ScrollHijack({ isAr, t }) {
           </div>
         </div>
 
-        {/* Track + Strip */}
         <div className="aspu-sh-track">
-          {/* لا dir="ltr" — الـ translateX يتحكم بالاتجاه مباشرة */}
           <div ref={stripRef} className="aspu-sh-strip">
             {RESEARCH_CARDS.map((card, i) => (
               <div key={i} className="aspu-sh-slide">
@@ -240,7 +227,6 @@ function ScrollHijack({ isAr, t }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="aspu-sh-foot">
           <p className="aspu-sh-hint">{tr.scrollHint}</p>
           <a
@@ -256,7 +242,6 @@ function ScrollHijack({ isAr, t }) {
   );
 }
 
-// ══ MAIN COMPONENT ══
 export default function ASPUInsight() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -355,13 +340,10 @@ export default function ASPUInsight() {
       className={`aspu-root${menuOpen ? " menu-is-open" : ""}`}
       data-lang={lang}
     >
-      {/* Noise overlay */}
       <div className="aspu-noise" />
 
-      {/* Cursor glow */}
       <div ref={cursorRef} className="aspu-cursor-glow" />
 
-      {/* ══ NAVBAR (nav + fullscreen menu) ══ */}
       <Navbar
         menuOpen={menuOpen} setMenuOpen={setMenuOpen}
         lang={lang} setLang={setLang}
@@ -372,7 +354,6 @@ export default function ASPUInsight() {
         Logo={Logo}
       />
 
-      {/* ══ HERO ══ */}
       <section className="aspu-hero">
         <div className="aspu-hero-grid" />
         <div className="aspu-orb o1" />
@@ -410,12 +391,10 @@ export default function ASPUInsight() {
         </div>
       </section>
 
-      {/* ══ STATS BAR ══ */}
       <div className="aspu-stats-bar">
         {stats.map((s, i) => <StatItem key={i} stat={s} />)}
       </div>
 
-      {/* ══ SEARCH ══ */}
       <div className="aspu-search-zone">
         <div className="aspu-s-wrap">
           <p className="aspu-s-ey">{search.eyebrow}</p>
@@ -437,7 +416,6 @@ export default function ASPUInsight() {
         </div>
       </div>
 
-      {/* ══ CINEMATIC TEXT SECTIONS ══ */}
       <div className="aspu-herotext-wrap">
         {sections.map((sec, i) => (
           <div key={i}>
@@ -447,10 +425,8 @@ export default function ASPUInsight() {
         ))}
       </div>
 
-      {/* ══ SCROLL HIJACK RESEARCH ══ */}
       <ScrollHijack isAr={isAr} t={t} />
 
-      {/* ══ GALLERY ══ */}
       <div className="aspu-gallery-sec">
         <div className="aspu-gallery-inner">
           <div className="aspu-gallery-text">
@@ -484,7 +460,6 @@ export default function ASPUInsight() {
         </div>
       </div>
 
-      {/* ══ FEATURES ══ */}
       <div className="aspu-feat-sec">
         <div className="aspu-feat-inner">
           <div className="aspu-feat-header">
@@ -505,7 +480,6 @@ export default function ASPUInsight() {
         </div>
       </div>
 
-      {/* ══ FOOTER ══ */}
       <Footer isAr={isAr} footer={footer} Logo={Logo} />
     </div>
   );

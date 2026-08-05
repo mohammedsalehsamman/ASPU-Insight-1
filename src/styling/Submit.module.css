@@ -1,12 +1,3 @@
-/* ══ TOKENS — imported from global :root / [data-theme] ══
-   هاد الملف بيفترض إنه عندك في index.css أو global.css:
-   --bg, --bg2, --surf, --surf2, --bd, --bd2,
-   --tx, --tx2, --tx3, --ac, --ac2,
-   --glow, --inp-bg, --inp-bd
-   بنفس القيم اللي بملف الـ HTML
-   ══════════════════════════════════════════════════════ */
-
-/* ══ PAGE CONTAINER ══ */
 .pageContainer {
   min-height: 100vh;
   background: var(--bg);
@@ -128,7 +119,6 @@
   margin-bottom: 8px;
 }
 
-/* ══ ERROR ALERT ══ */
 .errorAlert {
   background: rgba(192, 84, 42, 0.08);
   border: 1px solid rgba(192, 84, 42, 0.35);
@@ -140,7 +130,6 @@
   line-height: 1.6;
 }
 
-/* ══ MAIN FORM ══ */
 .mainForm {
   display: flex;
   flex-direction: column;
@@ -148,7 +137,6 @@
   counter-reset: section-counter;
 }
 
-/* ══ FORM SECTION (accordion card) ══ */
 .section {
   background: var(--surf);
   border: 1px solid var(--bd);
@@ -236,7 +224,6 @@ margin-top: 50px;
   gap: 18px;
 }
 
-/* ══ INPUT GROUP ══ */
 .inputGroup {
   display: flex;
   flex-direction: column;
@@ -304,7 +291,6 @@ margin-top: 50px;
   display: block;
 }
 
-/* ══ KEYWORDS SECTION ══ */
 .keywordWrapper {
   display: flex;
   gap: 8px;
@@ -356,7 +342,6 @@ margin-top: 50px;
   color: var(--ac);
 }
 
-/* Tags container */
 .tagsContainer {
   display: flex;
   flex-wrap: wrap;
@@ -395,7 +380,6 @@ margin-top: 50px;
   opacity: 1;
 }
 
-/* ══ FILE UPLOAD ZONE ══ */
 .fileUploadZone {
   position: relative;
 }
@@ -542,7 +526,6 @@ margin-top: 50px;
   flex-wrap: wrap;
 }
 
-/* Primary submit button */
 .submitBtn {
   display: inline-flex;
   align-items: center;
@@ -1052,12 +1035,10 @@ margin-top: 50px;
   box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
 }
 
-/* ══ SCROLLBAR ══ */
 .pageContainer ::-webkit-scrollbar { width: 5px; }
 .pageContainer ::-webkit-scrollbar-track { background: transparent; }
 .pageContainer ::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--bd2); }
 
-/* ══ RESPONSIVE ══ */
 @media (max-width: 600px) {
   .formCard {
     padding: 0 16px;

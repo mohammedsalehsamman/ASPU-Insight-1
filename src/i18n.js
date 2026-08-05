@@ -9,6 +9,8 @@ export const Ara = {
     explore: "استعرض",
     appearance: "المظهر",
     login: "تسجيل الدخول →",
+    submit: "تقديم بحث",      // ✅ جديد
+    profile: "الملف الشخصي",  // ✅ جديد
   },
   hero: {
     badge: "العدد الأول · 2026 · جامعة الشام الخاصة",
@@ -95,9 +97,22 @@ export const Ara = {
   footer: {
     brand: "مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.",
     cols: [
-      { title: "الأبحاث", links: ["آخر الإضافات", "الأكثر تقييماً", "حسب التخصص", "الأرشيف"] },
-      { title: "للطلبة", links: ["تقديم بحث", "إرشادات النشر", "فحص التشابه"] },
-      { title: "للأساتذة", links: ["لوحة المراجعة", "تقارير النزاهة", "إدارة اللجنة"] },
+      {
+        title: "الأبحاث",
+        links: [
+          { label: "آخر الإضافات", path: "/research_review" },
+          { label: "الأكثر تقييماً", path: "/research_review" },
+          { label: "حسب التخصص", path: "/research_review" },
+          { label: "الأرشيف", path: "/research_review" },
+        ],
+      },
+      {
+        title: "للطلبة",
+        links: [
+          { label: "تقديم بحث", path: "/submit" },
+          { label: "إرشادات النشر", path: "/#" },
+        ],
+      },
     ],
     copy: "© 2025 ASPU Insight — جامعة الشام الخاصة",
     sub: "مشروع تخرج · 2025–2026",
@@ -131,6 +146,8 @@ export const Ara = {
     common: {
       loading: "جاري التحميل...",
       backToHome: "› العودة للرئيسية",
+      logout: "تسجيل الخروج",   // ✅ جديد
+
     },
     tabs: {
       login: "تسجيل الدخول",
@@ -342,6 +359,8 @@ export const Eng = {
     explore: "EXPLORE",
     appearance: "Appearance",
     login: "Login →",
+    submit: "Submit Paper",   // ✅ جديد
+    profile: "Profile",       // ✅ جديد
   },
   hero: {
     badge: "Vol. 1 · 2026 · Al-Sham Private University",
@@ -428,9 +447,21 @@ export const Eng = {
   footer: {
     brand: "A digital academic journal spotlighting student research at Al-Sham Private University.",
     cols: [
-      { title: "Research", links: ["Latest", "Top Rated", "By Discipline", "Archive"] },
-      { title: "Students", links: ["Submit Paper", "Guidelines", "Similarity Check"] },
-      { title: "Faculty", links: ["Review Panel", "Integrity Reports", "Committee"] },
+      {
+        title: "Research",
+        links: [
+          { label: "Latest", path: "/research_review" },
+          { label: "Top Rated", path: "/research_review" },
+          { label: "By Discipline", path: "/research_review" },
+        ],
+      },
+      {
+        title: "Students",
+        links: [
+          { label: "Submit Paper", path: "/submit" },
+          { label: "Guidelines", path: "/#" },
+        ],
+      },
     ],
     copy: "© 2025 ASPU Insight — Al-Sham Private University",
     sub: "Graduation Project · 2025–2026",
@@ -653,6 +684,175 @@ export const Eng = {
   },
 };
 
+/* ══════════════════════════════════════════════════════════════
+   ترجمات محلية خاصة بصفحة EditorAssistant.jsx (مساعد المحرر)
+   كانت هاي مكتوبة جوا الكومبوننت نفسه، هلق صارت هون فقط.
+══════════════════════════════════════════════════════════════ */
+export const EditorAssistantDict = {
+  total: { ar: 'إجمالي الأبحاث', en: 'Total Papers' },
+  pending: { ar: 'بانتظار المراجعة', en: 'Pending Review' },
+  noted: { ar: 'تمت مراجعتها', en: 'Reviewed' },
+  submitted: { ar: 'الأبحاث المقدَّمة', en: 'Submitted Papers' },
+  all: { ar: 'الكل', en: 'All' },
+  search_ph: { ar: 'ابحث بالعنوان أو الكاتب...', en: 'Search by title or author...' },
+  no_results: { ar: 'لا توجد نتائج', en: 'No results found' },
+  no_sub: { ar: 'جرّب تغيير الفلتر أو البحث بكلمة أخرى', en: 'Try changing the filter or search keyword' },
+  loading: { ar: 'جارٍ التحميل...', en: 'Loading...' },
+  error: { ar: 'خطأ في تحميل البيانات', en: 'Failed to load papers' },
+  details: { ar: 'تفاصيل البحث', en: 'Paper Details' },
+  ref_id: { ar: 'الرقم المرجعي', en: 'Reference ID' },
+  author: { ar: 'الباحث', en: 'Author' },
+  status_l: { ar: 'الحالة', en: 'Status' },
+  abstract: { ar: 'الملخص', en: 'Abstract' },
+  file: { ar: 'ملف البحث', en: 'Research File' },
+  download: { ar: 'تحميل', en: 'Download' },
+  no_file: { ar: 'لا يوجد ملف مرفق', en: 'No file attached' },
+  notes_l: { ar: 'تقرير مساعد المحرر', en: 'Editor Report' },
+  no_notes: { ar: 'لا يوجد تقرير بعد', en: 'No report yet' },
+  add_note: { ar: 'أضف تقريرك', en: 'Add Your Report' },
+  note_ph: { ar: 'اكتب تقريرك هنا...', en: 'Write your report here...' },
+  cancel: { ar: 'إلغاء', en: 'Cancel' },
+  save_note: { ar: 'حفظ التقرير', en: 'Save Report' },
+  saving: { ar: 'جارٍ الحفظ...', en: 'Saving...' },
+  save_fail: { ar: 'فشل حفظ التقرير، حاول مرة أخرى', en: 'Failed to save report, please try again' },
+  view_report: { ar: 'عرض التقرير', en: 'View Report' },
+  load_report_fail: { ar: 'فشل تحميل التقرير، حاول مرة أخرى', en: 'Failed to load report, please try again' },
+  plagiarism: { ar: 'درجة الانتحال', en: 'Plagiarism Score' },
+  keywords: { ar: 'الكلمات المفتاحية', en: 'AI Keywords' },
+  open_access: { ar: 'وصول مفتوح مدفوع', en: 'Paid Open Access' },
+  yes: { ar: 'نعم', en: 'Yes' },
+  no: { ar: 'لا', en: 'No' },
+  role: { ar: 'مساعد المحرر', en: 'Assistant Editor' },
+  welcome_ar: 'مرحباً،',
+  welcome_en: 'Welcome back,',
+  papers_await_ar: 'بانتظار مراجعتك',
+  papers_await_en: 'await your review',
+  sub_ar: 'هنا كل الأبحاث المُقدَّمة حديثاً. اضغط على أي بحث لتطلع على تفاصيله وتضيف تقريرك.',
+  sub_en: 'All recently submitted papers are listed below. Click any paper to view details and add your report.',
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ترجمات محلية خاصة بصفحة Editor.jsx (المحرر)
+   كانت هاي مكتوبة جوا الكومبوننت نفسه، هلق صارت هون فقط.
+══════════════════════════════════════════════════════════════ */
+export const EditorDict = {
+  total: { ar: 'إجمالي الأبحاث', en: 'Total Papers' },
+  pending: { ar: 'بانتظار المراجعة', en: 'Pending Review' },
+  noted: { ar: 'تمت مراجعتها', en: 'Reviewed' },
+  submitted: { ar: 'الأبحاث المقدَّمة', en: 'Submitted Papers' },
+  all: { ar: 'الكل', en: 'All' },
+  search_ph: { ar: 'ابحث بالعنوان أو الكاتب...', en: 'Search by title or author...' },
+  no_results: { ar: 'لا توجد نتائج', en: 'No results found' },
+  no_sub: { ar: 'جرّب تغيير الفلتر أو البحث بكلمة أخرى', en: 'Try changing the filter or search keyword' },
+  loading: { ar: 'جارٍ التحميل...', en: 'Loading...' },
+  error: { ar: 'خطأ في تحميل البيانات', en: 'Failed to load papers' },
+  details: { ar: 'تفاصيل البحث', en: 'Paper Details' },
+  ref_id: { ar: 'الرقم المرجعي', en: 'Reference ID' },
+  author: { ar: 'الباحث', en: 'Author' },
+  status_l: { ar: 'الحالة', en: 'Status' },
+  abstract: { ar: 'الملخص', en: 'Abstract' },
+  file: { ar: 'ملف البحث', en: 'Research File' },
+  download: { ar: 'تحميل', en: 'Download' },
+  no_file: { ar: 'لا يوجد ملف مرفق', en: 'No file attached' },
+  assistant_report: { ar: "تقرير مساعد المحرر", en: "Assistant Report" },
+  editor_notes: { ar: "ملاحظات المحرر", en: "Editor's Notes" },
+  editor_decision: { ar: "قرار المحرر", en: "Editor's Decision" },
+  initial_notes: { ar: 'الملاحظات الأولية', en: 'Initial Notes' },
+  no_notes: { ar: 'لا يوجد تقرير بعد', en: 'No report yet' },
+  add_report: { ar: 'إضافة تقرير', en: 'Add Report' },
+  decision_l: { ar: 'القرار', en: 'Decision' },
+  decision_ph: { ar: 'اختر القرار...', en: 'Select decision...' },
+  decision_missing: { ar: 'يرجى اختيار القرار', en: 'Please select a decision' },
+  note_ph: { ar: 'اكتب تقريرك هنا...', en: 'Write your report here...' },
+  cancel: { ar: 'إلغاء', en: 'Cancel' },
+  save_note: { ar: 'إرسال', en: 'Submit' },
+  saving: { ar: 'جارٍ الإرسال...', en: 'Submitting...' },
+  save_fail: { ar: 'فشل إرسال التقرير، حاول مرة أخرى', en: 'Failed to submit report, please try again' },
+  load_fail: { ar: 'فشل تحميل التقرير', en: 'Failed to load report' },
+  plagiarism: { ar: 'درجة الانتحال', en: 'Plagiarism Score' },
+  keywords: { ar: 'الكلمات المفتاحية', en: 'AI Keywords' },
+  open_access: { ar: 'وصول مفتوح مدفوع', en: 'Paid Open Access' },
+  yes: { ar: 'نعم', en: 'Yes' },
+  no: { ar: 'لا', en: 'No' },
+  role: { ar: ' المحرر', en: ' Editor' },
+  welcome_ar: 'مرحباً،',
+  welcome_en: 'Welcome back,',
+  papers_await_ar: 'بانتظار مراجعتك',
+  papers_await_en: 'await your review',
+  sub_ar: 'هنا كل الأبحاث المُقدَّمة حديثاً. اضغط على أي بحث لتطلع على تفاصيله وتضيف تقريرك.',
+  sub_en: 'All recently submitted papers are listed below. Click any paper to view details and add your report.',
+  // ── لجنة التحكيم ──
+  view_committee_members: { ar: 'استعراض الأعضاء المحتملين للتحكيم', en: 'View Potential Committee Members' },
+  committee_created: { ar: '✓ تم إنشاء اللجنة بنجاح', en: '✓ Committee created successfully' },
+  select_committee: { ar: 'اختر أعضاء اللجنة', en: 'Select Committee Members' },
+  load_reviewers_fail: { ar: 'فشل تحميل المراجعين المتاحين', en: 'Failed to load available reviewers' },
+  no_reviewers: { ar: 'لا يوجد مراجعون متاحون حالياً', en: 'No available reviewers' },
+  creating: { ar: 'جارٍ الإنشاء...', en: 'Creating...' },
+  create_committee: { ar: 'إنشاء اللجنة', en: 'Create Committee' },
+  create_committee_fail: { ar: 'فشل إنشاء اللجنة، حاول مرة أخرى', en: 'Failed to create committee, please try again' },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   ترجمات محلية خاصة بصفحة PaperDetail.jsx (تفاصيل البحث)
+   كانت هاي كلها نصوص ثابتة مكتوبة جوا الكومبوننت، هلق صارت هون.
+══════════════════════════════════════════════════════════════ */
+export const PaperDetailDict = {
+  // Breadcrumb
+  breadcrumb_home: { ar: 'الرئيسية', en: 'Home' },
+  breadcrumb_research: { ar: 'الأبحاث', en: 'Research' },
+  breadcrumb_details: { ar: 'تفاصيل البحث', en: 'Paper Details' },
+
+  // Status labels (badge + meta)
+  status_pending: { ar: 'قيد المراجعة', en: 'Pending Review' },
+  status_approved: { ar: 'منشور', en: 'Approved' },
+  status_rejected: { ar: 'مرفوض', en: 'Rejected' },
+
+  // Header
+  open_access_badge: { ar: 'وصول مفتوح مدفوع', en: 'Paid Open Access' },
+  author_label: { ar: 'الباحث:', en: 'Author:' },
+
+  // Main column
+  abstract_label: { ar: 'الملخص', en: 'Abstract' },
+  file_label: { ar: 'ملف البحث', en: 'Research File' },
+  pdf_attached_sub: { ar: 'ملف PDF مرفق', en: 'PDF file attached' },
+  download: { ar: 'تحميل', en: 'Download' },
+  pdf_missing: { ar: 'لم يتم إرفاق ملف PDF بعد', en: 'No PDF file attached yet' },
+  rejection_label: { ar: 'سبب الرفض', en: 'Rejection Reason' },
+
+  // Sidebar — info card
+  info_label: { ar: 'معلومات البحث', en: 'Paper Information' },
+  paper_number: { ar: 'رقم البحث', en: 'Paper Number' },
+  status_key: { ar: 'الحالة', en: 'Status' },
+  access_type: { ar: 'نوع الوصول', en: 'Access Type' },
+  open_paid: { ar: 'مفتوح مدفوع', en: 'Paid Open' },
+  closed: { ar: 'مغلق', en: 'Closed' },
+  author_key: { ar: 'الباحث', en: 'Author' },
+  pdf_key: { ar: 'ملف PDF', en: 'PDF File' },
+  available: { ar: 'متوفر', en: 'Available' },
+  not_attached: { ar: 'غير مرفق', en: 'Not attached' },
+
+  status_track_label: { ar: 'مسار الحالة', en: 'Status Track' },
+  timeline_submitted: { ar: 'تقديم البحث', en: 'Submitted' },
+  timeline_submitted_sub: { ar: 'تم التقديم بنجاح', en: 'Successfully submitted' },
+  timeline_review: { ar: 'قيد المراجعة', en: 'Under Review' },
+  timeline_review_sub: { ar: 'قيد مراجعة المحكمين', en: 'Awaiting peer review' },
+  timeline_decision: { ar: 'القرار النهائي', en: 'Final Decision' },
+  timeline_decision_approved: { ar: 'تم القبول والنشر', en: 'Accepted & published' },
+  timeline_decision_rejected: { ar: 'تم رفض البحث', en: 'Paper was rejected' },
+  timeline_decision_pending: { ar: 'في انتظار القرار', en: 'Awaiting decision' },
+
+  actions_label: { ar: 'الإجراءات', en: 'Actions' },
+  edit_paper: { ar: 'تعديل البحث', en: 'Edit Paper' },
+  copy_link: { ar: 'نسخ الرابط', en: 'Copy Link' },
+
+  loading: { ar: 'جاري التحميل…', en: 'Loading…' },
+  retry: { ar: 'إعادة المحاولة', en: 'Retry' },
+  default_error: { ar: 'حدث خطأ في جلب البيانات', en: 'An error occurred while fetching the data' },
+};
+
+export const createLocalT = (dict, lang) => (key) =>
+  (dict[key]?.[lang]) ?? dict[key] ?? key;
+
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
@@ -661,7 +861,6 @@ export const resources = {
   en: { translation: Eng },
 };
 
-// Initialize i18next once for the whole app
 if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
     resources,
