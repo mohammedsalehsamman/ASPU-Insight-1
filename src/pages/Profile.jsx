@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "../styling/Profile.css";
 import { updateProfile, changePassword } from "../api/auth";
-import api from "../api/client";
+import api, { BASE_URL } from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
@@ -72,6 +72,13 @@ const ACT_LABELS = [
     { ar: "الآن", en: "Now" },
 ];
 
+/* ══ RESOLVE MEDIA URL ══ */
+function resolveMediaUrl(url) {
+    if (!url) return null;
+    return /^https?:\/\//i.test(url) ? url : `${BASE_URL}${url}`;
+}
+
+/* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
     const cols = [];
     for (let col = 0; col < 12; col++) {
@@ -106,6 +113,7 @@ function ProfileSkeleton() {
 function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
+            <div className="empty-state-ico">⚠️</div>
             <div className="empty-state-t">{t("auth.profile.error.loadFailed")}</div>
             <div className="empty-state-s">{message}</div>
             <button onClick={onRetry} className="edit-btn" style={{ marginTop: 16, display: "inline-flex" }}>
@@ -240,6 +248,7 @@ function ChangePasswordModal({ onClose, t }) {
     );
 }
 
+/* ══ ACTIVITY TAB CONTENT ══ */
 function ActivityTab({ grid, isAr, t }) {
     return (
         <div>
@@ -379,6 +388,7 @@ function ProfileSidebar({ isAr }) {
     );
 }
 
+/* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
     const { t, i18n, ready } = useTranslation();
     const lang = i18n.language || "ar";
@@ -410,7 +420,6 @@ export default function StudentProfile() {
         orcid_id: "",
         bio: "",
         preferred_language: "ar",
-        profile_picture_url: "",
         role: "author",
     });
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -445,7 +454,6 @@ export default function StudentProfile() {
             orcid_id: profile.orcid_id || "",
             bio: profile.bio || "",
             preferred_language: profile.preferred_language || "ar",
-            profile_picture_url: profile.profile_picture_url || "",
             role: profile.role || "author",
         });
         setAvatarPreview(null);
@@ -491,7 +499,7 @@ export default function StudentProfile() {
                 Object.keys(changed).forEach(key => {
                     formData.append(key, changed[key]);
                 });
-                formData.append("profile_picture", avatarFile, avatarFile.name);
+                formData.append("profile_picture_url", avatarFile, avatarFile.name);
                 updated = await updateProfile(formData);
             } else {
                 updated = await updateProfile(changed);
@@ -574,6 +582,7 @@ export default function StudentProfile() {
         };
     }, []);
 
+    // ══ لسا الترجمة ما جهزت → إظهار سكيلتون بدل أي محاولة قراءة مفاتيح ══
     if (!ready) {
         return <ProfileSkeleton />;
     }
@@ -588,7 +597,7 @@ export default function StudentProfile() {
         nameAr: profile.full_name || "",
         nameEn: profile.full_name || "",
         avatarInitial: (profile.full_name || "؟")[0].toUpperCase(),
-        avatarUrl: profile.profile_picture_url || null,
+        avatarUrl: resolveMediaUrl(profile.profile_picture_url),
         roleAr: profile.role === "محرر" ? "طالب" : profile.role,
         roleEn: profile.role === "author" ? "Student" : profile.role,
         universityAr: profile.institution || "جامعة الشام الخاصة",
@@ -618,6 +627,7 @@ export default function StudentProfile() {
 
             {!loading && !error && profile && (
                 <>
+                    {/* ══ PROFILE HERO ══ */}
                     <div className="profile-hero">
                         <div className="hero-glow-1" />
                         <div className="hero-glow-2" />
@@ -663,6 +673,7 @@ export default function StudentProfile() {
 
                                 <div className="profile-info">
                                     {isEditing ? (
+                                        /* ══ وضع التعديل ══ */
                                         <div style={{ minWidth: 280 }}>
                                             <EditField
                                                 label={tProfile?.field?.fullName}
@@ -683,6 +694,7 @@ export default function StudentProfile() {
                                                 placeholder={tProfile?.placeholder?.orcid}
                                             />
 
+                                            {/* الدور */}
                                             <div className="field-group">
                                                 <label className="field-label">{tProfile?.field?.role}</label>
                                                 <div className="pill-row">
@@ -710,6 +722,7 @@ export default function StudentProfile() {
                                                 placeholder={tProfile?.placeholder?.bio}
                                             />
 
+                                            {/* اللغة المفضلة */}
                                             <div className="field-group">
                                                 <label className="field-label">{tProfile?.field?.preferredLanguage}</label>
                                                 <div className="pill-row">
@@ -725,6 +738,7 @@ export default function StudentProfile() {
                                                 </div>
                                             </div>
 
+                                            {/* رسائل الخطأ / النجاح */}
                                             {saveError && <div className="form-msg error">{saveError}</div>}
                                             {saveSuccess && <div className="form-msg success">{tProfile?.action?.saved}</div>}
 
@@ -758,6 +772,7 @@ export default function StudentProfile() {
                                     )}
                                 </div>
 
+                                {/* Edit actions */}
                                 {!isEditing && (
                                     <div className="hero-actions">
                                         <button onClick={handleStartEdit} className="edit-btn">
@@ -771,6 +786,7 @@ export default function StudentProfile() {
                             </div>
                         </div>
 
+                        {/* ══ STATS STRIP ══ */}
                         <div className="stats-strip">
                             {MOCK_STATS.map((s, i) => (
                                 <div key={i} className="stat-cell">
@@ -782,6 +798,7 @@ export default function StudentProfile() {
                         </div>
                     </div>
 
+                    {/* ══ TABS ══ */}
                     <div className="profile-tabs">
                         <button className={`ptab ${activeTab === "research" ? "on" : ""}`} onClick={() => setActiveTab("research")}>
                             {isAr ? "الأبحاث" : "Research"}
@@ -794,6 +811,7 @@ export default function StudentProfile() {
                         </button>
                     </div>
 
+                    {/* ══ PAGE BODY ══ */}
                     <div className="page-body">
                         <div>
                             {activeTab === "research" && <ResearchTab isAr={isAr} t={t} />}

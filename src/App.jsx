@@ -13,6 +13,11 @@ import ResetPasswordPage from './pages/Auth/Auth/ResetPasswordPage';
 import Submit from './pages/Submit';
 import EditorAssistant from './pages/A-editor/EditorAssistant';
 import Editor from './pages/Editor/Editor';
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminPapers from './pages/admin/Papers';
+import AdminReviews from './pages/admin/Reviews';
+import AdminSettings from './pages/admin/Settings';
 import EditPaper from './pages/EditPaper';
 function App() {
   return (
@@ -59,6 +64,47 @@ function App() {
               element={
                 <ProtectedRoute redirectTo="/auth">
                   <Submit />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/papers"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPapers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reviews"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminReviews />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminSettings />
                 </ProtectedRoute>
               }
             />

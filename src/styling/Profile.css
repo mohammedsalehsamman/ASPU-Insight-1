@@ -1,3 +1,12 @@
+/* ══════════════════════════════════════════════════════
+   ProfileExtra.css
+   ستايلات إضافية لصفحة البروفايل — منسوخة بالضبط عن
+   التصميم المرجعي (aspu_profile_student.html)
+   استوردها بعد Profile.css بنفس المكوّن
+   ══════════════════════════════════════════════════════ */
+
+/* ── Tokens إضافية غير موجودة أصلاً بنظام الثيم الحالي ──
+   (بتعتمد على --ac / --tx1 الموجودين، وبتضيف الباقي فقط) */
 [data-theme="dark"] .profile-page {
   --bd: rgba(180, 160, 120, 0.1);
   --bd2: rgba(180, 160, 120, 0.2);
@@ -12,6 +21,7 @@
   --g: #22c55e;
   --glow: rgba(139, 105, 20, 0.06);
 }
+/* fallback لو ما في data-theme محدد على الصفحة */
 .profile-page {
   --bd: var(--bdr, rgba(180, 160, 120, 0.1));
   --bd2: rgba(180, 160, 120, 0.2);
@@ -20,6 +30,7 @@
   --glow: rgba(196, 165, 90, 0.08);
 }
 
+/* ══ PROFILE HERO (بديل الـ inline styles) ══ */
 .profile-hero {
   padding: 108px clamp(16px, 5%, 80px) 0;
   background: var(--bg);
@@ -67,6 +78,7 @@
   padding-top: 40px;
 }
 
+/* ── Breadcrumb ── */
 .ph-breadcrumb {
   display: flex;
   align-items: center;
@@ -87,6 +99,7 @@
   opacity: 0.4;
 }
 
+/* ── Profile card top ── */
 .profile-card-top {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -101,6 +114,7 @@
   }
 }
 
+/* ── Avatar ── */
 .avatar-wrap {
   position: relative;
   flex-shrink: 0;
@@ -163,6 +177,7 @@
   border: 2px solid var(--bg);
 }
 
+/* ── Info ── */
 .profile-info {
   min-width: 0;
 }
@@ -219,6 +234,7 @@
   max-width: 60ch;
 }
 
+/* ── Edit / action buttons ── */
 .edit-btn {
   display: flex;
   align-items: center;
@@ -610,6 +626,7 @@
   background: var(--bd);
 }
 
+/* ── Activity grid (يستبدل الـ inline styles القديمة) ── */
 .activity-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -647,6 +664,7 @@
   color: var(--tx3);
 }
 
+/* ── Skills tags ── */
 .skills-list {
   display: flex;
   flex-wrap: wrap;
@@ -667,6 +685,7 @@
   color: var(--ac);
 }
 
+/* ── Social links ── */
 .social-links {
   display: flex;
   flex-direction: column;
@@ -716,6 +735,7 @@
   color: var(--tx3);
 }
 
+/* ══ EDIT MODE FIELDS ══ */
 .field-group {
   display: flex;
   flex-direction: column;

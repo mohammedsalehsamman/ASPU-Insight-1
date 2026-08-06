@@ -187,7 +187,7 @@ body, #aspu-root {
   padding: 36px clamp(16px,5%,80px) 80px;
   display: grid; grid-template-columns: 280px 1fr;
   gap: 28px; align-items: start;
-  grid-template-columns: 1fr 280px;   
+  grid-template-columns: 1fr 280px;   /* content أولاً، sidebar ثانياً */
   grid-template-areas: "content sidebar";
 }
 
@@ -196,6 +196,7 @@ body, #aspu-root {
 }
  
 
+/* ── SIDEBAR ── */
 .sidebar {
   position: sticky; top: 88px;
   background: var(--surf); border: 1px solid var(--bd); border-radius: 4px;
@@ -478,6 +479,7 @@ aside.sidebar {
   .popup-box { max-height: 90vh; }
 }
 
+/* ── EMPTY STATE — مركز كامل ── */
 .rr-state-center {
   display: flex;
   flex-direction: column;
@@ -515,6 +517,7 @@ aside.sidebar {
   line-height: 1.6;
 }
  
+/* ── زر نشر بحث جديد ── */
 .rr-submit-cta {
   display: inline-flex;
   align-items: center;
@@ -539,6 +542,7 @@ aside.sidebar {
   box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
 }
  
+/* ── Responsive: موبايل ── */
 @media (max-width: 960px) {
   .page-body {
     grid-template-columns: 1fr;

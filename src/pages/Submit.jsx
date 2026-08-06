@@ -193,6 +193,7 @@ const Submit = () => {
       <header className={styles.heroHeader}>
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroInner}>
+          {/* ✅ الإصلاح هنا: دمج className="rr" مع styles.breadcrumb */}
           <nav className={`${styles.rr} ${styles.breadcrumb}`} aria-label="Breadcrumb">
             <a href="/">الرئيسية</a>
             <span className={styles.crumbSep}>›</span>
@@ -259,6 +260,29 @@ const Submit = () => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* نوع البحث */}
+              <div>
+                <div className={styles.filterLabel}>نوع البحث</div>
+                <div className={styles.rtypeGrid}>
+                  {RTYPE_OPTIONS.map((r) => (
+                    <label
+                      key={r.value}
+                      className={`${styles.rtypeItem} ${rtype === r.value ? styles.selected : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="rtype"
+                        value={r.value}
+                        checked={rtype === r.value}
+                        onChange={() => setRtype(r.value)}
+                      />
+                      <span className={styles.rtypeText}>{r.label}</span>
+                      <span className={`${styles.rtypeBadge} ${styles[r.badgeClass]}`}>{r.badge}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -458,6 +482,10 @@ const Submit = () => {
                 <div className={styles.summaryRow}>
                   <span>نوع الناشر</span>
                   <strong>{roleLabel}</strong>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>نوع البحث</span>
+                  <strong>{rtypeLabel}</strong>
                 </div>
                 <div className={styles.summaryRow}>
                   <span>التخصص</span>

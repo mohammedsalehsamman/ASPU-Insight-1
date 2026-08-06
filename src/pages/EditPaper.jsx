@@ -21,6 +21,7 @@ export default function EditPaper() {
   const [error, setError] = useState(null);
   const [saveError, setSaveError] = useState(null);
 
+  /* ── جلب بيانات البحث الحالية ── */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -32,7 +33,7 @@ export default function EditPaper() {
         setForm({
           title: data.title || '',
           abstract: data.abstract || '',
-          is_paid_open_access: !! data.is_paid_open_access,
+          is_paid_open_access: !!data.is_paid_open_access,
         });
         setCurrentPdfName(data.pdf_file ? data.pdf_file.split('/').pop() : '');
       })

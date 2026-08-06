@@ -44,7 +44,10 @@ export const getProfile = async () => {
 
 //خالص
 export const updateProfile = async (payload) => {
-  const { data } = await api.patch('/api/auth/ASPU-2004/profile/', payload);
+  const isFormData = payload instanceof FormData;
+  const { data } = await api.patch('/api/auth/ASPU-2004/profile/', payload,
+    isFormData ? { headers: { 'Content-Type': undefined } } : undefined
+  );
   return data;
 };
 
