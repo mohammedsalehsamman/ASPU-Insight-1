@@ -12,53 +12,17 @@ import {
     FaCamera,
     FaUniversity,
     FaEnvelope,
-    FaFlask,
-    FaBook,
-    FaLinkedin,
-    FaExclamationTriangle,
-    FaPen,
-    FaSearch,
-    FaStar,
-    FaFileAlt,
-    FaCheck,
     FaChevronRight,
     FaCaretUp,
-    FaRegCircle,
 } from "react-icons/fa";
 
-const MOCK_STATS = [
-    { n: "12", labelAr: "بحث منشور", labelEn: "Published", deltaAr: "3 هذا العام", deltaEn: "3 this year" },
-    { n: "4,821", labelAr: "مرة قُرئت الأبحاث", labelEn: "Total Reads", deltaAr: "+18%", deltaEn: "+18%" },
-    { n: "37", labelAr: "اقتباس علمي", labelEn: "Citations", deltaAr: null, deltaEn: null },
-    { n: "94", labelAr: "نقطة تقييم", labelEn: "Reputation Score", deltaAr: "مرتبة ممتاز", deltaEn: "Excellent rank" },
-];
+import ProfileSkeleton from "../components/Profile/ProfileSkeleton";
+import ProfileError from "../components/Profile/ProfileError";
+import EditField from "../components/Profile/EditField";
+import ChangePasswordModal from "../components/Profile/ChangePasswordModal";
+import InfoTab from "../components/Profile/InfoTab";
+import ResearchTab from "../components/Profile/ResearchTab";
 
-const MOCK_LEVEL = {
-    nameAr: "مستوى: باحث متقدم", nameEn: "Advanced Researcher",
-    badge: "LV. 4", pts: 94, ptsAr: "94 نقطة", ptsEn: "94 pts",
-    nextAr: "150 للترقي", nextEn: "150 to next", percent: 63,
-    milestones: [
-        { done: true, ar: "أول نشر", en: "First Publish" },
-        { done: true, ar: "5 أبحاث", en: "5 Papers" },
-        { done: true, ar: "100 قراءة", en: "100 Reads" },
-        { done: false, ar: "20 اقتباس", en: "20 Citations" },
-    ],
-};
-
-const MOCK_SKILLS = ["Machine Learning", "NLP", "Deep Learning", "Data Mining", "Python", "TensorFlow"];
-
-const MOCK_SOCIAL = [
-    { Icon: FaEnvelope, label: "email" },
-    { Icon: FaFlask, label: "ResearchGate" },
-    { Icon: FaBook, label: "Google Scholar" },
-    { Icon: FaLinkedin, label: "LinkedIn" },
-];
-
-const ACT_LABELS = [
-    { ar: "يناير", en: "Jan" }, { ar: "أبريل", en: "Apr" },
-    { ar: "يوليو", en: "Jul" }, { ar: "أكتوبر", en: "Oct" },
-    { ar: "الآن", en: "Now" },
-];
 
 /* ══ RESOLVE MEDIA URL ══ */
 function resolveMediaUrl(url) {
@@ -79,355 +43,6 @@ function generateActivityGrid() {
         cols.push(cells);
     }
     return cols;
-}
-
-function ProfileSkeleton() {
-    return (
-        <div className="profile-hero" style={{ minHeight: 320 }}>
-            <div className="hero-inner" style={{ paddingTop: 40 }}>
-                <div style={{ display: "flex", gap: 24, alignItems: "center", marginBottom: 32 }}>
-                    <div style={{ width: 108, height: 108, borderRadius: "50%", background: "var(--surf2)", animation: "pulse 1.4s ease-in-out infinite" }} />
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ height: 16, width: "40%", borderRadius: 4, background: "var(--surf2)", animation: "pulse 1.4s ease-in-out infinite" }} />
-                        <div style={{ height: 32, width: "60%", borderRadius: 4, background: "var(--surf2)", animation: "pulse 1.4s ease-in-out infinite" }} />
-                        <div style={{ height: 14, width: "50%", borderRadius: 4, background: "var(--surf2)", animation: "pulse 1.4s ease-in-out infinite" }} />
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ProfileError({ message, onRetry, t }) {
-    return (
-        <div className="empty-state" style={{ marginTop: 120 }}>
-            <div className="empty-state-ico"><FaExclamationTriangle /></div>
-            <div className="empty-state-t">{t("auth.profile.error.loadFailed")}</div>
-            <div className="empty-state-s">{message}</div>
-            <button onClick={onRetry} className="edit-btn" style={{ marginTop: 16, display: "inline-flex" }}>
-                {t("auth.profile.action.retry")}
-            </button>
-        </div>
-    );
-}
-
-function EditField({ label, value, onChange, type = "text", placeholder = "" }) {
-    return (
-        <div className="field-group">
-            <label className="field-label">{label}</label>
-            {type === "textarea" ? (
-                <textarea
-                    className="field-input"
-                    value={value}
-                    onChange={e => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    rows={3}
-                />
-            ) : (
-                <input
-                    className="field-input"
-                    type={type}
-                    value={value}
-                    onChange={e => onChange(e.target.value)}
-                    placeholder={placeholder}
-                />
-            )}
-        </div>
-    );
-}
-
-function ChangePasswordModal({ onClose, t }) {
-    const [oldPassword, setOldPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
-
-    const handleSubmit = async () => {
-        setError("");
-
-        if (!oldPassword || !newPassword || !confirmPassword) {
-            setError(t("auth.profile.modal.error.emptyFields"));
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setError(t("auth.profile.modal.error.mismatch"));
-            return;
-        }
-        if (newPassword.length < 8) {
-            setError(t("auth.profile.modal.error.shortPassword"));
-            return;
-        }
-
-        setLoading(true);
-        try {
-            await changePassword(oldPassword, newPassword, confirmPassword);
-            setSuccess(true);
-            setTimeout(() => onClose(), 1200);
-        } catch (err) {
-            const errData = err?.response?.data;
-            setError(
-                errData
-                    ? Object.values(errData).flat().join(" ")
-                    : t("auth.profile.modal.error.submitFailed")
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div
-            style={{
-                position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                zIndex: 1000, padding: 20,
-            }}
-            onClick={onClose}
-        >
-            <div
-                style={{
-                    background: "var(--surf1)", borderRadius: 12, padding: 28,
-                    width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-                    border: "1px solid var(--bd)",
-                }}
-                onClick={e => e.stopPropagation()}
-            >
-                <div style={{ fontSize: 17, fontWeight: 700, color: "var(--tx1)", marginBottom: 20 }}>
-                    {t("auth.profile.modal.title")}
-                </div>
-
-                <EditField
-                    label={t("auth.profile.modal.oldPassword")}
-                    type="password"
-                    value={oldPassword}
-                    onChange={setOldPassword}
-                    placeholder={t("auth.profile.modal.oldPasswordPlaceholder")}
-                />
-                <EditField
-                    label={t("auth.profile.modal.newPassword")}
-                    type="password"
-                    value={newPassword}
-                    onChange={setNewPassword}
-                    placeholder={t("auth.profile.modal.newPasswordPlaceholder")}
-                />
-                <EditField
-                    label={t("auth.profile.modal.confirmPassword")}
-                    type="password"
-                    value={confirmPassword}
-                    onChange={setConfirmPassword}
-                    placeholder={t("auth.profile.modal.confirmPasswordPlaceholder")}
-                />
-
-                {error && <div className="form-msg error">{error}</div>}
-                {success && <div className="form-msg success">{t("auth.profile.modal.success")}</div>}
-
-                <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                    <button onClick={handleSubmit} disabled={loading} className="edit-btn primary">
-                        {loading ? t("auth.profile.action.saving") : t("auth.profile.modal.title")}
-                    </button>
-                    <button onClick={onClose} disabled={loading} className="edit-btn">
-                        {t("auth.profile.action.cancel")}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ══ ACTIVITY TAB CONTENT ══ */
-function ActivityTab({ grid, isAr, t }) {
-    return (
-        <div>
-            <div className="section-label">{t("auth.profile.activity.title", { defaultValue: isAr ? "النشاط خلال 12 شهراً" : "Activity — Last 12 Months" })}</div>
-            <div className="info-card">
-                <div className="activity-grid">
-                    {grid.map((col, i) => (
-                        <div key={i} className="act-col">
-                            {col.map((cls, j) => (
-                                <div key={j} className={`act-cell ${cls}`} />
-                            ))}
-                        </div>
-                    ))}
-                </div>
-                <div className="act-labels">
-                    {ACT_LABELS.map((l, i) => <span key={i}>{isAr ? l.ar : l.en}</span>)}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ══ INFO TAB CONTENT (بيانات حقيقية من الـ API) ══ */
-function InfoTab({ student, isAr, t }) {
-    return (
-        <div>
-            <div className="section-label">{isAr ? "المعلومات الأساسية" : "Basic Information"}</div>
-            <div className="info-card">
-                <div className="info-card-title">
-                    <FaGraduationCap /> <span>{isAr ? "المعلومات الأكاديمية" : "Academic Info"}</span>
-                </div>
-                <div className="info-grid">
-                    <div className="info-item">
-                        <div className="info-item-label">{isAr ? "الدور" : "Role"}</div>
-                        <div className="info-item-val ac">{isAr ? student.roleAr : student.roleEn}</div>
-                    </div>
-                    <div className="info-item">
-                        <div className="info-item-label">{isAr ? "الجامعة / المؤسسة" : "Institution"}</div>
-                        <div className="info-item-val">{isAr ? student.universityAr : student.universityEn}</div>
-                    </div>
-                    <div className="info-item">
-                        <div className="info-item-label">ORCID iD</div>
-                        <div className="info-item-val">{student.orcid_id || "—"}</div>
-                    </div>
-                    <div className="info-item">
-                        <div className="info-item-label">{isAr ? "البريد الإلكتروني" : "Email"}</div>
-                        <div className="info-item-val">{student.email || "—"}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ══ RESEARCH TAB (بيانات حقيقية من الـ API — /api/research/researchAspu2004/papers/) ══ */
-function ResearchTab({ papers, loading, error, isAr }) {
-    const statusLabel = (status) => {
-        switch (status) {
-            case "published": return isAr ? "منشور" : "Published";
-            case "pending": return isAr ? "قيد المراجعة" : "Under Review";
-            case "rejected": return isAr ? "مرفوض" : "Rejected";
-            case "needs_revision": return isAr ? "بحاجة لتعديل" : "Needs Revision";
-            default: return status || (isAr ? "غير معروف" : "Unknown");
-        }
-    };
-
-    const statusClass = (status) => {
-        if (status === "published") return "published";
-        if (status === "rejected") return "rejected";
-        return "review";
-    };
-
-    if (loading) {
-        return (
-            <div>
-                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
-                <div className="info-card">{isAr ? "جارٍ التحميل..." : "Loading..."}</div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div>
-                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
-                <div className="info-card">{error}</div>
-            </div>
-        );
-    }
-
-    if (!papers || papers.length === 0) {
-        return (
-            <div>
-                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
-                <div className="empty-state">
-                    <div className="empty-state-ico"><FaFileAlt /></div>
-                    <div className="empty-state-t">{isAr ? "لا توجد أبحاث بعد" : "No research yet"}</div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
-            <div className="research-list">
-                {papers.map((r) => (
-                    <div key={r.id} className="research-item">
-                        <div>
-                            <div className="ri-type">{r.specialization}</div>
-                            <div className="ri-title">{r.title}</div>
-                            <div className="ri-meta">
-                                {r.author_name && (
-                                    <div className="ri-meta-item"><FaPen /> {r.author_name}</div>
-                                )}
-                                {r.plagiarism_score != null && (
-                                    <div className="ri-meta-item">
-                                        <FaSearch /> {isAr ? "نسبة الاقتباس" : "Plagiarism"}: {r.plagiarism_score}%
-                                    </div>
-                                )}
-                                {r.metadata_quality_score != null && (
-                                    <div className="ri-meta-item">
-                                        <FaStar /> {isAr ? "جودة البيانات" : "Quality"}: {r.metadata_quality_score}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="ri-status">
-                            <div className={`ri-badge ${statusClass(r.status)}`}>
-                                {statusLabel(r.status)}
-                            </div>
-                            {r.rejection_reason && (
-                                <div className="ri-reads">{r.rejection_reason}</div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-/* ══ SIDEBAR (موك داتا) ══ */
-function ProfileSidebar({ isAr }) {
-    return (
-        <div>
-            <div className="level-section">
-                <div className="section-label">{isAr ? "المستوى الأكاديمي" : "Academic Level"}</div>
-                <div className="level-card">
-                    <div className="level-header">
-                        <div className="level-name">{isAr ? MOCK_LEVEL.nameAr : MOCK_LEVEL.nameEn}</div>
-                        <div className="level-badge">{MOCK_LEVEL.badge}</div>
-                    </div>
-                    <div className="level-bar-wrap">
-                        <div className="level-bar-labels">
-                            <span>{isAr ? MOCK_LEVEL.ptsAr : MOCK_LEVEL.ptsEn}</span>
-                            <span>{isAr ? MOCK_LEVEL.nextAr : MOCK_LEVEL.nextEn}</span>
-                        </div>
-                        <div className="level-bar-bg">
-                            <div className="level-bar-fill" style={{ width: `${MOCK_LEVEL.percent}%` }} />
-                        </div>
-                    </div>
-                    <div className="level-milestones">
-                        {MOCK_LEVEL.milestones.map((m, i) => (
-                            <div key={i} className={`milestone ${m.done ? "done" : ""}`}>
-                                {m.done ? <FaCheck /> : <FaRegCircle />} {isAr ? m.ar : m.en}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="side-card">
-                <div className="side-card-title">{isAr ? "مجالات البحث" : "Research Areas"}</div>
-                <div className="skills-list">
-                    {MOCK_SKILLS.map((s, i) => <span key={i} className="skill-tag">{s}</span>)}
-                </div>
-            </div>
-
-            <div className="side-card">
-                <div className="side-card-title">{isAr ? "التواصل" : "Contact"}</div>
-                <div className="social-links">
-                    {MOCK_SOCIAL.map((s, i) => (
-                        <a key={i} href="#" className="social-link">
-                            <span className="social-ico"><s.Icon /></span> {s.label}
-                        </a>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
 }
 
 /* ══ MAIN COMPONENT ══ */
@@ -845,17 +460,6 @@ export default function StudentProfile() {
                                 )}
                             </div>
                         </div>
-
-                        {/* ══ STATS STRIP ══ */}
-                        <div className="stats-strip">
-                            {MOCK_STATS.map((s, i) => (
-                                <div key={i} className="stat-cell">
-                                    <div className="stat-n">{s.n}</div>
-                                    <div className="stat-l">{isAr ? s.labelAr : s.labelEn}</div>
-                                    {s.deltaAr && <div className="stat-delta"><FaCaretUp /> {isAr ? s.deltaAr : s.deltaEn}</div>}
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     {/* ══ TABS ══ */}
@@ -865,9 +469,6 @@ export default function StudentProfile() {
                         </button>
                         <button className={`ptab ${activeTab === "info" ? "on" : ""}`} onClick={() => setActiveTab("info")}>
                             {isAr ? "المعلومات الأساسية" : "Basic Info"}
-                        </button>
-                        <button className={`ptab ${activeTab === "activity" ? "on" : ""}`} onClick={() => setActiveTab("activity")}>
-                            {isAr ? "النشاط" : "Activity"}
                         </button>
                     </div>
 
@@ -884,9 +485,7 @@ export default function StudentProfile() {
                                 />
                             )}
                             {activeTab === "info" && <InfoTab student={student} isAr={isAr} t={t} />}
-                            {activeTab === "activity" && <ActivityTab grid={activityGrid} isAr={isAr} t={t} />}
                         </div>
-                        <ProfileSidebar isAr={isAr} />
                     </div>
                 </>
             )}

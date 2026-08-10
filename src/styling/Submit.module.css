@@ -9,7 +9,7 @@
 /* ══ HERO HEADER ══ */
 .heroHeader {
   position: relative;
-  padding: 108px clamp(16px, 5%, 80px) 48px;
+  padding: 48px clamp(16px, 5%, 80px) 48px;  /* كان 108px */
   background: var(--bg);
   border-bottom: 1px solid var(--bd);
   overflow: hidden;
@@ -97,9 +97,10 @@
 }
 
 /* ══ PAGE HEADER TITLE ══ */
-.rr{
-  padding-top: 100px;
+.rr {
+  padding-top: 20px;  /* كان 100px — هاد أكبر سبب بالفراغ */
 }
+
 .formTitle {
   font-family: 'IBM Plex Sans Arabic', sans-serif;
   font-size: clamp(1.6rem, 4vw, 2.8rem);
@@ -186,8 +187,8 @@
   flex-shrink: 0;
 }
 
-.bb{
-margin-top: 50px;
+.bb {
+  margin-top: 20px;  /* كان 50px */
 }
 
 .sectionTitleText {

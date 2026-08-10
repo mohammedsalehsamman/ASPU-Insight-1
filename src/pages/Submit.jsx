@@ -4,51 +4,16 @@ import { getProfile } from '../api/auth';
 import styles from '../styling/Submit.module.css';
 import Navbar from '../components/Navbar.jsx';
 import Logo from '../components/Logo.jsx';
-import {
-  Robot,
-  LockKey,
-  Globe,
-  DeviceMobile,
-  ChartBar,
-  Code,
-  Shapes,
-  UploadSimple,
-  CheckCircle,
-  X,
-  ArrowLeft,
-  CaretDown,
-  User,
-} from '@phosphor-icons/react';
-
-const ROLE_LABELS = {
-  author: 'باحث',
-  reviewer: 'مراجع',
-  editor: 'محرر',
-};
-
-const RTYPE_OPTIONS = [
-  { value: 'technical', label: 'بحث علمي / تقني', badge: 'للجميع', badgeClass: 'rbBoth' },
-  { value: 'semester', label: 'مشروع فصلي', badge: 'طالب', badgeClass: 'rbStu' },
-  { value: 'graduation', label: 'مشروع تخرج (SRS)', badge: 'طالب', badgeClass: 'rbStu' },
-  { value: 'master', label: "رسالة ماجستير", badge: 'طالب', badgeClass: 'rbStu' },
-  { value: 'phd', label: 'رسالة دكتوراه', badge: 'طالب', badgeClass: 'rbStu' },
-];
-
-const DISCIPLINE_OPTIONS = [
-  { value: 'ai', icon: Robot, name: 'ذكاء اصطناعي' },
-  { value: 'sec', icon: LockKey, name: 'أمن معلومات' },
-  { value: 'net', icon: Globe, name: 'شبكات' },
-  { value: 'app', icon: DeviceMobile, name: 'تطوير تطبيقات' },
-  { value: 'data', icon: ChartBar, name: 'علم البيانات' },
-  { value: 'se', icon: Code, name: 'هندسة برمجيات' },
-  { value: 'other', icon: Shapes, name: 'أخرى' },
-];
-
-const STEPS = [
-  { num: 1, label: 'تفاصيل البحث', desc: 'العنوان والخلاصة' },
-  { num: 2, label: 'الكلمات المفتاحية', desc: 'الكلمات الدالة على البحث' },
-  { num: 3, label: 'ملف البحث', desc: 'رفع ملف PDF' },
-];
+import { CaretDown } from '@phosphor-icons/react';
+import PublisherInfo, { ROLE_LABELS } from '../components/Submit/PublisherInfo';
+import StepsList from '../components/Submit/StepsList';
+import RtypeSelector, { RTYPE_OPTIONS } from '../components/Submit/RtypeSelector';
+import DisciplineSelector, { DISCIPLINE_OPTIONS } from '../components/Submit/DisciplineSelector';
+import DetailsSection from '../components/Submit/DetailsSection';
+import FileSection from '../components/Submit/FileSection';
+import SummaryBox from '../components/Submit/SummaryBox';
+import ActionRow from '../components/Submit/ActionRow';
+import SuccessOverlay from '../components/Submit/SuccessOverlay';
 
 const Submit = () => {
   const [title, setTitle] = useState('');
@@ -193,7 +158,6 @@ const Submit = () => {
       <header className={styles.heroHeader}>
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroInner}>
-          {/* ✅ الإصلاح هنا: دمج className="rr" مع styles.breadcrumb */}
           <nav className={`${styles.rr} ${styles.breadcrumb}`} aria-label="Breadcrumb">
             <a href="/">الرئيسية</a>
             <span className={styles.crumbSep}>›</span>
@@ -228,85 +192,10 @@ const Submit = () => {
             </button>
 
             <div className={`${styles.sidebar} ${sidebarMobileOpen ? styles.mobileOpen : ''}`}>
-              {/* ✅ الناشر — للعرض فقط، مأخوذ من بروفايل المستخدم */}
-              <div>
-                <div className={styles.filterLabel}>الناشر</div>
-                <div className={styles.discItem} style={{ cursor: 'default' }}>
-                  <span className={styles.discIco}>
-                    <User size={14} weight="duotone" />
-                  </span>
-                  <span>
-                    {profileLoading
-                      ? 'جارٍ التحميل...'
-                      : `${profile?.full_name || '—'} (${roleLabel})`}
-                  </span>
-                </div>
-              </div>
-
-              {/* خطوات النشر */}
-              <div>
-                <div className={styles.filterLabel}>خطوات النشر</div>
-                <div className={styles.stepsList}>
-                  {STEPS.map((s) => {
-                    const state =
-                      s.num === openSection ? styles.active : s.num < openSection ? styles.done : '';
-                    return (
-                      <div className={`${styles.step} ${state}`} key={s.num}>
-                        <div className={styles.stepCircle}>{s.num}</div>
-                        <div>
-                          <div className={styles.stepLabel}>{s.label}</div>
-                          <div className={styles.stepDesc}>{s.desc}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* نوع البحث */}
-              <div>
-                <div className={styles.filterLabel}>نوع البحث</div>
-                <div className={styles.rtypeGrid}>
-                  {RTYPE_OPTIONS.map((r) => (
-                    <label
-                      key={r.value}
-                      className={`${styles.rtypeItem} ${rtype === r.value ? styles.selected : ''}`}
-                    >
-                      <input
-                        type="radio"
-                        name="rtype"
-                        value={r.value}
-                        checked={rtype === r.value}
-                        onChange={() => setRtype(r.value)}
-                      />
-                      <span className={styles.rtypeText}>{r.label}</span>
-                      <span className={`${styles.rtypeBadge} ${styles[r.badgeClass]}`}>{r.badge}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* التخصص */}
-              <div>
-                <div className={styles.filterLabel}>التخصص</div>
-                <div className={styles.discGrid}>
-                  {DISCIPLINE_OPTIONS.map((d) => (
-                    <label key={d.value} className={styles.discItem}>
-                      <input
-                        type="radio"
-                        name="discipline"
-                        value={d.value}
-                        checked={discipline === d.value}
-                        onChange={() => setDiscipline(d.value)}
-                      />
-                      <span className={styles.discIco}>
-                        <d.icon size={14} weight="duotone" />
-                      </span>
-                      <span>{d.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <PublisherInfo profile={profile} profileLoading={profileLoading} />
+              <StepsList openSection={openSection} />
+              <RtypeSelector rtype={rtype} setRtype={setRtype} />
+              <DisciplineSelector discipline={discipline} setDiscipline={setDiscipline} />
             </div>
           </aside>
 
@@ -316,216 +205,35 @@ const Submit = () => {
 
             <form onSubmit={handleSubmit} className={styles.mainForm}>
 
-              {/* قسم 1: تفاصيل البحث */}
-              <div className={styles.section}>
-                <button
-                  type="button"
-                  className={styles.sectionTitle}
-                  onClick={() => toggleSection(1)}
-                  aria-expanded={openSection === 1}
-                >
-                  <span className={styles.sectionTitleText}>
-                    تفاصيل البحث
-                    <span className={styles.sectionSubtitle}>العنوان والخلاصة</span>
-                  </span>
-                  <span className={`${styles.chevron} ${openSection === 1 ? styles.open : ''}`}>
-                    <CaretDown size={14} />
-                  </span>
-                </button>
+              <DetailsSection
+                openSection={openSection}
+                toggleSection={toggleSection}
+                title={title}
+                setTitle={setTitle}
+                abstract={abstract}
+                setAbstract={setAbstract}
+              />
 
-                {openSection === 1 && (
-                  <div>
-                    <div className={styles.inputGroup}>
-                      <label htmlFor="title">
-                        عنوان البحث <span className={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        maxLength={150}
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="أدخل عنوان البحث كاملاً..."
-                        required
-                      />
-                      <span className={styles.charCount}>{title.length}/150</span>
-                    </div>
 
-                    <div className={styles.inputGroup}>
-                      <label htmlFor="abstract">
-                        الخلاصة (Abstract) <span className={styles.required}>*</span>
-                      </label>
-                      <textarea
-                        id="abstract"
-                        maxLength={1000}
-                        rows={6}
-                        value={abstract}
-                        onChange={(e) => setAbstract(e.target.value)}
-                        placeholder="اكتب خلاصة البحث هنا..."
-                        required
-                      />
-                      <span className={styles.charCount}>{abstract.length}/1000</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <FileSection
+                openSection={openSection}
+                toggleSection={toggleSection}
+                file={file}
+                fileInputRef={fileInputRef}
+                handleFileChange={handleFileChange}
+                handleFileDrop={handleFileDrop}
+                dragOver={dragOver}
+                setDragOver={setDragOver}
+              />
 
-              {/* قسم 2: الكلمات المفتاحية */}
-              <div className={styles.section}>
-                <button
-                  type="button"
-                  className={styles.sectionTitle}
-                  onClick={() => toggleSection(2)}
-                  aria-expanded={openSection === 2}
-                >
-                  <span className={styles.sectionTitleText}>
-                    الكلمات المفتاحية
-                    <span className={styles.sectionSubtitle}>الكلمات الدالة على البحث</span>
-                  </span>
-                  <span className={`${styles.chevron} ${openSection === 2 ? styles.open : ''}`}>
-                    <CaretDown size={14} />
-                  </span>
-                </button>
+              <SummaryBox
+                roleLabel={roleLabel}
+                rtypeLabel={rtypeLabel}
+                discLabel={discLabel}
+                file={file}
+              />
 
-                {openSection === 2 && (
-                  <div>
-                    <div className={styles.inputGroup}>
-                      <div className={styles.keywordWrapper}>
-                        <input
-                          type="text"
-                          value={keywordInput}
-                          onChange={(e) => setKeywordInput(e.target.value)}
-                          onKeyDown={handleAddKeyword}
-                          placeholder="أضف كلمة واضغط Enter..."
-                        />
-                        <button type="button" onClick={handleAddKeyword} className={styles.addBtn}>
-                          إضافة
-                        </button>
-                      </div>
-
-                      <div className={styles.tagsContainer}>
-                        {keywords.map((kw, idx) => (
-                          <span key={idx} className={styles.tag}>
-                            {kw}
-                            <button type="button" onClick={() => handleRemoveKeyword(idx)} aria-label="حذف">
-                              <X size={12} weight="bold" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <span className={styles.fieldHint}>أضف عدة كلمات مفتاحية مفصولة بـ Enter</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* قسم 3: ملف البحث */}
-              <div className={styles.section}>
-                <button
-                  type="button"
-                  className={styles.sectionTitle}
-                  onClick={() => toggleSection(3)}
-                  aria-expanded={openSection === 3}
-                >
-                  <span className={styles.sectionTitleText}>
-                    ملف البحث
-                    <span className={styles.sectionSubtitle}>رفع ملف PDF</span>
-                  </span>
-                  <span className={`${styles.chevron} ${openSection === 3 ? styles.open : ''}`}>
-                    <CaretDown size={14} />
-                  </span>
-                </button>
-
-                {openSection === 3 && (
-                  <div>
-                    <div className={styles.inputGroup}>
-                      <div className={styles.fileUploadZone}>
-                        <input
-                          type="file"
-                          id="file-upload"
-                          accept=".pdf"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          className={styles.hiddenFileInput}
-                          required={!file}
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className={`${styles.fileLabel} ${dragOver ? styles.dragOver : ''}`}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setDragOver(true);
-                          }}
-                          onDragLeave={() => setDragOver(false)}
-                          onDrop={handleFileDrop}
-                        >
-                          <div className={styles.uploadIcon}>
-                            <UploadSimple size={32} weight="duotone" />
-                          </div>
-                          {file ? (
-                            <span className={styles.fileName}>
-                              {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                            </span>
-                          ) : (
-                            <span>اسحب ملف البحث بصيغة PDF أو انقر للاختيار</span>
-                          )}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ملخص الطلب */}
-              <div className={styles.summaryBox}>
-                <div className={styles.summaryTitle}>ملخص الطلب</div>
-                <div className={styles.summaryRow}>
-                  <span>نوع الناشر</span>
-                  <strong>{roleLabel}</strong>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>نوع البحث</span>
-                  <strong>{rtypeLabel}</strong>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>التخصص</span>
-                  <strong>{discLabel}</strong>
-                </div>
-                <div className={styles.summaryDivider} />
-                <div className={styles.summaryRow}>
-                  <span>ملف البحث</span>
-                  {file ? (
-                    <strong className={styles.summaryOk}>
-                      <CheckCircle size={14} weight="fill" /> {file.name}
-                    </strong>
-                  ) : (
-                    <span className={styles.summaryMuted}>لم يُرفع بعد</span>
-                  )}
-                </div>
-              </div>
-
-              {/* أزرار التحكم */}
-              <div className={styles.actionRow}>
-                <div className={styles.actionInfo}>
-                  <div className={styles.actionTitle}>هل أنت جاهز للإرسال؟</div>
-                  <div className={styles.actionSub}>سيتم مراجعة البحث من قبل النظام والمحررين</div>
-                </div>
-                <div className={styles.actionBtns}>
-                  <button type="button" onClick={handleReset} className={styles.resetBtn} disabled={loading}>
-                    إعادة تعيين
-                  </button>
-                  <button type="submit" disabled={loading} className={styles.submitBtn}>
-                    {loading ? 'جاري الإرسال...' : (
-                      <>
-                        تقديم البحث للمراجعة{' '}
-                        <span className={styles.arrow}>
-                          <ArrowLeft size={16} weight="bold" />
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <ActionRow loading={loading} handleReset={handleReset} />
 
             </form>
           </div>
@@ -534,19 +242,7 @@ const Submit = () => {
 
       {/* شاشة النجاح المنبثقة (Overlay) */}
       {showSuccess && (
-        <div className={styles.overlay}>
-          <div className={styles.overlayCard}>
-            <div className={styles.successCheck}>
-              <CheckCircle size={36} weight="fill" />
-            </div>
-            <h3>تم تقديم البحث بنجاح!</h3>
-            <p>تم تسجيل البحث في نظام ASPU Insight بنجاح وجاري تحويله إلى نظام مراجعة الذكاء الاصطناعي.</p>
-            <div className={styles.refBox}>رقم المرجع: {successRef}</div>
-            <button onClick={() => setShowSuccess(false)} className={styles.closeOverlayBtn}>
-              موافق
-            </button>
-          </div>
-        </div>
+        <SuccessOverlay successRef={successRef} onClose={() => setShowSuccess(false)} />
       )}
     </div>
   );

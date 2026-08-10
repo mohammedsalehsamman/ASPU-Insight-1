@@ -1,3 +1,11 @@
+import { FaLockOpen, FaFilePdf, FaFolderOpen, FaArrowLeft } from 'react-icons/fa';
+
+const STATUS_CONFIG = {
+  pending:  { ar: 'قيد المراجعة', cls: 'rr-sb-pending'  },
+  approved: { ar: 'منشور',        cls: 'rr-sb-approved' },
+  rejected: { ar: 'مرفوض',        cls: 'rr-sb-rejected' },
+};
+
 export default function PaperCard({ paper, onClick }) {
   const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
 
@@ -12,7 +20,9 @@ export default function PaperCard({ paper, onClick }) {
             {st.ar}
           </span>
           {paper.is_paid_open_access && (
-            <span className="rr-oa-badge">🔓 مفتوح</span>
+            <span className="rr-oa-badge">
+              <FaLockOpen size={11} /> مفتوح
+            </span>
           )}
         </div>
         <span className="rr-paper-id">#{paper.id}</span>
@@ -30,9 +40,14 @@ export default function PaperCard({ paper, onClick }) {
 
       <div className="rr-card-footer">
         <span className="rr-pdf-indicator">
-          {paper.pdf_file ? '📄 PDF متوفر' : '📂 لا يوجد PDF'}
+          {paper.pdf_file
+            ? <><FaFilePdf size={14} /> PDF متوفر</>
+            : <><FaFolderOpen size={14} /> لا يوجد PDF</>}
         </span>
-        <span className="rr-view-more">عرض التفاصيل ←</span>
+        <span className="rr-view-more">
+          عرض التفاصيل
+          <FaArrowLeft size={13} />
+        </span>
       </div>
     </div>
   );

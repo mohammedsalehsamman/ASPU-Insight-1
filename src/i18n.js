@@ -113,6 +113,14 @@ export const Ara = {
           { label: "إرشادات النشر", path: "/#" },
         ],
       },
+      {
+        title: "الفريق",
+        links: [
+          { label: "عدنان تيسير الله رشي", path: "https://github.com/3Dnan259" },
+          { label: "راما عثمان", path: "https://github.com/ramathman29-ship-it" },
+          { label: "محمد صالح سمان", path: "https://github.com/mohammedsalehsamman" },
+        ],
+      },
     ],
     copy: "© 2025 ASPU Insight — جامعة الشام الخاصة",
     sub: "مشروع تخرج · 2025–2026",
@@ -460,6 +468,14 @@ export const Eng = {
         links: [
           { label: "Submit Paper", path: "/submit" },
           { label: "Guidelines", path: "/#" },
+        ],
+      },
+      {
+        title: "Team",
+        links: [
+          { label: "Adnan Tayseer Allah Rashi", path: "/https://github.com/3Dnan259" },
+          { label: "Rama Othman", path: "https://github.com/ramathman29-ship-it" },
+          { label: "Mohammad Saleh Samman", path: "https://github.com/mohammedsalehsamman" },
         ],
       },
     ],

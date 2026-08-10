@@ -1,85 +1,23 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getPapers, smartSearchPapers } from '../api/research';
 import '../styling/ResearchReview.css';
-import {
-  MagnifyingGlass,
-  List,
-  SquaresFour,
-  FilePdf,
-  Folder,
-  LockOpen,
-  Warning,
-  ArrowClockwise,
-  SlidersHorizontal,
-  CaretDown,
-  FilePlus,
-  ArrowLeft,
-} from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Logo from '../components/Logo';
-
-/* ── Status config ── */
-const STATUS_CONFIG = {
-  pending:  { ar: 'قيد المراجعة', cls: 'rr-sb-pending'  },
-  approved: { ar: 'منشور',        cls: 'rr-sb-approved' },
-  rejected: { ar: 'مرفوض',        cls: 'rr-sb-rejected' },
-};
-
-/* ── Single paper card ── */
-function PaperCard({ paper, onClick }) {
-  const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
-
-  return (
-    <div className="rc-paper" onClick={onClick} role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick()}>
-
-      <div className="rcp-top">
-        <div className="rcp-tags">
-          <span className={`rr-status-badge ${st.cls}`}>
-            <span className="rr-badge-dot" />
-            {st.ar}
-          </span>
-          {paper.is_paid_open_access && (
-            <span className="rr-oa-badge">
-              <LockOpen size={11} weight="bold" /> مفتوح
-            </span>
-          )}
-        </div>
-        <span className="rr-paper-id">#{paper.id}</span>
-      </div>
-
-      <h3 className="rcp-title">{paper.title}</h3>
-      <p className="rcp-excerpt">{paper.abstract}</p>
-
-      <div className="rcp-meta">
-        <span className="rcp-author">{paper.author_name}</span>
-        <span className="rcp-sep">•</span>
-        <span>ASPU</span>
-      </div>
-
-      <div className="rr-card-footer">
-        <span className="rr-pdf-indicator">
-          {paper.pdf_file
-            ? <><FilePdf size={14} weight="duotone" /> PDF متوفر</>
-            : <><Folder size={14} weight="duotone" /> لا يوجد PDF</>}
-        </span>
-        <span className="rr-view-more">
-          عرض التفاصيل
-          <ArrowLeft size={13} weight="bold" />
-        </span>
-      </div>
-    </div>
-  );
-}
+import PageHeader from '../components/ResearchReview/PageHeader';
+import Sidebar from '../components/ResearchReview/Sidebar';
+import ResultsBar from '../components/ResearchReview/ResultsBar';
+import EmptyState, { LoadingState, ErrorState } from '../components/ResearchReview/EmptyState';
+import PapersGrid from '../components/ResearchReview/PapersGrid';
 
 /* ════════════════════════════════════════
    MAIN COMPONENT
 ════════════════════════════════════════ */
 export default function ResearchReview() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'ar';
   const isAr = lang === 'ar';
@@ -87,7 +25,7 @@ export default function ResearchReview() {
   const [papers,      setPapers]      = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState(null);
-  const [search,      setSearch]      = useState('');
+  const [search,      setSearch]      = useState(searchParams.get('q') || '');
   const [status,      setStatus]      = useState('all');
   const [oaOnly,      setOaOnly]      = useState(false);
   const [view,        setView]        = useState('list');
@@ -142,6 +80,15 @@ export default function ResearchReview() {
     return () => clearTimeout(t);
   }, [fetchPapers]);
 
+  // ← يحدّث الرابط كل ما يتغيّر نص البحث (يخليه قابل للمشاركة وللرجوع بالـ back button)
+  useEffect(() => {
+    if (search.trim()) {
+      setSearchParams({ q: search }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [search, setSearchParams]);
+
   /* ── Scroll ── */
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -172,6 +119,12 @@ export default function ResearchReview() {
   const footer = t('footer', { returnObjects: true });
   const hasFilters = search || status !== 'all' || oaOnly;
 
+  const handleResetFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setOaOnly(false);
+  };
+
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} lang={lang}>
       <div id="rr-cg" />
@@ -187,201 +140,49 @@ export default function ResearchReview() {
       />
 
       {/* ── PAGE HEADER ── */}
-      <div className="page-header">
-        <div className="ph-inner">
-          <div className="ph-breadcrumb">
-            <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: 'var(--ac)' }}>الرئيسية</span>
-            <span className="ph-sep">›</span>
-            <span>مراجعة الأبحاث</span>
-          </div>
-          <h1 className="ph-title">مراجعة الأبحاث<br />المنشورة</h1>
-          <p className="ph-sub">
-            استعراض شامل لجميع الأبحاث الأكاديمية — مرتّبة وقابلة للتصفية حسب الحالة والوصول.
-          </p>
-          {!loading && (
-            <div className="ph-stats-row">
-              <div className="ph-stat">
-                <div className="ph-stat-n">{papers.length}</div>
-                <div className="ph-stat-l">بحث</div>
-              </div>
-              <div className="ph-stat">
-                <div className="ph-stat-n">{papers.filter(p => p.status === 'approved').length}</div>
-                <div className="ph-stat-l">منشور</div>
-              </div>
-              <div className="ph-stat">
-                <div className="ph-stat-n">{papers.filter(p => p.status === 'pending').length}</div>
-                <div className="ph-stat-l">قيد المراجعة</div>
-              </div>
-              <div className="ph-stat">
-                <div className="ph-stat-n">{papers.filter(p => p.is_paid_open_access).length}</div>
-                <div className="ph-stat-l">وصول مفتوح</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <PageHeader navigate={navigate} papers={papers} loading={loading} />
 
       {/* ── BODY ── */}
       <div className="page-body">
 
-        {/* Mobile filter toggle */}
-        <button className="filter-toggle" onClick={() => setSideOpen(o => !o)}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <SlidersHorizontal size={15} weight="duotone" />
-            الفلاتر والتصفية
-          </span>
-          <CaretDown
-            size={16}
-            weight="bold"
-            style={{ transition: 'transform .3s', transform: sideOpen ? 'rotate(180deg)' : 'none' }}
-          />
-        </button>
-
-        {/* ── SIDEBAR ── */}
-        <aside className={`sidebar ${sideOpen ? 'mobile-open' : ''}`}>
-          <div>
-            <div className="filter-label">بحث ذكي (AI)</div>
-            <div className="sf-search">
-              <MagnifyingGlass size={15} weight="duotone" className="sf-ico" />
-              <input
-                type="text"
-                placeholder="اكتب فكرة البحث بلغتك الطبيعية..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="filter-label">الحالة</div>
-            <div className="cb-group">
-              {[
-                { value: 'all',      label: 'الكل'         },
-                { value: 'approved', label: 'منشور'        },
-                { value: 'pending',  label: 'قيد المراجعة' },
-                { value: 'rejected', label: 'مرفوض'        },
-              ].map((opt) => (
-                <label className="cb-item" key={opt.value}>
-                  <input
-                    type="radio"
-                    name="status"
-                    value={opt.value}
-                    checked={status === opt.value}
-                    onChange={() => setStatus(opt.value)}
-                  />
-                  <span>{opt.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="filter-label">نوع الوصول</div>
-            <label className="cb-item">
-              <input
-                type="checkbox"
-                checked={oaOnly}
-                onChange={(e) => setOaOnly(e.target.checked)}
-              />
-              <span>وصول مفتوح مدفوع فقط</span>
-            </label>
-          </div>
-
-          <button className="reset-btn" onClick={() => { setSearch(''); setStatus('all'); setOaOnly(false); }}>
-            إعادة تعيين الفلاتر
-          </button>
-        </aside>
+        <Sidebar
+          search={search} setSearch={setSearch}
+          status={status} setStatus={setStatus}
+          oaOnly={oaOnly} setOaOnly={setOaOnly}
+          sideOpen={sideOpen} setSideOpen={setSideOpen}
+          onReset={handleResetFilters}
+        />
 
         {/* ── CONTENT ── */}
         <div className="content-area">
 
-          <div className="results-bar">
-            <div className="results-count">
-              عرض <strong>{papers.length}</strong> بحث
-              {isSmartSearch && (
-                <span style={{ marginRight: 8, fontSize: 12, color: 'var(--ac)' }}>
-                  (نتائج بحث دلالي AI)
-                </span>
-              )}
-            </div>
-            <div className="view-btns">
-              <button className={`view-btn ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')} title="قائمة">
-                <List size={16} weight="bold" />
-              </button>
-              <button className={`view-btn ${view === 'grid' ? 'active' : ''}`} onClick={() => setView('grid')} title="شبكة">
-                <SquaresFour size={16} weight="bold" />
-              </button>
-            </div>
-          </div>
+          <ResultsBar
+            count={papers.length}
+            isSmartSearch={isSmartSearch}
+            view={view}
+            setView={setView}
+          />
 
-          {loading && (
-            <div className="rr-state-center">
-              <div className="rr-spinner" />
-              <span>جاري التحميل…</span>
-            </div>
-          )}
+          {loading && <LoadingState />}
 
           {error && !loading && (
-            <div className="rr-state-center">
-              <Warning size={36} weight="duotone" style={{ color: 'var(--ac)' }} />
-              <span className="rr-error-msg">{error}</span>
-              <button
-                className="reset-btn"
-                style={{ width: 'auto', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 7 }}
-                onClick={fetchPapers}
-              >
-                <ArrowClockwise size={14} weight="bold" />
-                إعادة المحاولة
-              </button>
-            </div>
+            <ErrorState error={error} onRetry={fetchPapers} />
           )}
 
           {!loading && !error && papers.length === 0 && (
-            <div className="rr-state-center">
-              <div className="rr-empty-ico">
-                <FilePlus size={48} weight="duotone" style={{ color: 'var(--ac)', opacity: .7 }} />
-              </div>
-
-              {hasFilters ? (
-                /* فلاتر نشطة */
-                <>
-                  <span className="rr-empty-title">لا توجد أبحاث تطابق معايير البحث</span>
-                  <span className="rr-empty-sub">جرّب تغيير الفلاتر أو مسح نص البحث</span>
-                  <button
-                    className="reset-btn"
-                    style={{ width: 'auto', padding: '9px 22px', marginTop: 4 }}
-                    onClick={() => { setSearch(''); setStatus('all'); setOaOnly(false); }}
-                  >
-                    مسح الفلاتر
-                  </button>
-                </>
-              ) : (
-                /* لا يوجد أي بحث */
-                <>
-                  <span className="rr-empty-title">لا توجد أبحاث منشورة بعد</span>
-                  <span className="rr-empty-sub">
-                    كن أول من ينشر بحثه على ASPU Insight
-                  </span>
-                  <button className="rr-submit-cta" onClick={() => navigate('/submit')}>
-                    <FilePlus size={16} weight="bold" />
-                    نشر بحث جديد
-                    <ArrowLeft size={15} weight="bold" />
-                  </button>
-                </>
-              )}
-            </div>
+            <EmptyState
+              hasFilters={hasFilters}
+              onClearFilters={handleResetFilters}
+              onSubmit={() => navigate('/submit')}
+            />
           )}
 
           {!loading && !error && papers.length > 0 && (
-            <div className={`research-grid ${view === 'grid' ? 'grid-2col' : ''}`}>
-              {papers.map((paper) => (
-                <PaperCard
-                  key={paper.id}
-                  paper={paper}
-                  onClick={() => navigate(`/papers/${paper.id}`)}
-                />
-              ))}
-            </div>
+            <PapersGrid
+              papers={papers}
+              view={view}
+              onPaperClick={(id) => navigate(`/papers/${id}`)}
+            />
           )}
 
         </div>
