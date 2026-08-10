@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
-import { getPaper } from '../api/research';
+import { getPaper, downloadPaper } from '../api/research';
 import { PaperDetailDict, createLocalT } from '../i18n'; 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -39,6 +39,10 @@ export default function PaperDetail() {
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const navScrolled = useNavScroll();
 
+  // ← حالة زر التحميل الفعلي (API /download/)
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(null);
+
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
@@ -63,6 +67,34 @@ export default function PaperDetail() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
   };
+
+  /* ── تحميل ملف البحث عبر الـ API الحقيقي (blob) ── */
+  async function handleDownload() {
+    if (!paper) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const blob = await downloadPaper(paper.id);
+
+      // استخراج اسم الملف من مسار pdf_file إن وجد، وإلا اسم افتراضي
+      const fileName = paper.pdf_file
+        ? paper.pdf_file.split('/').pop()
+        : `paper-${paper.id}.pdf`;
+
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err.message || (lang === 'ar' ? 'فشل تحميل الملف' : 'Failed to download file'));
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const STATUS_CONFIG = {
     pending:  { label: t('status_pending'),  badgeCls: 'pd-sb-pending',  metaCls: 'pd-meta-val--gold' },
@@ -206,20 +238,27 @@ export default function PaperDetail() {
                   <div className="pd-pdf-sub">{t('pdf_attached_sub')}</div>
                 </div>
 
-                <a
-                  href={paper.pdf_file}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
                   className="pd-pdf-download-btn"
+                  onClick={handleDownload}
+                  disabled={downloading}
                 >
-                  <FaDownload size={12} /> {t('download')}
-                </a>
+                  <FaDownload size={12} />
+                  {downloading
+                    ? (lang === 'ar' ? 'جارٍ التحميل...' : 'Downloading...')
+                    : t('download')}
+                </button>
               </div>
             ) : (
               <div className="pd-pdf-missing">
                 <span className="pd-pdf-missing-icon"><FaFolderOpen /></span>
                 <span>{t('pdf_missing')}</span>
               </div>
+            )}
+            {downloadError && (
+              <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                {downloadError}
+              </p>
             )}
           </div>
 

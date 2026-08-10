@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { getPapers, submitAssistantReport, getAssistantReview } from "../../api/research";
+import { getPapers, submitAssistantReport, getAssistantReview, getPlagiarismReport, suggestKeywords } from "../../api/research";
 import "../../styling/EditorAssistant.css"
 
 /* ══════════════════
@@ -68,6 +68,12 @@ export default function EditorAssistant() {
   const [noteText, setNoteText] = useState('');
   const [previewIdx, setPreviewIdx] = useState(null);
 
+  // ← حقول تقرير مساعد المحرر (تطابق الـ backend schema: decision/notes/is_format_compliant/is_complete/policy_notes)
+  const [decision, setDecision] = useState('APPROVE');
+  const [isFormatCompliant, setIsFormatCompliant] = useState(true);
+  const [isComplete, setIsComplete] = useState(true);
+  const [policyNotes, setPolicyNotes] = useState('');
+
   // ← حالة حفظ التقرير
   const [savingNote, setSavingNote] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -76,6 +82,16 @@ export default function EditorAssistant() {
   const [reviewData, setReviewData] = useState(null);
   const [loadingReview, setLoadingReview] = useState(false);
   const [reviewError, setReviewError] = useState(null);
+
+  // ← حالة تقرير فحص الانتحال (GET plagiarism-report)
+  const [plagiarismData, setPlagiarismData] = useState(null);
+  const [loadingPlagiarism, setLoadingPlagiarism] = useState(false);
+  const [plagiarismError, setPlagiarismError] = useState(null);
+
+  // ← حالة اقتراح الكلمات المفتاحية (POST keywords/suggest)
+  const [keywordsData, setKeywordsData] = useState(null);
+  const [loadingKeywords, setLoadingKeywords] = useState(false);
+  const [keywordsError, setKeywordsError] = useState(null);
 
   const menuRef = useRef(null);
   const menuTopRef = useRef(null);
@@ -194,9 +210,17 @@ export default function EditorAssistant() {
     setDetailOpen(true);
     setNoteEditorOpen(false);
     setNoteText('');
+    setDecision('APPROVE');
+    setIsFormatCompliant(true);
+    setIsComplete(true);
+    setPolicyNotes('');
     setSaveError(null);
     setReviewData(null);
     setReviewError(null);
+    setPlagiarismData(null);
+    setPlagiarismError(null);
+    setKeywordsData(null);
+    setKeywordsError(null);
     document.body.style.overflow = 'hidden';
   }
 
@@ -205,9 +229,17 @@ export default function EditorAssistant() {
     setActivePaper(null);
     setNoteEditorOpen(false);
     setNoteText('');
+    setDecision('APPROVE');
+    setIsFormatCompliant(true);
+    setIsComplete(true);
+    setPolicyNotes('');
     setSaveError(null);
     setReviewData(null);
     setReviewError(null);
+    setPlagiarismData(null);
+    setPlagiarismError(null);
+    setKeywordsData(null);
+    setKeywordsError(null);
     document.body.style.overflow = '';
   }
 
@@ -226,7 +258,37 @@ export default function EditorAssistant() {
     }
   }
 
-  /* ── Save note (متصل بالـ API الآن) ── */
+  /* ── جلب تقرير فحص الانتحال (GET plagiarism-report) ── */
+  async function loadPlagiarismReport() {
+    if (!activePaper) return;
+    setLoadingPlagiarism(true);
+    setPlagiarismError(null);
+    try {
+      const data = await getPlagiarismReport(activePaper.id);
+      setPlagiarismData(data);
+    } catch (err) {
+      setPlagiarismError(err);
+    } finally {
+      setLoadingPlagiarism(false);
+    }
+  }
+
+  /* ── جلب اقتراح الكلمات المفتاحية (POST keywords/suggest) ── */
+  async function loadKeywordsSuggestion() {
+    if (!activePaper) return;
+    setLoadingKeywords(true);
+    setKeywordsError(null);
+    try {
+      const data = await suggestKeywords(activePaper.id);
+      setKeywordsData(data);
+    } catch (err) {
+      setKeywordsError(err);
+    } finally {
+      setLoadingKeywords(false);
+    }
+  }
+
+  /* ── Save note (payload يطابق تماماً schema الـ backend) ── */
   async function saveNote() {
     if (!activePaper || !noteText.trim()) return;
 
@@ -235,13 +297,16 @@ export default function EditorAssistant() {
 
     try {
       const payload = {
-        assistant_report: noteText.trim(),
+        decision,                              // "APPROVE" | "REJECT"
+        notes: noteText.trim(),
+        is_format_compliant: isFormatCompliant, // boolean
+        is_complete: isComplete,                // boolean
+        policy_notes: policyNotes.trim(),       // string (يمكن يكون فاضي)
       };
 
       await submitAssistantReport(activePaper.id, payload);
 
       // الباك إند بيرجع فقط رسالة تأكيد، فبنبني الكائن المحدث يدوياً
-      // ملاحظة: اسم الحقل بالموديل/الـ API هو assistant_editor_report
       const updatedPaper = {
         ...activePaper,
         assistant_editor_report: noteText.trim(),
@@ -254,6 +319,7 @@ export default function EditorAssistant() {
       setActivePaper(updatedPaper);
       setNoteEditorOpen(false);
       setNoteText('');
+      setPolicyNotes('');
     } catch (err) {
       setSaveError(err);
     } finally {
@@ -324,6 +390,25 @@ export default function EditorAssistant() {
       papers_await_en: 'await your review',
       sub_ar: 'هنا كل الأبحاث المُقدَّمة حديثاً. اضغط على أي بحث لتطلع على تفاصيله وتضيف تقريرك.',
       sub_en: 'All recently submitted papers are listed below. Click any paper to view details and add your report.',
+      plag_report_l: { ar: 'تقرير فحص الانتحال', en: 'Plagiarism Report' },
+      plag_load_btn: { ar: 'عرض تقرير الانتحال', en: 'Load Plagiarism Report' },
+      plag_pending:  { ar: 'التقرير قيد الإنشاء، حاول لاحقاً', en: 'Report is being generated, try again later' },
+      plag_total:    { ar: 'نسبة التشابه الكلية', en: 'Total Similarity' },
+      plag_internal: { ar: 'تشابه داخلي', en: 'Internal Similarity' },
+      plag_external: { ar: 'تشابه خارجي', en: 'External Similarity' },
+      plag_human:    { ar: 'يتطلب مراجعة بشرية', en: 'Requires Human Review' },
+      plag_fail:     { ar: 'فشل تحميل تقرير الانتحال، حاول مرة أخرى', en: 'Failed to load plagiarism report, please try again' },
+      kw_l:          { ar: 'اقتراح كلمات مفتاحية', en: 'Keyword Suggestions' },
+      kw_load_btn:   { ar: 'اقترح كلمات مفتاحية', en: 'Suggest Keywords' },
+      kw_none:       { ar: 'لا توجد اقتراحات متاحة حالياً', en: 'No suggestions available right now' },
+      kw_fail:       { ar: 'فشل تحميل الكلمات المفتاحية', en: 'Failed to load keyword suggestions' },
+      decision_l:    { ar: 'القرار', en: 'Decision' },
+      approve:       { ar: 'قبول (APPROVE)', en: 'Approve' },
+      reject:        { ar: 'رفض (REJECT)', en: 'Reject' },
+      format_ok_l:   { ar: 'الفورمات مطابق للمعايير', en: 'Format is compliant' },
+      complete_l:    { ar: 'البحث مكتمل', en: 'Paper is complete' },
+      policy_notes_l:{ ar: 'ملاحظات السياسات (اختياري)', en: 'Policy Notes (optional)' },
+      policy_ph:     { ar: 'اكتب أي ملاحظات متعلقة بسياسات النشر...', en: 'Any policy-related notes...' },
     };
     return (map[key]?.[lang]) ?? (map[key]) ?? key;
   };
@@ -668,7 +753,7 @@ export default function EditorAssistant() {
                 ))}
               </div>
 
-              {/* AI Keywords */}
+              {/* AI Keywords (تابع البحث نفسه إن وُجدت) */}
               {activePaper.ai_keywords?.length > 0 && (
                 <>
                   <div className="dp-sec-label">{t('keywords')}</div>
@@ -689,6 +774,70 @@ export default function EditorAssistant() {
 
               <div className="dp-sec-label">{t('abstract')}</div>
               <div className="dp-abstract">{activePaper.abstract}</div>
+
+              {/* Plagiarism Report */}
+              <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('plag_report_l')}</div>
+              {!plagiarismData ? (
+                <button className="add-note-btn" onClick={loadPlagiarismReport} disabled={loadingPlagiarism}>
+                  {loadingPlagiarism ? t('saving') : t('plag_load_btn')}
+                </button>
+              ) : plagiarismData.status === 'pending' ? (
+                <div className="no-notes-msg">{t('plag_pending')}</div>
+              ) : (
+                <div className="dp-info-grid">
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('plag_total')}</div>
+                    <div className="dp-info-val">{plagiarismData.total_similarity_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('plag_internal')}</div>
+                    <div className="dp-info-val">{plagiarismData.internal_similarity_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('plag_external')}</div>
+                    <div className="dp-info-val">{plagiarismData.external_similarity_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('plag_human')}</div>
+                    <div className="dp-info-val">{plagiarismData.requires_human_review ? t('yes') : t('no')}</div>
+                  </div>
+                </div>
+              )}
+              {plagiarismError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {t('plag_fail')}
+                </p>
+              )}
+
+              {/* Keyword Suggestions (API خاص بالاقتراح، جنب مربعات الانتحال) */}
+              <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('kw_l')}</div>
+              {!keywordsData ? (
+                <button className="add-note-btn" onClick={loadKeywordsSuggestion} disabled={loadingKeywords}>
+                  {loadingKeywords ? t('saving') : t('kw_load_btn')}
+                </button>
+              ) : keywordsData.keywords?.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                  {keywordsData.keywords.map((kw, i) => (
+                    <span key={i} style={{
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '20px',
+                      padding: '4px 12px',
+                      fontSize: '12px',
+                      color: 'var(--ac)',
+                    }}>{kw}</span>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-notes-msg">
+                  {keywordsData.note || t('kw_none')}
+                </div>
+              )}
+              {keywordsError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {t('kw_fail')}
+                </p>
+              )}
 
               {/* PDF File */}
               <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('file')}</div>
@@ -761,6 +910,28 @@ export default function EditorAssistant() {
 
               {noteEditorOpen && (
                 <div className="note-editor open">
+                  {/* القرار: APPROVE / REJECT */}
+                  <div className="dp-sec-label" style={{ marginTop: 4 }}>{t('decision_l')}</div>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    <button
+                      type="button"
+                      className={`filter-pill ${decision === 'APPROVE' ? 'active' : ''}`}
+                      onClick={() => setDecision('APPROVE')}
+                      disabled={savingNote}
+                    >
+                      {t('approve')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`filter-pill ${decision === 'REJECT' ? 'active' : ''}`}
+                      onClick={() => setDecision('REJECT')}
+                      disabled={savingNote}
+                    >
+                      {t('reject')}
+                    </button>
+                  </div>
+
+                  {/* الملاحظات الأساسية → تُرسل كـ notes */}
                   <textarea
                     className="note-textarea"
                     placeholder={t('note_ph')}
@@ -770,10 +941,50 @@ export default function EditorAssistant() {
                     autoFocus
                     disabled={savingNote}
                   />
+
+                  {/* checkboxes */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      checked={isFormatCompliant}
+                      onChange={e => setIsFormatCompliant(e.target.checked)}
+                      disabled={savingNote}
+                    />
+                    {t('format_ok_l')}
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      checked={isComplete}
+                      onChange={e => setIsComplete(e.target.checked)}
+                      disabled={savingNote}
+                    />
+                    {t('complete_l')}
+                  </label>
+
+                  {/* policy_notes (اختياري) */}
+                  <div className="dp-sec-label" style={{ marginTop: 12 }}>{t('policy_notes_l')}</div>
+                  <textarea
+                    className="note-textarea"
+                    placeholder={t('policy_ph')}
+                    rows={2}
+                    value={policyNotes}
+                    onChange={e => setPolicyNotes(e.target.value)}
+                    disabled={savingNote}
+                  />
+
                   <div className="note-editor-btns">
                     <button
                       className="btn-cancel-note"
-                      onClick={() => { setNoteEditorOpen(false); setNoteText(''); setSaveError(null); }}
+                      onClick={() => {
+                        setNoteEditorOpen(false);
+                        setNoteText('');
+                        setDecision('APPROVE');
+                        setIsFormatCompliant(true);
+                        setIsComplete(true);
+                        setPolicyNotes('');
+                        setSaveError(null);
+                      }}
                       disabled={savingNote}
                     >
                       {t('cancel')}

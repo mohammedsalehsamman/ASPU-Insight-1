@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPapers } from '../api/research';
+import { getPapers, smartSearchPapers } from '../api/research';
 import '../styling/ResearchReview.css';
 import {
   MagnifyingGlass,
@@ -93,6 +93,9 @@ export default function ResearchReview() {
   const [view,        setView]        = useState('list');
   const [sideOpen,    setSideOpen]    = useState(false);
 
+  // ← يوضّح للمستخدم إنه النتائج جاية من البحث الدلالي (AI) مش البحث العادي
+  const [isSmartSearch, setIsSmartSearch] = useState(false);
+
   // ── Navbar state ──
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
@@ -103,12 +106,30 @@ export default function ResearchReview() {
     setLoading(true);
     setError(null);
     try {
-      const params = {};
-      if (search)           params.search = search;
-      if (status !== 'all') params.status = status;
-      if (oaOnly)           params.is_paid_open_access = true;
-      const data = await getPapers(params);
-      setPapers(Array.isArray(data) ? data : (data.results ?? []));
+      const trimmedSearch = search.trim();
+
+      if (trimmedSearch) {
+        // ← بحث دلالي (Smart Search) — بياخد q فقط، فبنطبّق فلاتر الحالة/الوصول محليًا بعدين
+        setIsSmartSearch(true);
+        const data = await smartSearchPapers(trimmedSearch);
+        let results = Array.isArray(data) ? data : (data.results ?? []);
+
+        if (status !== 'all') {
+          results = results.filter((p) => p.status === status);
+        }
+        if (oaOnly) {
+          results = results.filter((p) => p.is_paid_open_access);
+        }
+        setPapers(results);
+      } else {
+        // ← بحث/تصفية عادية عبر الـ API الأساسي
+        setIsSmartSearch(false);
+        const params = {};
+        if (status !== 'all') params.status = status;
+        if (oaOnly)           params.is_paid_open_access = true;
+        const data = await getPapers(params);
+        setPapers(Array.isArray(data) ? data : (data.results ?? []));
+      }
     } catch (err) {
       setError(err.message || 'خطأ في جلب البيانات');
     } finally {
@@ -219,12 +240,12 @@ export default function ResearchReview() {
         {/* ── SIDEBAR ── */}
         <aside className={`sidebar ${sideOpen ? 'mobile-open' : ''}`}>
           <div>
-            <div className="filter-label">بحث</div>
+            <div className="filter-label">بحث ذكي (AI)</div>
             <div className="sf-search">
               <MagnifyingGlass size={15} weight="duotone" className="sf-ico" />
               <input
                 type="text"
-                placeholder="عنوان، باحث، كلمة مفتاحية..."
+                placeholder="اكتب فكرة البحث بلغتك الطبيعية..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -277,6 +298,11 @@ export default function ResearchReview() {
           <div className="results-bar">
             <div className="results-count">
               عرض <strong>{papers.length}</strong> بحث
+              {isSmartSearch && (
+                <span style={{ marginRight: 8, fontSize: 12, color: 'var(--ac)' }}>
+                  (نتائج بحث دلالي AI)
+                </span>
+              )}
             </div>
             <div className="view-btns">
               <button className={`view-btn ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')} title="قائمة">

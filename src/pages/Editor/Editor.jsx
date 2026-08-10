@@ -66,6 +66,12 @@ const DECISION_OPTIONS = [
 ];
 
 /* ══════════════════
+   عدد المحكّمين الأساسيين المطلوب من الباك (ثابت — شفناه بالـ Postman:
+   "primary_users" لازم يكون بالضبط 3 عناصر)
+══════════════════ */
+const REQUIRED_PRIMARY_COUNT = 3;
+
+/* ══════════════════
    AUTH HELPER — يقرأ اسم المستخدم الحالي من بيانات تسجيل الدخول المخزّنة
 ══════════════════ */
 function getCurrentUser() {
@@ -149,11 +155,17 @@ export default function Editor() {
   const [initialReviewError, setInitialReviewError] = useState(null);
 
   // ← لجنة التحكيم (تظهر فقط إذا decision === SEND_TO_COMMITTEE)
+  // ✅ FIX: الباك بيتوقع تمييز صريح بين أعضاء أساسيين (primary_users — بالضبط 3)
+  //   وأعضاء احتياطيين (substitute_users — عدد حر)، بالإضافة لـ blinding_type.
+  //   قبل هيك كان في مصفوفة وحدة selectedReviewerIds بتترسل باسم reviewer_ids
+  //   وهاد سبب رفض الباك للطلب ("يجب 3 محكمين أساسيين").
   const [committeePanelOpen, setCommitteePanelOpen] = useState(false);
   const [availableReviewers, setAvailableReviewers] = useState([]);
   const [loadingReviewers, setLoadingReviewers] = useState(false);
   const [reviewersError, setReviewersError] = useState(null);
-  const [selectedReviewerIds, setSelectedReviewerIds] = useState([]);
+  const [primaryReviewerIds, setPrimaryReviewerIds] = useState([]);
+  const [substituteReviewerIds, setSubstituteReviewerIds] = useState([]);
+  const [blindingType, setBlindingType] = useState('single_blind');
   const [creatingCommittee, setCreatingCommittee] = useState(false);
   const [committeeError, setCommitteeError] = useState(null);
   const [committeeSuccess, setCommitteeSuccess] = useState(false);
@@ -303,7 +315,7 @@ export default function Editor() {
     if (!p) return;
     setActivePaper(p);
     setDetailOpen(true);
-    resetReviewUI();
+    resetReviewUI(p);
     document.body.style.overflow = 'hidden';
     loadReviews(p.id);
   }
@@ -311,11 +323,11 @@ export default function Editor() {
   function closeDetail() {
     setDetailOpen(false);
     setActivePaper(null);
-    resetReviewUI();
+    resetReviewUI(null);
     document.body.style.overflow = '';
   }
 
-  function resetReviewUI() {
+  function resetReviewUI(paper) {
     setNoteEditorOpen(false);
     setNoteText('');
     setDecision('');
@@ -325,7 +337,10 @@ export default function Editor() {
     // ← تصفير حالة اللجنة
     setCommitteePanelOpen(false);
     setAvailableReviewers([]);
-    setSelectedReviewerIds([]);
+    setPrimaryReviewerIds([]);
+    setSubstituteReviewerIds([]);
+    // الافتراضي: نفس نوع تحكيم البحث نفسه (single_blind / double_blind)
+    setBlindingType(paper?.review_blindness_type === 'double_blind' ? 'double_blind' : 'single_blind');
     setReviewersError(null);
     setCommitteeError(null);
     setCommitteeSuccess(false);
@@ -380,7 +395,9 @@ export default function Editor() {
     setCommitteePanelOpen(true);
     setLoadingReviewers(true);
     setReviewersError(null);
-    setSelectedReviewerIds([]);
+    setPrimaryReviewerIds([]);
+    setSubstituteReviewerIds([]);
+    setBlindingType(activePaper.review_blindness_type === 'double_blind' ? 'double_blind' : 'single_blind');
     setCommitteeError(null);
     setCommitteeSuccess(false);
 
@@ -398,24 +415,41 @@ export default function Editor() {
     setCommitteePanelOpen(false);
   }
 
-  function toggleReviewer(userId) {
-    setSelectedReviewerIds(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
+  /* ── تحديد دور المحكّم: بدون / أساسي / احتياطي ──
+     كل محكّم بيكون بس بحالة وحدة (primary أو substitute أو ولا وحدة) */
+  function setReviewerRole(userId, role) {
+    setPrimaryReviewerIds(prev => prev.filter(id => id !== userId));
+    setSubstituteReviewerIds(prev => prev.filter(id => id !== userId));
+    if (role === 'primary') {
+      setPrimaryReviewerIds(prev => [...prev, userId]);
+    } else if (role === 'substitute') {
+      setSubstituteReviewerIds(prev => [...prev, userId]);
+    }
+  }
+
+  function getReviewerRole(userId) {
+    if (primaryReviewerIds.includes(userId)) return 'primary';
+    if (substituteReviewerIds.includes(userId)) return 'substitute';
+    return 'none';
   }
 
   /* ── إنشاء اللجنة ─────────────────────────────────
-     ⚠ شكل الـ payload تحت هو افتراض (reviewer_ids: [...]).
-     لازم تتأكد من الباك (Postman) شو اسم الحقل المتوقع بالضبط
-     قبل ما تعتمدها نهائياً */
+     ✅ FIX: الـ payload الصحيح (شفناه بالـ Postman) هو:
+       { primary_users: [...] (بالضبط 3), substitute_users: [...], blinding_type: "single_blind"|"double_blind" }
+     قبل هيك كان عم يترسل { reviewer_ids: [...] } وهاد مش الشكل يلي الباك بيتوقعه إطلاقاً. */
   async function handleCreateCommittee() {
-    if (!activePaper || selectedReviewerIds.length === 0) return;
+    if (!activePaper) return;
+    if (primaryReviewerIds.length !== REQUIRED_PRIMARY_COUNT) return;
 
     setCreatingCommittee(true);
     setCommitteeError(null);
 
     try {
-      const payload = { reviewer_ids: selectedReviewerIds };
+      const payload = {
+        primary_users: primaryReviewerIds,
+        substitute_users: substituteReviewerIds,
+        blinding_type: blindingType,
+      };
       await createCommittee(activePaper.id, payload);
       setCommitteeSuccess(true);
       setCommitteePanelOpen(false);
@@ -507,6 +541,30 @@ export default function Editor() {
       papers_await_en: 'await your review',
       sub_ar: 'هنا كل الأبحاث المُقدَّمة حديثاً. اضغط على أي بحث لتطلع على تفاصيله وتضيف تقريرك.',
       sub_en: 'All recently submitted papers are listed below. Click any paper to view details and add your report.',
+      // ── لجنة التحكيم ──
+      select_committee_l: { ar: 'اختر أعضاء اللجنة', en: 'Select Committee Members' },
+      committee_hint: {
+        ar: `اختر بالضبط ${REQUIRED_PRIMARY_COUNT} محكّمين أساسيين، وأي عدد من الاحتياطيين (اختياري)`,
+        en: `Select exactly ${REQUIRED_PRIMARY_COUNT} primary reviewers, and any number of substitutes (optional)`,
+      },
+      role_none: { ar: '— بدون —', en: '— None —' },
+      role_primary: { ar: 'أساسي', en: 'Primary' },
+      role_substitute: { ar: 'احتياطي', en: 'Substitute' },
+      blinding_type_l: { ar: 'نوع التحكيم', en: 'Blinding Type' },
+      single_blind: { ar: 'تحكيم فردي (Single Blind)', en: 'Single Blind' },
+      double_blind: { ar: 'تحكيم مزدوج (Double Blind)', en: 'Double Blind' },
+      primary_count_ok: { ar: 'تمام، عندك 3 أساسيين ✓', en: 'Good, 3 primary selected ✓' },
+      primary_count_bad: {
+        ar: `لازم تختار بالضبط ${REQUIRED_PRIMARY_COUNT} أساسيين (المختارين حالياً: `,
+        en: `You must select exactly ${REQUIRED_PRIMARY_COUNT} primary reviewers (currently selected: `,
+      },
+      no_reviewers: { ar: 'لا يوجد مراجعون متاحون حالياً', en: 'No available reviewers' },
+      reviewers_load_fail: { ar: 'فشل تحميل المراجعين المتاحين', en: 'Failed to load available reviewers' },
+      creating: { ar: 'جارٍ الإنشاء...', en: 'Creating...' },
+      create_committee_btn: { ar: 'إنشاء اللجنة', en: 'Create Committee' },
+      committee_fail: { ar: 'فشل إنشاء اللجنة، حاول مرة أخرى', en: 'Failed to create committee, please try again' },
+      committee_success: { ar: '✓ تم إنشاء اللجنة بنجاح', en: '✓ Committee created successfully' },
+      view_reviewers_btn: { ar: 'استعراض الأعضاء المحتملين للتحكيم', en: 'View Potential Committee Members' },
     };
     return (map[key]?.[lang]) ?? (map[key]) ?? key;
   };
@@ -955,66 +1013,103 @@ export default function Editor() {
                     marginTop: 16,
                   }}
                 >
-                  {lang === 'ar' ? 'استعراض الأعضاء المحتملين للتحكيم' : 'View Potential Committee Members'}
+                  {t('view_reviewers_btn')}
                 </button>
               )}
 
               {committeeSuccess && (
                 <p style={{ color: '#22C55E', fontSize: 13, marginTop: 12, fontWeight: 600 }}>
-                  {lang === 'ar' ? '✓ تم إنشاء اللجنة بنجاح' : '✓ Committee created successfully'}
+                  {t('committee_success')}
                 </p>
               )}
 
               {committeePanelOpen && (
                 <div className="note-editor open" style={{ marginTop: 16 }}>
                   <div className="dp-sec-label">
-                    {lang === 'ar' ? 'اختر أعضاء اللجنة' : 'Select Committee Members'}
+                    {t('select_committee_l')}
                   </div>
+                  <p style={{ fontSize: 12, opacity: 0.7, marginTop: 4, marginBottom: 12 }}>
+                    {t('committee_hint')}
+                  </p>
 
                   {loadingReviewers ? (
                     <div className="no-notes-msg">{t('loading')}</div>
                   ) : reviewersError ? (
                     <p style={{ color: '#EF4444', fontSize: 12 }}>
-                      {lang === 'ar' ? 'فشل تحميل المراجعين المتاحين' : 'Failed to load available reviewers'}
+                      {t('reviewers_load_fail')}
                     </p>
                   ) : availableReviewers.length === 0 ? (
                     <div className="no-notes-msg">
-                      {lang === 'ar' ? 'لا يوجد مراجعون متاحون حالياً' : 'No available reviewers'}
+                      {t('no_reviewers')}
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                      {availableReviewers.map(r => (
-                        <label
-                          key={r.user_id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            border: '1px solid var(--border)',
-                            borderRadius: 10,
-                            padding: '10px 12px',
-                            cursor: 'pointer',
-                            background: selectedReviewerIds.includes(r.user_id) ? 'var(--card-bg)' : 'transparent',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedReviewerIds.includes(r.user_id)}
-                            onChange={() => toggleReviewer(r.user_id)}
-                          />
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontWeight: 600, fontSize: 14 }}>
-                              {r.full_name}{' '}
-                              <span style={{ opacity: 0.55, fontWeight: 400, fontSize: 12 }}>#{r.user_id}</span>
-                            </span>
-                            <span style={{ fontSize: 12, opacity: 0.7 }}>
-                              {r.email}{r.institution ? ` · ${r.institution}` : ''}
-                            </span>
+                      {availableReviewers.map(r => {
+                        const currentRole = getReviewerRole(r.user_id);
+                        return (
+                          <div
+                            key={r.user_id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                              border: '1px solid var(--border)',
+                              borderRadius: 10,
+                              padding: '10px 12px',
+                              background: currentRole !== 'none' ? 'var(--card-bg)' : 'transparent',
+                            }}
+                          >
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                {r.full_name}{' '}
+                                <span style={{ opacity: 0.55, fontWeight: 400, fontSize: 12 }}>#{r.user_id}</span>
+                              </span>
+                              <span style={{ fontSize: 12, opacity: 0.7 }}>
+                                {r.email}{r.institution ? ` · ${r.institution}` : ''}
+                              </span>
+                            </div>
+
+                            <select
+                              className="editor-select"
+                              value={currentRole}
+                              onChange={e => setReviewerRole(r.user_id, e.target.value)}
+                              style={{ minWidth: 110 }}
+                            >
+                              <option value="none">{t('role_none')}</option>
+                              <option value="primary">{t('role_primary')}</option>
+                              <option value="substitute">{t('role_substitute')}</option>
+                            </select>
                           </div>
-                        </label>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
+
+                  {/* عدّاد الأساسيين — لازم بالضبط 3 */}
+                  <p style={{
+                    fontSize: 12,
+                    marginTop: 12,
+                    fontWeight: 600,
+                    color: primaryReviewerIds.length === REQUIRED_PRIMARY_COUNT ? '#22C55E' : '#F59E0B',
+                  }}>
+                    {primaryReviewerIds.length === REQUIRED_PRIMARY_COUNT
+                      ? t('primary_count_ok')
+                      : `${t('primary_count_bad')}${primaryReviewerIds.length})`}
+                  </p>
+
+                  {/* نوع التحكيم */}
+                  <div className="editor-field" style={{ marginTop: 12 }}>
+                    <label className="editor-label">{t('blinding_type_l')}</label>
+                    <select
+                      className="editor-select"
+                      value={blindingType}
+                      onChange={e => setBlindingType(e.target.value)}
+                    >
+                      <option value="single_blind">{t('single_blind')}</option>
+                      <option value="double_blind">{t('double_blind')}</option>
+                    </select>
+                  </div>
 
                   <div className="note-editor-btns">
                     <button className="btn-cancel-note" onClick={closeCommitteePanel} disabled={creatingCommittee}>
@@ -1023,17 +1118,17 @@ export default function Editor() {
                     <button
                       className="btn-save-note"
                       onClick={handleCreateCommittee}
-                      disabled={creatingCommittee || selectedReviewerIds.length === 0}
+                      disabled={creatingCommittee || primaryReviewerIds.length !== REQUIRED_PRIMARY_COUNT}
                     >
                       {creatingCommittee
-                        ? (lang === 'ar' ? 'جارٍ الإنشاء...' : 'Creating...')
-                        : (lang === 'ar' ? `إنشاء اللجنة (${selectedReviewerIds.length})` : `Create Committee (${selectedReviewerIds.length})`)}
+                        ? t('creating')
+                        : `${t('create_committee_btn')} (${primaryReviewerIds.length}/${REQUIRED_PRIMARY_COUNT})`}
                     </button>
                   </div>
 
                   {committeeError && (
                     <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
-                      {lang === 'ar' ? 'فشل إنشاء اللجنة، حاول مرة أخرى' : 'Failed to create committee, please try again'}
+                      {t('committee_fail')}
                     </p>
                   )}
                 </div>

@@ -1,48 +1,36 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "../styling/Profile.css";
-import { updateProfile, changePassword } from "../api/auth";
-import api, { BASE_URL } from "../api/client";
+import { getProfile, updateProfile, changePassword } from "../api/auth";
+import { getPapers } from "../api/research";
+import { BASE_URL } from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
+import {
+    FaGraduationCap,
+    FaCamera,
+    FaUniversity,
+    FaEnvelope,
+    FaFlask,
+    FaBook,
+    FaLinkedin,
+    FaExclamationTriangle,
+    FaPen,
+    FaSearch,
+    FaStar,
+    FaFileAlt,
+    FaCheck,
+    FaChevronRight,
+    FaCaretUp,
+    FaRegCircle,
+} from "react-icons/fa";
 
 const MOCK_STATS = [
     { n: "12", labelAr: "بحث منشور", labelEn: "Published", deltaAr: "3 هذا العام", deltaEn: "3 this year" },
     { n: "4,821", labelAr: "مرة قُرئت الأبحاث", labelEn: "Total Reads", deltaAr: "+18%", deltaEn: "+18%" },
     { n: "37", labelAr: "اقتباس علمي", labelEn: "Citations", deltaAr: null, deltaEn: null },
     { n: "94", labelAr: "نقطة تقييم", labelEn: "Reputation Score", deltaAr: "مرتبة ممتاز", deltaEn: "Excellent rank" },
-];
-
-const MOCK_RESEARCH = [
-    {
-        typeAr: "بحث علمي / تقني", typeEn: "Scientific / Technical",
-        titleAr: "نموذج تنبؤي لاكتشاف الاحتيال المالي باستخدام خوارزميات التعلم العميق",
-        titleEn: "Predictive Model for Financial Fraud Detection Using Deep Learning",
-        dateAr: "مارس 2025", dateEn: "March 2025",
-        reads: "1,240", citations: 14, status: "published", trending: true,
-    },
-    {
-        typeAr: "رسالة دكتوراه", typeEn: "PhD Dissertation",
-        titleAr: "تحليل الأنماط السلوكية في شبكات التواصل الاجتماعي باستخدام معالجة اللغة الطبيعية",
-        titleEn: "Behavioural Pattern Analysis in Social Networks Using NLP",
-        dateAr: "يناير 2025", dateEn: "Jan 2025",
-        reads: "980", citations: 9, status: "published", trending: false,
-    },
-    {
-        typeAr: "بحث علمي", typeEn: "Scientific Paper",
-        titleAr: "تحسين أداء خوارزميات التجميع في قواعد البيانات الضخمة",
-        titleEn: "Optimising Clustering Algorithms in Large-Scale Databases",
-        dateAr: "سبتمبر 2024", dateEn: "Sep 2024",
-        reads: "430", citations: 6, status: "review", trending: false,
-    },
-    {
-        typeAr: "مشروع تخرج", typeEn: "Graduation Project",
-        titleAr: "نظام ذكي لإدارة المختبرات الجامعية",
-        titleEn: "Smart University Lab Management System",
-        dateAr: "يونيو 2024", dateEn: "Jun 2024",
-        reads: "2,171", citations: null, status: "draft", trending: false,
-    },
 ];
 
 const MOCK_LEVEL = {
@@ -60,10 +48,10 @@ const MOCK_LEVEL = {
 const MOCK_SKILLS = ["Machine Learning", "NLP", "Deep Learning", "Data Mining", "Python", "TensorFlow"];
 
 const MOCK_SOCIAL = [
-    { ico: "✉", label: "email" },
-    { ico: "🔬", label: "ResearchGate" },
-    { ico: "📚", label: "Google Scholar" },
-    { ico: "💼", label: "LinkedIn" },
+    { Icon: FaEnvelope, label: "email" },
+    { Icon: FaFlask, label: "ResearchGate" },
+    { Icon: FaBook, label: "Google Scholar" },
+    { Icon: FaLinkedin, label: "LinkedIn" },
 ];
 
 const ACT_LABELS = [
@@ -113,7 +101,7 @@ function ProfileSkeleton() {
 function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
-            <div className="empty-state-ico">⚠️</div>
+            <div className="empty-state-ico"><FaExclamationTriangle /></div>
             <div className="empty-state-t">{t("auth.profile.error.loadFailed")}</div>
             <div className="empty-state-s">{message}</div>
             <button onClick={onRetry} className="edit-btn" style={{ marginTop: 16, display: "inline-flex" }}>
@@ -278,7 +266,7 @@ function InfoTab({ student, isAr, t }) {
             <div className="section-label">{isAr ? "المعلومات الأساسية" : "Basic Information"}</div>
             <div className="info-card">
                 <div className="info-card-title">
-                    🎓 <span>{isAr ? "المعلومات الأكاديمية" : "Academic Info"}</span>
+                    <FaGraduationCap /> <span>{isAr ? "المعلومات الأكاديمية" : "Academic Info"}</span>
                 </div>
                 <div className="info-grid">
                     <div className="info-item">
@@ -303,32 +291,86 @@ function InfoTab({ student, isAr, t }) {
     );
 }
 
-/* ══ RESEARCH TAB (موك داتا) ══ */
-function ResearchTab({ isAr, t }) {
+/* ══ RESEARCH TAB (بيانات حقيقية من الـ API — /api/research/researchAspu2004/papers/) ══ */
+function ResearchTab({ papers, loading, error, isAr }) {
+    const statusLabel = (status) => {
+        switch (status) {
+            case "published": return isAr ? "منشور" : "Published";
+            case "pending": return isAr ? "قيد المراجعة" : "Under Review";
+            case "rejected": return isAr ? "مرفوض" : "Rejected";
+            case "needs_revision": return isAr ? "بحاجة لتعديل" : "Needs Revision";
+            default: return status || (isAr ? "غير معروف" : "Unknown");
+        }
+    };
+
+    const statusClass = (status) => {
+        if (status === "published") return "published";
+        if (status === "rejected") return "rejected";
+        return "review";
+    };
+
+    if (loading) {
+        return (
+            <div>
+                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
+                <div className="info-card">{isAr ? "جارٍ التحميل..." : "Loading..."}</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div>
+                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
+                <div className="info-card">{error}</div>
+            </div>
+        );
+    }
+
+    if (!papers || papers.length === 0) {
+        return (
+            <div>
+                <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
+                <div className="empty-state">
+                    <div className="empty-state-ico"><FaFileAlt /></div>
+                    <div className="empty-state-t">{isAr ? "لا توجد أبحاث بعد" : "No research yet"}</div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
             <div className="research-list">
-                {MOCK_RESEARCH.map((r, i) => (
-                    <div key={i} className="research-item">
+                {papers.map((r) => (
+                    <div key={r.id} className="research-item">
                         <div>
-                            <div className="ri-type">{isAr ? r.typeAr : r.typeEn}</div>
-                            <div className="ri-title">{isAr ? r.titleAr : r.titleEn}</div>
+                            <div className="ri-type">{r.specialization}</div>
+                            <div className="ri-title">{r.title}</div>
                             <div className="ri-meta">
-                                <div className="ri-meta-item">📅 {isAr ? r.dateAr : r.dateEn}</div>
-                                <div className="ri-meta-item">👁 {r.reads} {isAr ? "قراءة" : "reads"}</div>
-                                {r.citations != null && (
-                                    <div className="ri-meta-item">🔗 {r.citations} {isAr ? "اقتباس" : "citations"}</div>
+                                {r.author_name && (
+                                    <div className="ri-meta-item"><FaPen /> {r.author_name}</div>
+                                )}
+                                {r.plagiarism_score != null && (
+                                    <div className="ri-meta-item">
+                                        <FaSearch /> {isAr ? "نسبة الاقتباس" : "Plagiarism"}: {r.plagiarism_score}%
+                                    </div>
+                                )}
+                                {r.metadata_quality_score != null && (
+                                    <div className="ri-meta-item">
+                                        <FaStar /> {isAr ? "جودة البيانات" : "Quality"}: {r.metadata_quality_score}
+                                    </div>
                                 )}
                             </div>
                         </div>
                         <div className="ri-status">
-                            <div className={`ri-badge ${r.status}`}>
-                                {r.status === "published" && (isAr ? "منشور" : "Published")}
-                                {r.status === "review" && (isAr ? "قيد المراجعة" : "Under Review")}
-                                {r.status === "draft" && (isAr ? "مسودة" : "Draft")}
+                            <div className={`ri-badge ${statusClass(r.status)}`}>
+                                {statusLabel(r.status)}
                             </div>
-                            {r.trending && <div className="ri-reads">⬆ {isAr ? "رائج هذا الأسبوع" : "Trending"}</div>}
+                            {r.rejection_reason && (
+                                <div className="ri-reads">{r.rejection_reason}</div>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -360,7 +402,7 @@ function ProfileSidebar({ isAr }) {
                     <div className="level-milestones">
                         {MOCK_LEVEL.milestones.map((m, i) => (
                             <div key={i} className={`milestone ${m.done ? "done" : ""}`}>
-                                {m.done ? "✓" : "⬡"} {isAr ? m.ar : m.en}
+                                {m.done ? <FaCheck /> : <FaRegCircle />} {isAr ? m.ar : m.en}
                             </div>
                         ))}
                     </div>
@@ -379,7 +421,7 @@ function ProfileSidebar({ isAr }) {
                 <div className="social-links">
                     {MOCK_SOCIAL.map((s, i) => (
                         <a key={i} href="#" className="social-link">
-                            <span className="social-ico">{s.ico}</span> {s.label}
+                            <span className="social-ico"><s.Icon /></span> {s.label}
                         </a>
                     ))}
                 </div>
@@ -408,6 +450,10 @@ export default function StudentProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [papers, setPapers] = useState([]);
+    const [papersLoading, setPapersLoading] = useState(true);
+    const [papersError, setPapersError] = useState(null);
+
     const hasFetched = useRef(false);
 
     const [isEditing, setIsEditing] = useState(false);
@@ -432,7 +478,7 @@ export default function StudentProfile() {
         setLoading(true);
         setError(null);
         try {
-            const { data } = await api.get('/api/auth/ASPU-2004/profile/');
+            const data = await getProfile();
             setProfile(data);
         } catch (err) {
             setError(err?.response?.data?.detail || err.message || "Unknown error");
@@ -441,10 +487,24 @@ export default function StudentProfile() {
         }
     };
 
+    const fetchPapers = async () => {
+        setPapersLoading(true);
+        setPapersError(null);
+        try {
+            const data = await getPapers();
+            setPapers(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setPapersError(err?.response?.data?.detail || err.message || "Unknown error");
+        } finally {
+            setPapersLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (hasFetched.current) return;
         hasFetched.current = true;
         fetchProfile();
+        fetchPapers();
     }, []);
 
     const handleStartEdit = () => {
@@ -634,7 +694,7 @@ export default function StudentProfile() {
                         <div className="hero-inner">
                             <div className="ph-breadcrumb">
                                 <a href="/">{tProfile?.breadcrumb?.home}</a>
-                                <span className="ph-sep">›</span>
+                                <span className="ph-sep"><FaChevronRight /></span>
                                 <span>{tProfile?.breadcrumb?.profile}</span>
                             </div>
 
@@ -653,14 +713,14 @@ export default function StudentProfile() {
                                     </div>
                                     <div className="avatar-ring" />
                                     <div className="avatar-ring-spin" />
-                                    <div className="avatar-badge">{isEditing ? "📷" : "🎓"}</div>
+                                    <div className="avatar-badge">{isEditing ? <FaCamera /> : <FaGraduationCap />}</div>
                                     {isEditing && (
                                         <div style={{
                                             position: "absolute", inset: 0, borderRadius: "50%",
                                             background: "rgba(0,0,0,0.35)", display: "flex",
                                             alignItems: "center", justifyContent: "center",
                                             fontSize: 22, opacity: 0.85,
-                                        }}>📷</div>
+                                        }}><FaCamera /></div>
                                     )}
                                     <input
                                         ref={avatarInputRef}
@@ -759,11 +819,11 @@ export default function StudentProfile() {
                                             </div>
                                             <div className="profile-name">{isAr ? student.nameAr : student.nameEn}</div>
                                             <div className="profile-meta">
-                                                <div className="profile-meta-item">🏛️ {isAr ? student.universityAr : student.universityEn}</div>
+                                                <div className="profile-meta-item"><FaUniversity /> {isAr ? student.universityAr : student.universityEn}</div>
                                                 {student.email && (
                                                     <>
                                                         <div className="profile-meta-dot" />
-                                                        <div className="profile-meta-item">✉ {student.email}</div>
+                                                        <div className="profile-meta-item"><FaEnvelope /> {student.email}</div>
                                                     </>
                                                 )}
                                             </div>
@@ -792,7 +852,7 @@ export default function StudentProfile() {
                                 <div key={i} className="stat-cell">
                                     <div className="stat-n">{s.n}</div>
                                     <div className="stat-l">{isAr ? s.labelAr : s.labelEn}</div>
-                                    {s.deltaAr && <div className="stat-delta">▲ {isAr ? s.deltaAr : s.deltaEn}</div>}
+                                    {s.deltaAr && <div className="stat-delta"><FaCaretUp /> {isAr ? s.deltaAr : s.deltaEn}</div>}
                                 </div>
                             ))}
                         </div>
@@ -814,7 +874,15 @@ export default function StudentProfile() {
                     {/* ══ PAGE BODY ══ */}
                     <div className="page-body">
                         <div>
-                            {activeTab === "research" && <ResearchTab isAr={isAr} t={t} />}
+                            {activeTab === "research" && (
+                                <ResearchTab
+                                    papers={papers}
+                                    loading={papersLoading}
+                                    error={papersError}
+                                    isAr={isAr}
+                                    t={t}
+                                />
+                            )}
                             {activeTab === "info" && <InfoTab student={student} isAr={isAr} t={t} />}
                             {activeTab === "activity" && <ActivityTab grid={activityGrid} isAr={isAr} t={t} />}
                         </div>

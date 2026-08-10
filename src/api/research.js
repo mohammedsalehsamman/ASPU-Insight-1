@@ -12,7 +12,7 @@ export const createPaper = async (payload) => {
   const { data } = await api.post('/api/research/researchAspu2004/papers/', payload, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
-  return data;0
+  return data;
 };
 
 //خالص
@@ -117,7 +117,7 @@ export const getPlagiarismReport = async (paperId) => {
 
 //خالص
 export const submitAssistantReport = async (paperId, payload) => {
-  const { data } = await api.post(`/api/research/researchAspu2004/papers/${paperId}/submit-assistant-report/`, payload);
+  const { data } = await api.post(`/api/research/papers/${paperId}/assistant-review/`, payload);
   return data;
 };
 
@@ -135,5 +135,25 @@ export const createCommittee = async (paperId, payload = {}) => {
     `/api/v1/committees-app/papers/${paperId}/committee/create/`,
     payload
   );
+  return data;
+};
+
+// ══ SMART SEARCH ══
+
+// بحث دلالي (semantic search) بدل البحث النصي العادي
+export const smartSearchPapers = async (query) => {
+  const { data } = await api.get('/api/research/researchAspu2004/papers/smart-search/', {
+    params: { q: query },
+  });
+  return data;
+};
+
+// ══ KEYWORD SUGGESTIONS ══
+
+// اقتراح كلمات مفتاحية لبحث معين
+export const suggestKeywords = async (paperId) => {
+  const { data } = await api.post('/api/ai/ai2004-R/keywords/suggest/', {
+    paper_id: paperId,
+  });
   return data;
 };
