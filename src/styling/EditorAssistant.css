@@ -53,6 +53,27 @@
   color: var(--tx);
 }
 
+.pc-delete-btn {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: #EF4444;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s, transform 0.15s;
+}
+.pc-delete-btn:hover { background: rgba(239,68,68,0.12); transform: scale(1.08); }
+.pc-delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Film grain */
 .ea-root::after {
   content: '';
@@ -737,4 +758,107 @@
     padding:18px;
     line-height:1.9;
     white-space:pre-wrap;
+}
+
+/* ══════════════════════════════════════════════════
+   إضافات ستايل — زر الاقتراح الذكي + قائمة المراجعين + الدروب داون
+   حطّهم بآخر EditorAssistant.css
+══════════════════════════════════════════════════ */
+
+/* زر الاقتراح الذكي — متماشي مع هوية اللوغو الذهبي */
+.btn-smart-suggest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #C4A55A, #8B6030);
+  color: #0D0F12;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  margin-bottom: 10px;
+}
+.btn-smart-suggest:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(196, 165, 90, 0.35);
+}
+.btn-smart-suggest:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-smart-suggest:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* رسالة تأكيد تطبيق الاقتراح */
+.smart-suggest-note {
+  font-size: 12px;
+  color: #5A8FA0;
+  background: rgba(90, 143, 160, 0.1);
+  border: 1px solid rgba(90, 143, 160, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* صف كل مراجع بقائمة اختيار اللجنة */
+.reviewer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  transition: background .2s ease, border-color .2s ease;
+}
+.reviewer-row.role-primary {
+  background: rgba(196, 165, 90, 0.08);
+  border-color: rgba(196, 165, 90, 0.4);
+}
+.reviewer-row.role-substitute {
+  background: rgba(90, 143, 160, 0.08);
+  border-color: rgba(90, 143, 160, 0.4);
+}
+
+/* تنسيق الدروب داون (نوع التحكيم + دور المحكّم) بنفس هوية المنصة */
+.editor-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--card-bg);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23C4A55A'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 32px 8px 12px;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+[dir="rtl"] .editor-select {
+  background-position: left 12px center;
+  padding: 8px 12px 8px 32px;
+}
+.editor-select:hover {
+  border-color: #C4A55A;
+}
+.editor-select:focus {
+  outline: none;
+  border-color: #C4A55A;
+  box-shadow: 0 0 0 3px rgba(196, 165, 90, 0.15);
+}
+.editor-select option {
+  background: var(--card-bg);
+  color: inherit;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
-import { getPaper, downloadPaper } from '../api/research';
+import { getPaper, downloadPaper, getRecommendations } from '../api/research';
 import { PaperDetailDict, createLocalT } from '../i18n'; 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -43,6 +43,11 @@ export default function PaperDetail() {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
 
+  // ← حالة الأبحاث المشابهة (recommendations)
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [recommendationsError, setRecommendationsError] = useState(null);
+
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
@@ -60,6 +65,29 @@ export default function PaperDetail() {
       .then((data) => { if (!cancelled) setPaper(data); })
       .catch((err) => { if (!cancelled) setError(err.message || t('default_error')); })
       .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [id]);
+
+  /* ── جلب الأبحاث المشابهة (GET /recommendations/) ── */
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingRecommendations(true);
+    setRecommendationsError(null);
+
+    getRecommendations(id)
+      .then((data) => {
+        if (!cancelled) {
+          setRecommendations(Array.isArray(data) ? data : data?.results ?? []);
+          setLoadingRecommendations(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRecommendationsError(err.message || (lang === 'ar' ? 'فشل تحميل الأبحاث المشابهة' : 'Failed to load similar papers'));
+          setLoadingRecommendations(false);
+        }
+      });
 
     return () => { cancelled = true; };
   }, [id]);
@@ -259,6 +287,68 @@ export default function PaperDetail() {
               <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
                 {downloadError}
               </p>
+            )}
+          </div>
+
+          {/* ══ أبحاث مشابهة (Recommendations) ══ */}
+          <div className="pd-detail-card">
+            <div className="pd-section-label">
+              {lang === 'ar' ? 'أبحاث مشابهة' : 'Similar Papers'}
+            </div>
+
+            {loadingRecommendations && (
+              <p style={{ fontSize: 13, opacity: 0.7 }}>
+                {lang === 'ar' ? 'جارٍ تحميل الأبحاث المشابهة...' : 'Loading similar papers...'}
+              </p>
+            )}
+
+            {!loadingRecommendations && recommendationsError && (
+              <p style={{ color: '#EF4444', fontSize: 12 }}>{recommendationsError}</p>
+            )}
+
+            {!loadingRecommendations && !recommendationsError && recommendations.length === 0 && (
+              <p style={{ fontSize: 13, opacity: 0.6 }}>
+                {lang === 'ar' ? 'لا توجد أبحاث مشابهة حالياً' : 'No similar papers found'}
+              </p>
+            )}
+
+            {!loadingRecommendations && !recommendationsError && recommendations.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {recommendations.map((rec) => (
+                  <Link
+                    key={rec.id}
+                    to={`/papers/${rec.id}`}
+                    style={{
+                      display: 'block',
+                      padding: '14px 16px',
+                      border: '1px solid var(--border)',
+                      borderRadius: 10,
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      transition: 'border-color .2s',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+                      {rec.title}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+                      {rec.author_name}
+                    </div>
+                    {rec.abstract && (
+                      <div style={{
+                        fontSize: 12,
+                        opacity: 0.6,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}>
+                        {rec.abstract}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
 

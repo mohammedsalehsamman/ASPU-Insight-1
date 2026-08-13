@@ -15,7 +15,8 @@ import {
     FaChevronRight,
     FaCaretUp,
 } from "react-icons/fa";
-
+import InvitationsTab from "../components/Profile/InvitationsTab";
+import { getMyInvitations } from "../api/committees";
 import ProfileSkeleton from "../components/Profile/ProfileSkeleton";
 import ProfileError from "../components/Profile/ProfileError";
 import EditField from "../components/Profile/EditField";
@@ -60,6 +61,9 @@ export default function StudentProfile() {
     const [activityGrid] = useState(generateActivityGrid);
     const [activeTab, setActiveTab] = useState("research");
     const cursorRef = useRef(null);
+    const [invitations, setInvitations] = useState([]);
+    const [invitationsLoading, setInvitationsLoading] = useState(true);
+    const [invitationsError, setInvitationsError] = useState(null);
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -88,6 +92,27 @@ export default function StudentProfile() {
     const avatarInputRef = useRef(null);
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const fetchInvitations = async () => {
+        setInvitationsLoading(true);
+        setInvitationsError(null);
+        try {
+            const data = await getMyInvitations();
+            setInvitations(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setInvitationsError(err?.response?.data?.detail || err.message || "Unknown error");
+        } finally {
+            setInvitationsLoading(false);
+        }
+    };
+
+    // عدّل useEffect تبع الفتش الأولي
+    useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+        fetchProfile();
+        fetchPapers();
+        fetchInvitations();
+    }, []);
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -470,6 +495,9 @@ export default function StudentProfile() {
                         <button className={`ptab ${activeTab === "info" ? "on" : ""}`} onClick={() => setActiveTab("info")}>
                             {isAr ? "المعلومات الأساسية" : "Basic Info"}
                         </button>
+                        <button className={`ptab ${activeTab === "invitations" ? "on" : ""}`} onClick={() => setActiveTab("invitations")}>
+                            {isAr ? "دعوات التحكيم" : "Review Invitations"}
+                        </button>
                     </div>
 
                     {/* ══ PAGE BODY ══ */}
@@ -482,6 +510,21 @@ export default function StudentProfile() {
                                     error={papersError}
                                     isAr={isAr}
                                     t={t}
+                                />
+                            )}
+                            {activeTab === "invitations" && (
+                                <InvitationsTab
+                                    invitations={invitations}
+                                    loading={invitationsLoading}
+                                    error={invitationsError}
+                                    isAr={isAr}
+                                    t={t}
+                                    onRetry={fetchInvitations}
+                                    onResponded={(id, response) => {
+                                        setInvitations(prev =>
+                                            prev.map(i => (i.id === id ? { ...i, response } : i))
+                                        );
+                                    }}
                                 />
                             )}
                             {activeTab === "info" && <InfoTab student={student} isAr={isAr} t={t} />}

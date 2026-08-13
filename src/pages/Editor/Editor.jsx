@@ -1,13 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import {
+  FiX,
+  FiMenu,
+  FiSearch,
+  FiChevronRight,
+  FiChevronLeft,
+  FiFileText,
+  FiDownload,
+  FiMoon,
+  FiSun,
+  FiLogOut,
+  FiCheckCircle,
+  FiAlertTriangle,
+  FiLoader,
+  FiLock,
+  FiUnlock,
+  FiUsers,
+  FiUpload,
+  FiEye,
+  FiEdit3,
+  FiCheck,
+} from 'react-icons/fi';
+import { HiSparkles } from 'react-icons/hi2';
+import {
   getPapers,
   getEditorReviewInitial,
   submitEditorReviewInitial,
   getAvailableReviewers,
   createCommittee,
-  // getEditorReviewFinal,      // ⏸ معطّل مؤقتاً — رح يترجع لما تصير اللجنة جاهزة
-  // submitEditorReviewFinal,   // ⏸ معطّل مؤقتاً — رح يترجع لما تصير اللجنة جاهزة
+  getCommitteeStatus,
+  publishPaper, // ⚠ لازم تكون مضافة بـ ../../api/research.js — شوف الملاحظة تحت
+  getEditorReviewFinal,
+  submitEditorReviewFinal,
 } from "../../api/research";
 import "../../styling/EditorAssistant.css"
 
@@ -66,10 +91,45 @@ const DECISION_OPTIONS = [
 ];
 
 /* ══════════════════
+   خيارات قرار المحرر النهائي (بعد رجوع تحكيم اللجنة)
+   ✅ FIX: الباك رفض "accepted" وقال "is not a valid choice" — القيم الصحيحة
+   (شفناها بالـ Postman بالصورة: "decision": "ACCEPT") هي بنفس نمط enum القرار
+   الأولي (REVISION_REQUIRED بالـ caps)، يعني: ACCEPT | REJECT | REVISION_REQUIRED
+══════════════════ */
+const FINAL_DECISION_OPTIONS = [
+  { value: 'ACCEPT', ar: 'قبول', en: 'Accept' },
+  { value: 'REJECT', ar: 'رفض', en: 'Reject' },
+  { value: 'REVISION_REQUIRED', ar: 'طلب تعديلات', en: 'Request Revision' },
+];
+
+/* ══════════════════
+   حالة رد المحكّم على الدعوة (response) وقراره على البحث (paper_decision)
+   ⬅ متوافقة مع CommitteeMember model بالباك
+══════════════════ */
+const MEMBER_RESPONSE_MAP = {
+  pending: { ar: 'بانتظار الرد', en: 'Pending', cls: 'status-pending' },
+  accepted: { ar: 'وافق', en: 'Accepted', cls: 'status-done' },
+  declined: { ar: 'اعتذر', en: 'Declined', cls: 'status-rejected' },
+};
+
+const MEMBER_DECISION_MAP = {
+  pending: { ar: 'قيد الدراسة', en: 'Pending', cls: 'status-pending' },
+  accept_paper: { ar: 'قبول الورقة', en: 'Accept Paper', cls: 'status-done' },
+  reject_paper: { ar: 'رفض الورقة', en: 'Reject Paper', cls: 'status-rejected' },
+  modify_paper: { ar: 'طلب تعديلات', en: 'Request Modifications', cls: 'status-noted' },
+};
+
+/* ══════════════════
    عدد المحكّمين الأساسيين المطلوب من الباك (ثابت — شفناه بالـ Postman:
    "primary_users" لازم يكون بالضبط 3 عناصر)
 ══════════════════ */
 const REQUIRED_PRIMARY_COUNT = 3;
+
+/* ══════════════════
+   عدد الاحتياطيين اللي بيقترحهم زر "الاقتراح الذكي" (اختياري بالباك،
+   بس منّا منقترح 2 كقيمة افتراضية معقولة)
+══════════════════ */
+const SUGGESTED_SUBSTITUTE_COUNT = 2;
 
 /* ══════════════════
    AUTH HELPER — يقرأ اسم المستخدم الحالي من بيانات تسجيل الدخول المخزّنة
@@ -117,6 +177,106 @@ function extractDecisionLabel(rev, lang) {
   const found = DECISION_OPTIONS.find(o => o.value === rev.decision);
   if (found) return lang === 'ar' ? found.ar : found.en;
   return rev.decision;
+}
+
+/* ══════════════════
+   HELPER — يستخرج رسالة خطأ قابلة للعرض من أي شكل يرجعه الباك (DRF)
+   الباك ممكن يرجع:
+     - مصفوفة نصوص مباشرة: ["Only accepted papers can be published."]
+     - object فيه حقول: {"notes": ["This field is required."]}
+     - نص عادي، أو حتى بدون response.data إطلاقاً (خطأ شبكة مثلاً)
+   منحاول نغطي كل الحالات بدل ما نطلع رسالة خطأ عامة دايماً
+══════════════════ */
+function extractErrorMessage(err, lang) {
+  const data = err?.response?.data;
+
+  if (Array.isArray(data)) {
+    const joined = data.filter(Boolean).join(' ');
+    if (joined) return joined;
+  }
+
+  if (data && typeof data === 'object') {
+    const messages = [];
+    Object.values(data).forEach(val => {
+      if (Array.isArray(val)) messages.push(...val.filter(Boolean));
+      else if (typeof val === 'string' && val.trim()) messages.push(val);
+    });
+    if (messages.length > 0) return messages.join(' ');
+  }
+
+  if (typeof data === 'string' && data.trim()) return data;
+
+  if (!err?.response) {
+    // ما وصل رد من السيرفر إطلاقاً (مشكلة شبكة/CORS)
+    return lang === 'ar'
+      ? 'تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت وحاول مرة أخرى'
+      : 'Could not reach the server, check your connection and try again';
+  }
+
+  if (err?.message) return err.message;
+
+  return lang === 'ar' ? 'حدث خطأ غير متوقع، حاول مرة أخرى' : 'An unexpected error occurred, please try again';
+}
+
+/* ══════════════════
+   HELPER — اقتراح لجنة ذكي (محلي بالكامل، بدون أي API إضافي)
+   بيحاول ينوّع الأساسيين حسب المؤسسة (institution) قدر الإمكان،
+   وبعدين ياخذ عدد ثابت من الباقي كاحتياطي.
+   بيرجّع { primary: [], substitute: [] } (مصفوفات user objects)
+══════════════════ */
+function buildSmartCommitteeSuggestion(reviewers) {
+  if (!Array.isArray(reviewers) || reviewers.length === 0) {
+    return { primary: [], substitute: [] };
+  }
+
+  // Fisher–Yates shuffle على نسخة عن القائمة (ما منعدّل الأصل)
+  const pool = [...reviewers];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  // تجميع حسب المؤسسة لتعظيم التنويع بين الأساسيين
+  const byInstitution = {};
+  pool.forEach(r => {
+    const key = (r.institution || 'unknown').trim().toLowerCase();
+    (byInstitution[key] ??= []).push(r);
+  });
+  const institutions = Object.keys(byInstitution);
+
+  const primary = [];
+  let round = 0;
+  while (primary.length < REQUIRED_PRIMARY_COUNT) {
+    let addedAny = false;
+    for (const inst of institutions) {
+      if (primary.length >= REQUIRED_PRIMARY_COUNT) break;
+      const candidate = byInstitution[inst][round];
+      if (candidate) {
+        primary.push(candidate);
+        addedAny = true;
+      }
+    }
+    round++;
+    if (!addedAny) break; // ما فيه مرشحين كفاية لإكمال العدد
+  }
+
+  const primaryIds = new Set(primary.map(r => r.user_id));
+  const remaining = pool.filter(r => !primaryIds.has(r.user_id));
+  const substitute = remaining.slice(0, SUGGESTED_SUBSTITUTE_COUNT);
+
+  return { primary, substitute };
+}
+
+/* ══════════════════
+   HELPER — هل رجعت قرارات فعلية من أعضاء اللجنة (مش لسا pending)؟
+   منعتمدها لإظهار قسم "قرار المحرر النهائي" فقط لما يصير في تحكيم فعلي
+══════════════════ */
+function committeeHasVerdict(status) {
+  return !!(
+    status &&
+    Array.isArray(status.members) &&
+    status.members.some(m => m.paper_decision && m.paper_decision !== 'pending')
+  );
 }
 
 /* ══════════════════
@@ -169,6 +329,41 @@ export default function Editor() {
   const [creatingCommittee, setCreatingCommittee] = useState(false);
   const [committeeError, setCommitteeError] = useState(null);
   const [committeeSuccess, setCommitteeSuccess] = useState(false);
+
+  // ← الاقتراح الذكي للجنة (محلي فقط — ما بيتصل بأي API، بيعبّي الحالة الموجودة فوق)
+  const [suggesting, setSuggesting] = useState(false);
+  const [lastSuggestionApplied, setLastSuggestionApplied] = useState(false);
+
+  // ← حالة اللجنة الكاملة (أعضاء + ردود + قرارات) — تُعرض بعد الإرسال للجنة
+  const [committeeStatusOpen, setCommitteeStatusOpen] = useState(false);
+  const [committeeStatus, setCommitteeStatus] = useState(null);
+  const [loadingCommitteeStatus, setLoadingCommitteeStatus] = useState(false);
+  const [committeeStatusError, setCommitteeStatusError] = useState(null);
+
+  // ← ✅ جديد: فيما إذا في لجنة موجودة أصلاً لهاد البحث (null = لسا ما تحقق)
+  //   هاد يلي بيتحكم بأي زر يطلع: "تعيين اللجنة" (لو false) أو "عرض حالة اللجنة" (لو true)
+  //   ما بيطلعوا الاثنين مع بعض، وما بيطلع ولا واحد فيهن قبل ما نتأكد
+  const [committeeExists, setCommitteeExists] = useState(null);
+  const [checkingCommittee, setCheckingCommittee] = useState(false);
+
+  // ← ✅ جديد: قرار المحرر النهائي (بيظهر فقط بعد ما يصير في تحكيم فعلي من اللجنة)
+  const [finalDecision, setFinalDecision] = useState('');
+  // ✅ الباك بيرفض الطلب من دون notes ("This field is required.")
+  const [finalNoteText, setFinalNoteText] = useState('');
+  // ✅ الباك بيرفض القبول (ACCEPT) لو هالتلاتة مش مؤكدين كلهن:
+  // "Language review, citation check and publisher permission must all be
+  //  confirmed before acceptance."
+  const [languageReviewPassed, setLanguageReviewPassed] = useState(false);
+  const [citationCheckPassed, setCitationCheckPassed] = useState(false);
+  const [publisherPermissionObtained, setPublisherPermissionObtained] = useState(false);
+  const [submittingFinalDecision, setSubmittingFinalDecision] = useState(false);
+  const [finalDecisionError, setFinalDecisionError] = useState(null);
+  const [finalReview, setFinalReview] = useState(null);
+
+  // ← ✅ جديد: نشر البحث
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState(null);
+  const [publishSuccess, setPublishSuccess] = useState(false);
 
   const menuRef = useRef(null);
   const menuTopRef = useRef(null);
@@ -248,6 +443,17 @@ export default function Editor() {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [menuOpen, detailOpen]);
+
+  /* ── ✅ جديد: فحص وجود لجنة أصلاً لما يصير عنا initialReview بقرار SEND_TO_COMMITTEE
+        هاد بيحدد أي زر يطلع تحت (تعيين / عرض حالة) بدل ما الاثنين يطلعوا مع بعض دايماً ── */
+  useEffect(() => {
+    if (activePaper && initialReview?.decision === 'SEND_TO_COMMITTEE') {
+      checkCommitteeExists(activePaper.id);
+    } else {
+      setCommitteeExists(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePaper?.id, initialReview?.decision]);
 
   /* ── GSAP Menu ── */
   function openMenu() {
@@ -344,6 +550,29 @@ export default function Editor() {
     setReviewersError(null);
     setCommitteeError(null);
     setCommitteeSuccess(false);
+    setSuggesting(false);
+    setLastSuggestionApplied(false);
+    // ← تصفير حالة عرض اللجنة الكاملة
+    setCommitteeStatusOpen(false);
+    setCommitteeStatus(null);
+    setLoadingCommitteeStatus(false);
+    setCommitteeStatusError(null);
+    // ← تصفير حالة معرفة وجود اللجنة من عدمه
+    setCommitteeExists(null);
+    setCheckingCommittee(false);
+    // ← تصفير قرار المحرر النهائي
+    setFinalDecision('');
+    setFinalNoteText('');
+    setLanguageReviewPassed(false);
+    setCitationCheckPassed(false);
+    setPublisherPermissionObtained(false);
+    setSubmittingFinalDecision(false);
+    setFinalDecisionError(null);
+    setFinalReview(null);
+    // ← تصفير حالة النشر
+    setPublishing(false);
+    setPublishError(null);
+    setPublishSuccess(false);
   }
 
   /* ── فتح محرر التقرير الأولي ── */
@@ -389,6 +618,23 @@ export default function Editor() {
     }
   }
 
+  /* ── ✅ جديد: فحص فيما إذا في لجنة مشكّلة أصلاً لهاد البحث
+        بنستخدم نفس getCommitteeStatus؛ 404 يعني "ما في لجنة بعد" (مش خطأ حقيقي) ── */
+  async function checkCommitteeExists(paperId) {
+    setCheckingCommittee(true);
+    try {
+      const data = await getCommitteeStatus(paperId);
+      const exists = !!(data && (data.id || data.editor_name || (data.members && data.members.length > 0)));
+      setCommitteeExists(exists);
+      if (exists) setCommitteeStatus(data); // ← تخزين مسبق، بيترفتش بعدين لو المستخدم فتح البانل فعلياً
+    } catch (err) {
+      // أي خطأ (404 أو غيره) بحالة الفحص هاد → منعتبر ما في لجنة بعد، بلاش نعلّق الواجهة
+      setCommitteeExists(false);
+    } finally {
+      setCheckingCommittee(false);
+    }
+  }
+
   /* ── جلب المراجعين المتاحين لهاد البحث ── */
   async function openCommitteePanel() {
     if (!activePaper) return;
@@ -400,6 +646,7 @@ export default function Editor() {
     setBlindingType(activePaper.review_blindness_type === 'double_blind' ? 'double_blind' : 'single_blind');
     setCommitteeError(null);
     setCommitteeSuccess(false);
+    setLastSuggestionApplied(false);
 
     try {
       const data = await getAvailableReviewers(activePaper.id);
@@ -425,6 +672,8 @@ export default function Editor() {
     } else if (role === 'substitute') {
       setSubstituteReviewerIds(prev => [...prev, userId]);
     }
+    // أي تعديل يدوي بعد الاقتراح الذكي بيلغي "علامة الاقتراح المطبّق"
+    setLastSuggestionApplied(false);
   }
 
   function getReviewerRole(userId) {
@@ -433,10 +682,37 @@ export default function Editor() {
     return 'none';
   }
 
+  /* ── الاقتراح الذكي للجنة ──────────────────────────
+     بيستخدم buildSmartCommitteeSuggestion على نفس availableReviewers
+     (نفس القائمة يلي بيجيبها getAvailableReviewers) وبيعبّي
+     primaryReviewerIds / substituteReviewerIds تلقائياً.
+     ⚠ ما بيرسل أي طلب — التعيين الفعلي لسا صاير عن طريق
+     handleCreateCommittee ونفس createCommittee الموجودة أصلاً،
+     فالمحرر لازم يضغط "إنشاء اللجنة" بعدين لتأكيد الاقتراح. */
+  function suggestCommitteeSmart() {
+    if (!availableReviewers || availableReviewers.length === 0) return;
+
+    setSuggesting(true);
+    setCommitteeError(null);
+
+    try {
+      const { primary, substitute } = buildSmartCommitteeSuggestion(availableReviewers);
+      setPrimaryReviewerIds(primary.map(r => r.user_id));
+      setSubstituteReviewerIds(substitute.map(r => r.user_id));
+      setLastSuggestionApplied(true);
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
   /* ── إنشاء اللجنة ─────────────────────────────────
      ✅ FIX: الـ payload الصحيح (شفناه بالـ Postman) هو:
        { primary_users: [...] (بالضبط 3), substitute_users: [...], blinding_type: "single_blind"|"double_blind" }
-     قبل هيك كان عم يترسل { reviewer_ids: [...] } وهاد مش الشكل يلي الباك بيتوقعه إطلاقاً. */
+     قبل هيك كان عم يترسل { reviewer_ids: [...] } وهاد مش الشكل يلي الباك بيتوقعه إطلاقاً.
+     ← نفس الدالة هاي مستخدمة سواء الأعضاء انتقوا يدوياً أو عن طريق
+       "الاقتراح الذكي" — ما في فرق بالـ payload أو الـ API المستخدم.
+     ← ✅ جديد: بعد النجاح منعلّم committeeExists = true فوراً، حتى زر
+       "تعيين اللجنة" يختفي وزر "عرض حالة اللجنة" يطلع من دون ما نحتاج نعمل reload */
   async function handleCreateCommittee() {
     if (!activePaper) return;
     if (primaryReviewerIds.length !== REQUIRED_PRIMARY_COUNT) return;
@@ -452,11 +728,86 @@ export default function Editor() {
       };
       await createCommittee(activePaper.id, payload);
       setCommitteeSuccess(true);
+      setCommitteeExists(true);
       setCommitteePanelOpen(false);
     } catch (err) {
       setCommitteeError(err);
     } finally {
       setCreatingCommittee(false);
+    }
+  }
+
+  /* ── فتح/جلب حالة اللجنة الكاملة (أعضاء + ردود + قرارات) ── */
+  async function openCommitteeStatusPanel() {
+    if (!activePaper) return;
+    setCommitteeStatusOpen(true);
+    setLoadingCommitteeStatus(true);
+    setCommitteeStatusError(null);
+    try {
+      const data = await getCommitteeStatus(activePaper.id);
+      setCommitteeStatus(data);
+    } catch (err) {
+      setCommitteeStatusError(err);
+    } finally {
+      setLoadingCommitteeStatus(false);
+    }
+  }
+
+  function closeCommitteeStatusPanel() {
+    setCommitteeStatusOpen(false);
+  }
+
+  /* ── ✅ جديد: إرسال قرار المحرر النهائي (بعد رجوع تحكيم اللجنة) ──
+        POST/PATCH /api/research/papers/{id}/editor-review/final/
+        ✅ FIX: الباك بيرفض الطلب لو "notes" ناقص ("This field is required.")
+        ✅ FIX: الباك بيرفض القبول (ACCEPT) لو الثلاث تأكيدات مش محددين كلهن
+        ("Language review, citation check and publisher permission must all
+        be confirmed before acceptance.") — فبنبعتهن دايماً بالـ payload،
+        وبنمنع الإرسال من الواجهة أصلاً لو القرار ACCEPT وواحد منهن ناقص
+        القيم المتوقعة من الباك لـ decision: ACCEPT | REJECT | REVISION_REQUIRED */
+  async function submitFinalDecision() {
+    if (!activePaper || !finalDecision || !finalNoteText.trim()) return;
+    if (finalDecision === 'ACCEPT' && !(languageReviewPassed && citationCheckPassed && publisherPermissionObtained)) return;
+
+    setSubmittingFinalDecision(true);
+    setFinalDecisionError(null);
+
+    try {
+      const payload = {
+        notes: finalNoteText.trim(),
+        decision: finalDecision, // "ACCEPT" | "REJECT" | "REVISION_REQUIRED"
+        language_review_passed: languageReviewPassed,
+        citation_check_passed: citationCheckPassed,
+        publisher_permission_obtained: publisherPermissionObtained,
+      };
+      const data = await submitEditorReviewFinal(activePaper.id, payload);
+      setFinalReview(data ?? payload);
+    } catch (err) {
+      setFinalDecisionError(err);
+    } finally {
+      setSubmittingFinalDecision(false);
+    }
+  }
+
+  /* ── ✅ جديد: نشر البحث ─────────────────────────────
+     POST /api/research/papers/{id}/publish/
+     ⚠ الباك بيرفض النشر لو البحث مش accepted بعد، وبيرجع 400 مع رسالة
+       زي ["Only accepted papers can be published."] — extractErrorMessage
+       عم تتكفّل تعرضها للمحرر مباشرة بدل رسالة خطأ عامة */
+  async function handlePublishPaper() {
+    if (!activePaper) return;
+
+    setPublishing(true);
+    setPublishError(null);
+    setPublishSuccess(false);
+
+    try {
+      await publishPaper(activePaper.id);
+      setPublishSuccess(true);
+    } catch (err) {
+      setPublishError(extractErrorMessage(err, lang));
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -553,7 +904,7 @@ export default function Editor() {
       blinding_type_l: { ar: 'نوع التحكيم', en: 'Blinding Type' },
       single_blind: { ar: 'تحكيم فردي (Single Blind)', en: 'Single Blind' },
       double_blind: { ar: 'تحكيم مزدوج (Double Blind)', en: 'Double Blind' },
-      primary_count_ok: { ar: 'تمام، عندك 3 أساسيين ✓', en: 'Good, 3 primary selected ✓' },
+      primary_count_ok: { ar: 'تمام، عندك 3 أساسيين', en: 'Good, 3 primary selected' },
       primary_count_bad: {
         ar: `لازم تختار بالضبط ${REQUIRED_PRIMARY_COUNT} أساسيين (المختارين حالياً: `,
         en: `You must select exactly ${REQUIRED_PRIMARY_COUNT} primary reviewers (currently selected: `,
@@ -563,8 +914,53 @@ export default function Editor() {
       creating: { ar: 'جارٍ الإنشاء...', en: 'Creating...' },
       create_committee_btn: { ar: 'إنشاء اللجنة', en: 'Create Committee' },
       committee_fail: { ar: 'فشل إنشاء اللجنة، حاول مرة أخرى', en: 'Failed to create committee, please try again' },
-      committee_success: { ar: '✓ تم إنشاء اللجنة بنجاح', en: '✓ Committee created successfully' },
-      view_reviewers_btn: { ar: 'استعراض الأعضاء المحتملين للتحكيم', en: 'View Potential Committee Members' },
+      committee_success: { ar: 'تم إنشاء اللجنة بنجاح', en: 'Committee created successfully' },
+      // ← الزر يطلع فقط لما ما في لجنة بعد (committeeExists === false)
+      assign_committee_btn: { ar: 'تعيين اللجنة', en: 'Assign Committee' },
+      checking_committee: { ar: 'جارٍ التحقق من حالة اللجنة...', en: 'Checking committee status...' },
+      // ── الاقتراح الذكي ──
+      smart_suggest_btn: { ar: 'اقتراح ذكي للجنة', en: 'Smart Committee Suggestion' },
+      suggesting: { ar: 'جارٍ الاقتراح...', en: 'Suggesting...' },
+      suggestion_applied: {
+        ar: 'تم تعبئة الاقتراح — راجع الأسماء وعدّل إذا حبيت، ثم اضغط "إنشاء اللجنة" للتأكيد',
+        en: 'Suggestion applied — review the names, adjust if needed, then press "Create Committee" to confirm',
+      },
+      // ── حالة اللجنة الكاملة ── (الزر يطلع فقط لما في لجنة أصلاً — committeeExists === true)
+      committee_status_btn: { ar: 'عرض حالة اللجنة والقرارات', en: 'View Committee Status' },
+      committee_status_title: { ar: 'حالة اللجنة', en: 'Committee Status' },
+      member_response_l: { ar: 'حالة الرد', en: 'Response' },
+      member_decision_l: { ar: 'قرار المحكّم', en: 'Reviewer Decision' },
+      member_comment_l: { ar: 'ملاحظات المحكّم', en: "Reviewer's Comment" },
+      no_comment: { ar: 'لا توجد ملاحظات', en: 'No comment' },
+      committee_status_load_fail: { ar: 'تعذّر تحميل حالة اللجنة', en: 'Failed to load committee status' },
+      committee_created_by: { ar: 'المحرر المسؤول', en: 'Handling Editor' },
+      // ── قرار المحرر النهائي ──
+      final_decision_l: { ar: 'قرار المحرر النهائي', en: "Editor's Final Decision" },
+      final_decision_hint: {
+        ar: 'وصلت قرارات اللجنة — اختر قرارك النهائي بشأن هذا البحث',
+        en: "The committee's decisions have arrived — choose your final decision on this paper",
+      },
+      decision_accepted: { ar: 'قبول', en: 'Accept' },
+      decision_rejected: { ar: 'رفض', en: 'Reject' },
+      decision_revision: { ar: 'طلب تعديلات', en: 'Request Revision' },
+      final_note_ph: { ar: 'اكتب ملاحظاتك النهائية هنا...', en: 'Write your final notes here...' },
+      accept_confirm_l: { ar: 'تأكيدات لازمة قبل القبول', en: 'Confirmations required before acceptance' },
+      language_review_passed_l: { ar: 'المراجعة اللغوية سليمة', en: 'Language review passed' },
+      citation_check_passed_l: { ar: 'فحص التوثيق/الاستشهادات سليم', en: 'Citation check passed' },
+      publisher_permission_obtained_l: { ar: 'تم الحصول على إذن النشر', en: 'Publisher permission obtained' },
+      accept_confirm_missing: {
+        ar: 'لازم تأكيد المراجعة اللغوية وفحص التوثيق وإذن النشر قبل القبول',
+        en: 'Language review, citation check and publisher permission must all be confirmed before acceptance',
+      },
+      submit_final_decision: { ar: 'إرسال القرار النهائي', en: 'Submit Final Decision' },
+      submitting_final: { ar: 'جارٍ الإرسال...', en: 'Submitting...' },
+      final_decision_saved: { ar: 'تم حفظ القرار النهائي بنجاح', en: 'Final decision saved successfully' },
+      final_decision_missing: { ar: 'يرجى كتابة الملاحظات واختيار القرار النهائي', en: 'Please write notes and select a final decision' },
+      final_decision_fail: { ar: 'فشل إرسال القرار النهائي، حاول مرة أخرى', en: 'Failed to submit final decision, please try again' },
+      // ── نشر البحث ──
+      publish_btn: { ar: 'نشر البحث', en: 'Publish Paper' },
+      publishing_l: { ar: 'جارٍ النشر...', en: 'Publishing...' },
+      publish_success: { ar: 'تم نشر البحث بنجاح', en: 'Paper published successfully' },
     };
     return (map[key]?.[lang]) ?? (map[key]) ?? key;
   };
@@ -590,9 +986,7 @@ export default function Editor() {
           </div>
           <button className="menu-close-btn" onClick={closeMenu}>
             {t('close_l')}
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
+            <FiX size={14} />
           </button>
         </div>
 
@@ -638,14 +1032,14 @@ export default function Editor() {
         <div className="menu-foot" ref={menuFootRef} style={{ opacity: 0 }}>
           <span className="mf-label">{t('appearance')}</span>
           <div className="menu-tpill">
-            <button className={`mtp-btn ${theme === 'dark' ? 'on' : ''}`} onClick={() => setThemeState('dark')}>🌙</button>
-            <button className={`mtp-btn ${theme === 'light' ? 'on' : ''}`} onClick={() => setThemeState('light')}>☀️</button>
+            <button className={`mtp-btn ${theme === 'dark' ? 'on' : ''}`} onClick={() => setThemeState('dark')}><FiMoon size={14} /></button>
+            <button className={`mtp-btn ${theme === 'light' ? 'on' : ''}`} onClick={() => setThemeState('light')}><FiSun size={14} /></button>
           </div>
           <div className="menu-tpill">
             <button className={`mtp-btn ${lang === 'ar' ? 'on' : ''}`} onClick={() => setLangState('ar')}>ع</button>
             <button className={`mtp-btn ${lang === 'en' ? 'on' : ''}`} onClick={() => setLangState('en')}>EN</button>
           </div>
-          <button className="menu-login-btn">{t('logout')} →</button>
+          <button className="menu-login-btn">{t('logout')} <FiLogOut size={14} /></button>
         </div>
       </div>
 
@@ -659,13 +1053,14 @@ export default function Editor() {
           </div>
         </a>
         <div className="nav-space" />
-        <button className={`nav-menu-btn ${menuOpen ? 'is-open' : ''}`} onClick={openMenu}>
+        <button
+          className={`nav-menu-btn ${menuOpen ? 'is-open' : ''}`}
+          onClick={menuOpen ? closeMenu : openMenu}
+        >
           <span className="nmb-label">{t('menu_l')}</span>
-          <div className="nmb-lines">
-            <div className="nmb-line l1" />
-            <div className="nmb-line l2" />
-            <div className="nmb-line l3" />
-          </div>
+          <span className="nmb-icon">
+            {menuOpen ? <FiX size={18} /> : <FiMenu size={18} />}
+          </span>
         </button>
       </nav>
 
@@ -678,7 +1073,7 @@ export default function Editor() {
         <div className="hero-inner">
           <div className="role-badge">
             {t('role')}
-            <span className="badge-active">● ACTIVE</span>
+            <span className="badge-active"><FiCheckCircle size={12} /> ACTIVE</span>
           </div>
           <h1 className="hero-title">
             {lang === 'ar' ? (
@@ -730,9 +1125,7 @@ export default function Editor() {
           ))}
           <div className="filter-space" />
           <div className="search-mini">
-            <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="6.5" cy="6.5" r="5" /><line x1="10.5" y1="10.5" x2="14" y2="14" />
-            </svg>
+            <FiSearch size={14} />
             <input
               type="text"
               placeholder={t('search_ph')}
@@ -746,7 +1139,7 @@ export default function Editor() {
           {/* Loading state */}
           {loading && (
             <div className="empty-state">
-              <div className="empty-ico">⏳</div>
+              <div className="empty-ico"><FiLoader className="spin-ico" /></div>
               <div className="empty-title">{t('loading')}</div>
             </div>
           )}
@@ -754,16 +1147,16 @@ export default function Editor() {
           {/* Error state */}
           {!loading && error && (
             <div className="empty-state">
-              <div className="empty-ico">⚠️</div>
+              <div className="empty-ico"><FiAlertTriangle /></div>
               <div className="empty-title">{t('error')}</div>
-              <p className="empty-sub">{error.message}</p>
+              <p className="empty-sub">{extractErrorMessage(error, lang)}</p>
             </div>
           )}
 
           {/* Empty results */}
           {!loading && !error && filtered.length === 0 && (
             <div className="empty-state">
-              <div className="empty-ico">🔍</div>
+              <div className="empty-ico"><FiSearch /></div>
               <div className="empty-title">{t('no_results')}</div>
               <p className="empty-sub">{t('no_sub')}</p>
             </div>
@@ -786,9 +1179,10 @@ export default function Editor() {
                       : (lang === 'ar' ? 'تحكيم فردي' : 'Single Blind')}
                   </span>
                   <span className="pc-date">
+                    {p.is_paid_open_access ? <FiUnlock size={12} /> : <FiLock size={12} />}
                     {p.is_paid_open_access
-                      ? (lang === 'ar' ? '🔓 مفتوح' : '🔓 Open Access')
-                      : (lang === 'ar' ? '🔒 مقيّد' : '🔒 Restricted')}
+                      ? (lang === 'ar' ? ' مفتوح' : ' Open Access')
+                      : (lang === 'ar' ? ' مقيّد' : ' Restricted')}
                   </span>
                 </div>
 
@@ -808,9 +1202,7 @@ export default function Editor() {
                     {lang === 'ar' ? s.ar : s.en}
                   </span>
                   <span className="pc-arrow">
-                    <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <FiChevronRight size={13} />
                   </span>
                 </div>
               </div>
@@ -864,9 +1256,7 @@ export default function Editor() {
           <>
             <div className="dp-header">
               <button className="dp-back-btn" onClick={closeDetail}>
-                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <FiChevronLeft size={16} />
               </button>
               <span className="dp-header-title">{t('details')}</span>
               <span className="dp-dept-tag">
@@ -935,10 +1325,7 @@ export default function Editor() {
                 <div className="dp-pdf-block">
                   <div className="dp-pdf-bar">
                     <div className="dp-pdf-ico">
-                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--ac)" strokeWidth="1.8">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <FiFileText size={18} />
                     </div>
                     <span className="dp-pdf-name">
                       {activePaper.pdf_file.split('/').pop()}
@@ -949,9 +1336,7 @@ export default function Editor() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                        <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                      <FiDownload size={12} />
                       {t('download')}
                     </a>
                   </div>
@@ -983,7 +1368,7 @@ export default function Editor() {
                 {loadingInitialReview ? (
                   <div className="no-notes-msg">{t('loading')}</div>
                 ) : initialReviewError ? (
-                  <p style={{ color: '#EF4444', fontSize: 12 }}>{t('load_fail')}</p>
+                  <p style={{ color: '#EF4444', fontSize: 12 }}>{extractErrorMessage(initialReviewError, lang) || t('load_fail')}</p>
                 ) : initialReview ? (
                   <div className="note-item">
                     <div className="note-body">{extractReportText(initialReview)}</div>
@@ -998,29 +1383,312 @@ export default function Editor() {
                 )}
               </div>
 
-              {/* ══ زر عرض اللجنة — يظهر فقط لو القرار SEND_TO_COMMITTEE ══ */}
-              {initialReview?.decision === 'SEND_TO_COMMITTEE' && !committeePanelOpen && !committeeSuccess && (
-                <button
-                  onClick={openCommitteePanel}
-                  style={{
-                    background: "#5A8FA0",
-                    color: "#fff",
-                    padding: "12px 20px",
-                    border: "none",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    marginTop: 16,
-                  }}
-                >
-                  {t('view_reviewers_btn')}
-                </button>
+              {/* ══ أزرار اللجنة — تظهر فقط لو القرار SEND_TO_COMMITTEE ══
+                    ✅ منطق جديد:
+                    - وقت ما يكون committeeExists === null (لسا عم نتحقق) → ما منطلع ولا زر، بنطلع مؤشر تحميل بسيط
+                    - committeeExists === false → بس زر "تعيين اللجنة" يطلع
+                    - committeeExists === true  → بس زر "عرض حالة اللجنة" يطلع
+                    - قسم "قرار المحرر النهائي" (راديو بوتن) بيطلع فقط لما زر عرض حالة اللجنة
+                      يكون ظاهر (committeeExists === true) وجاي تحكيم فعلي من اللجنة (committeeHasVerdict)
+                    - زر "نشر البحث" ما بيطلع إلا لما القرار النهائي يصير "قبول" */}
+              {initialReview?.decision === 'SEND_TO_COMMITTEE' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {checkingCommittee && (
+                      <span style={{ fontSize: 12, opacity: 0.65, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <FiLoader className="spin-ico" size={13} />
+                        {t('checking_committee')}
+                      </span>
+                    )}
+
+                    {/* زر عرض حالة اللجنة — يطلع فقط إذا أكيد في لجنة مشكّلة أصلاً */}
+                    {!checkingCommittee && committeeExists === true && !committeeStatusOpen && (
+                      <button
+                        onClick={openCommitteeStatusPanel}
+                        style={{
+                          background: "#C4A55A",
+                          color: "#fff",
+                          padding: "12px 20px",
+                          border: "none",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <FiEye size={14} />
+                        {t('committee_status_btn')}
+                      </button>
+                    )}
+
+                    {/* زر تعيين اللجنة — يطلع فقط إذا أكيد ما في لجنة مشكّلة بعد */}
+                    {!checkingCommittee && committeeExists === false && !committeePanelOpen && !committeeSuccess && (
+                      <button
+                        onClick={openCommitteePanel}
+                        style={{
+                          background: "#5A8FA0",
+                          color: "#fff",
+                          padding: "12px 20px",
+                          border: "none",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          fontWeight: "600",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <FiUsers size={14} />
+                        {t('assign_committee_btn')}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* ══ قرار المحرر النهائي (راديو بوتن) ══
+                        بيطلع حصراً لما زر "عرض حالة اللجنة" يكون ظاهر (في لجنة أصلاً)
+                        وجاي تحكيم فعلي من أعضاء اللجنة (مش لسا pending) ══ */}
+                  {committeeExists === true && committeeHasVerdict(committeeStatus) && (
+                    <div className="editor-field">
+                      <label className="editor-label">
+                        {t('final_decision_l')}
+                      </label>
+                      <p style={{ fontSize: 12, opacity: 0.7, marginTop: -4, marginBottom: 10 }}>
+                        {t('final_decision_hint')}
+                      </p>
+
+                      {/* ✅ الباك بيرفض الطلب من دون notes */}
+                      <textarea
+                        className="editor-textarea"
+                        rows={4}
+                        placeholder={t('final_note_ph')}
+                        value={finalNoteText}
+                        onChange={e => setFinalNoteText(e.target.value)}
+                        disabled={submittingFinalDecision}
+                        style={{ marginBottom: 10 }}
+                      />
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {FINAL_DECISION_OPTIONS.map(opt => (
+                          <label
+                            key={opt.value}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}
+                          >
+                            <input
+                              type="radio"
+                              name="final-decision"
+                              value={opt.value}
+                              checked={finalDecision === opt.value}
+                              onChange={() => setFinalDecision(opt.value)}
+                              disabled={submittingFinalDecision}
+                            />
+                            {lang === 'ar' ? opt.ar : opt.en}
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* ✅ الباك بيرفض ACCEPT من دون هالتلاتة تأكيدات — بتطلع فقط لما القرار المختار ACCEPT */}
+                      {finalDecision === 'ACCEPT' && (
+                        <div style={{ marginTop: 10, marginBottom: 4 }}>
+                          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+                            {t('accept_confirm_l')}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={languageReviewPassed}
+                                onChange={e => setLanguageReviewPassed(e.target.checked)}
+                                disabled={submittingFinalDecision}
+                              />
+                              {t('language_review_passed_l')}
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={citationCheckPassed}
+                                onChange={e => setCitationCheckPassed(e.target.checked)}
+                                disabled={submittingFinalDecision}
+                              />
+                              {t('citation_check_passed_l')}
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={publisherPermissionObtained}
+                                onChange={e => setPublisherPermissionObtained(e.target.checked)}
+                                disabled={submittingFinalDecision}
+                              />
+                              {t('publisher_permission_obtained_l')}
+                            </label>
+                          </div>
+                          {!(languageReviewPassed && citationCheckPassed && publisherPermissionObtained) && (
+                            <p style={{ color: '#F59E0B', fontSize: 12, marginTop: 6 }}>
+                              {t('accept_confirm_missing')}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          className="btn-save-note"
+                          onClick={submitFinalDecision}
+                          disabled={
+                            submittingFinalDecision ||
+                            !finalDecision ||
+                            !finalNoteText.trim() ||
+                            (finalDecision === 'ACCEPT' && !(languageReviewPassed && citationCheckPassed && publisherPermissionObtained))
+                          }
+                        >
+                          {submittingFinalDecision ? <FiLoader className="spin-ico" size={13} /> : <FiCheck size={13} />}
+                          {submittingFinalDecision ? t('submitting_final') : t('submit_final_decision')}
+                        </button>
+                      </div>
+
+                      {!finalNoteText.trim() && finalDecision && (
+                        <p style={{ color: '#F59E0B', fontSize: 12, marginTop: 8 }}>
+                          {t('final_decision_missing')}
+                        </p>
+                      )}
+
+                      {finalReview && (
+                        <p style={{ color: '#22C55E', fontSize: 13, marginTop: 10, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FiCheckCircle size={15} />
+                          {t('final_decision_saved')}
+                        </p>
+                      )}
+                      {finalDecisionError && (
+                        <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                          {extractErrorMessage(finalDecisionError, lang) || t('final_decision_fail')}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ══ زر نشر البحث — يظهر فقط إذا القرار النهائي = قبول (ACCEPT) ══ */}
+                  {finalReview?.decision === 'ACCEPT' && (
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        onClick={handlePublishPaper}
+                        disabled={publishing}
+                        style={{
+                          background: "#22C55E",
+                          color: "#fff",
+                          padding: "12px 20px",
+                          border: "none",
+                          borderRadius: "10px",
+                          cursor: publishing ? "not-allowed" : "pointer",
+                          fontWeight: "600",
+                          opacity: publishing ? 0.7 : 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        {publishing ? <FiLoader className="spin-ico" size={14} /> : <FiUpload size={14} />}
+                        {publishing ? t('publishing_l') : t('publish_btn')}
+                      </button>
+                    </div>
+                  )}
+
+                  {publishSuccess && (
+                    <p style={{ color: '#22C55E', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                      <FiCheckCircle size={15} />
+                      {t('publish_success')}
+                    </p>
+                  )}
+                  {publishError && (
+                    <p style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                      <FiAlertTriangle size={15} />
+                      {publishError}
+                    </p>
+                  )}
+                </div>
               )}
 
               {committeeSuccess && (
-                <p style={{ color: '#22C55E', fontSize: 13, marginTop: 12, fontWeight: 600 }}>
+                <p style={{ color: '#22C55E', fontSize: 13, marginTop: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FiCheckCircle size={15} />
                   {t('committee_success')}
                 </p>
+              )}
+
+              {/* ══ بانل حالة اللجنة (أعضاء + ردود + قرارات) ══ */}
+              {committeeStatusOpen && (
+                <div className="note-editor open" style={{ marginTop: 16 }}>
+                  <div className="dp-header" style={{ padding: 0, marginBottom: 12, border: 'none' }}>
+                    <span className="dp-header-title" style={{ margin: 0 }}>{t('committee_status_title')}</span>
+                  </div>
+
+                  {loadingCommitteeStatus ? (
+                    <div className="no-notes-msg">{t('loading')}</div>
+                  ) : committeeStatusError ? (
+                    <p style={{ color: '#EF4444', fontSize: 12 }}>{extractErrorMessage(committeeStatusError, lang) || t('committee_status_load_fail')}</p>
+                  ) : committeeStatus ? (
+                    <>
+                      <div className="dp-info-grid" style={{ marginBottom: 16 }}>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('blinding_type_l')}</div>
+                          <div className="dp-info-val">
+                            {committeeStatus.blinding_type === 'double_blind' ? t('double_blind') : t('single_blind')}
+                          </div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('committee_created_by')}</div>
+                          <div className="dp-info-val">{committeeStatus.editor_name}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {(committeeStatus.members ?? []).map(member => {
+                          const respMeta = MEMBER_RESPONSE_MAP[member.response] ?? MEMBER_RESPONSE_MAP.pending;
+                          const decMeta = MEMBER_DECISION_MAP[member.paper_decision] ?? MEMBER_DECISION_MAP.pending;
+                          return (
+                            <div key={member.id} className="reviewer-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                                <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                  {member.user?.full_name}{' '}
+                                  <span style={{ opacity: 0.55, fontWeight: 400, fontSize: 12 }}>
+                                    {member.user?.institution ? `· ${member.user.institution}` : ''}
+                                  </span>
+                                </span>
+                                <span className={`pc-status ${respMeta.cls}`}>
+                                  <span className="pc-status-dot" />
+                                  {lang === 'ar' ? respMeta.ar : respMeta.en}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                                <span style={{ fontSize: 12, opacity: 0.7 }}>{t('member_decision_l')}</span>
+                                <span className={`pc-status ${decMeta.cls}`}>
+                                  <span className="pc-status-dot" />
+                                  {lang === 'ar' ? decMeta.ar : decMeta.en}
+                                </span>
+                              </div>
+
+                              <div>
+                                <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 2 }}>{t('member_comment_l')}</div>
+                                <div style={{ fontSize: 13 }}>
+                                  {member.comments?.trim() ? member.comments : t('no_comment')}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : null}
+
+                  <div className="note-editor-btns">
+                    <button className="btn-cancel-note" onClick={closeCommitteeStatusPanel}>
+                      <FiX size={13} />
+                      {t('cancel')}
+                    </button>
+                  </div>
+                </div>
               )}
 
               {committeePanelOpen && (
@@ -1032,11 +1700,28 @@ export default function Editor() {
                     {t('committee_hint')}
                   </p>
 
+                  {/* ══ زر الاقتراح الذكي — يعبّي primary/substitute تلقائياً
+                        من نفس availableReviewers، بدون أي API إضافي ══ */}
+                  <button
+                    className="btn-smart-suggest"
+                    onClick={suggestCommitteeSmart}
+                    disabled={suggesting || loadingReviewers || availableReviewers.length === 0}
+                  >
+                    {suggesting ? <FiLoader className="spin-ico" size={14} /> : <HiSparkles size={15} />}
+                    {suggesting ? t('suggesting') : t('smart_suggest_btn')}
+                  </button>
+
+                  {lastSuggestionApplied && (
+                    <p className="smart-suggest-note">
+                      {t('suggestion_applied')}
+                    </p>
+                  )}
+
                   {loadingReviewers ? (
                     <div className="no-notes-msg">{t('loading')}</div>
                   ) : reviewersError ? (
                     <p style={{ color: '#EF4444', fontSize: 12 }}>
-                      {t('reviewers_load_fail')}
+                      {extractErrorMessage(reviewersError, lang) || t('reviewers_load_fail')}
                     </p>
                   ) : availableReviewers.length === 0 ? (
                     <div className="no-notes-msg">
@@ -1049,16 +1734,7 @@ export default function Editor() {
                         return (
                           <div
                             key={r.user_id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 10,
-                              border: '1px solid var(--border)',
-                              borderRadius: 10,
-                              padding: '10px 12px',
-                              background: currentRole !== 'none' ? 'var(--card-bg)' : 'transparent',
-                            }}
+                            className={`reviewer-row ${currentRole !== 'none' ? `role-${currentRole}` : ''}`}
                           >
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                               <span style={{ fontWeight: 600, fontSize: 14 }}>
@@ -1092,7 +1768,13 @@ export default function Editor() {
                     marginTop: 12,
                     fontWeight: 600,
                     color: primaryReviewerIds.length === REQUIRED_PRIMARY_COUNT ? '#22C55E' : '#F59E0B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}>
+                    {primaryReviewerIds.length === REQUIRED_PRIMARY_COUNT
+                      ? <FiCheckCircle size={13} />
+                      : <FiAlertTriangle size={13} />}
                     {primaryReviewerIds.length === REQUIRED_PRIMARY_COUNT
                       ? t('primary_count_ok')
                       : `${t('primary_count_bad')}${primaryReviewerIds.length})`}
@@ -1113,6 +1795,7 @@ export default function Editor() {
 
                   <div className="note-editor-btns">
                     <button className="btn-cancel-note" onClick={closeCommitteePanel} disabled={creatingCommittee}>
+                      <FiX size={13} />
                       {t('cancel')}
                     </button>
                     <button
@@ -1120,6 +1803,7 @@ export default function Editor() {
                       onClick={handleCreateCommittee}
                       disabled={creatingCommittee || primaryReviewerIds.length !== REQUIRED_PRIMARY_COUNT}
                     >
+                      {creatingCommittee ? <FiLoader className="spin-ico" size={13} /> : <FiCheck size={13} />}
                       {creatingCommittee
                         ? t('creating')
                         : `${t('create_committee_btn')} (${primaryReviewerIds.length}/${REQUIRED_PRIMARY_COUNT})`}
@@ -1128,7 +1812,7 @@ export default function Editor() {
 
                   {committeeError && (
                     <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
-                      {t('committee_fail')}
+                      {extractErrorMessage(committeeError, lang) || t('committee_fail')}
                     </p>
                   )}
                 </div>
@@ -1146,10 +1830,14 @@ export default function Editor() {
                       border: "none",
                       borderRadius: "10px",
                       cursor: "pointer",
-                      fontWeight: "600"
+                      fontWeight: "600",
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
                     }}
                   >
-                    إضافة تقرير
+                    <FiEdit3 size={14} />
+                    {lang === 'ar' ? 'إضافة تقرير' : 'Add Report'}
                   </button>
                 </div>
               )}
@@ -1217,6 +1905,7 @@ export default function Editor() {
                         onClick={cancelReviewEditor}
                         disabled={savingNote}
                       >
+                        <FiX size={13} />
                         {t('cancel')}
                       </button>
                       <button
@@ -1224,6 +1913,7 @@ export default function Editor() {
                         onClick={submitReview}
                         disabled={savingNote || !noteText.trim() || !decision}
                       >
+                        {savingNote ? <FiLoader className="spin-ico" size={13} /> : <FiCheck size={13} />}
                         {savingNote ? t('saving') : t('save_note')}
                       </button>
                     </div>
@@ -1236,7 +1926,7 @@ export default function Editor() {
 
                     {saveError && (
                       <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
-                        {t('save_fail')}
+                        {extractErrorMessage(saveError, lang) || t('save_fail')}
                       </p>
                     )}
                   </div>

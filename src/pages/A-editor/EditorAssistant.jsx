@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { getPapers, submitAssistantReport, getAssistantReview, getPlagiarismReport, suggestKeywords } from "../../api/research";
+import {
+  getPapers, submitAssistantReport, getAssistantReview, getPlagiarismReport, suggestKeywords,
+  getIEEEReports, getIEEEReportDetail, submitIEEECheck, deleteIEEEReport,
+  submitClaimEvidenceAnalysis, getClaimEvidenceReports, getClaimEvidenceReportDetail, deleteClaimEvidenceReport,
+  getMetadataScore, // ⚠ لازم تكون مضافة بـ ../../api/research.js — شوف الملاحظة تحت
+} from "../../api/research";
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import Logo from '../../components/Logo';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import "../../styling/EditorAssistant.css"
 
 /* ══════════════════
@@ -8,17 +18,17 @@ import "../../styling/EditorAssistant.css"
 ══════════════════ */
 const LogoSVG = () => (
   <svg width="38" height="38" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-    <rect width="40" height="40" rx="8" fill="#0D0F12"/>
-    <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5"/>
-    <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#141820" stroke="#C4A55A" strokeWidth="0.9"/>
-    <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1"/>
-    <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A"/>
-    <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round"/>
-    <line x1="17.5" y1="20" x2="15" y2="25" stroke="#6FA07A" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
-    <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round"/>
-    <line x1="22.5" y1="20" x2="25" y2="25" stroke="#8B6030" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
-    <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round"/>
-    <circle cx="20" cy="13" r="1.5" fill="#E8D090"/>
+    <rect width="40" height="40" rx="8" fill="#0D0F12" />
+    <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5" />
+    <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#141820" stroke="#C4A55A" strokeWidth="0.9" />
+    <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1" />
+    <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A" />
+    <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round" />
+    <line x1="17.5" y1="20" x2="15" y2="25" stroke="#6FA07A" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
+    <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round" />
+    <line x1="22.5" y1="20" x2="25" y2="25" stroke="#8B6030" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
+    <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="20" cy="13" r="1.5" fill="#E8D090" />
   </svg>
 );
 
@@ -26,13 +36,13 @@ const LogoSVG = () => (
    STATUS MAP  ← متوافق مع API values
 ══════════════════ */
 const STATUS_MAP = {
-  pending:            { ar: 'بانتظار المراجعة',     en: 'Pending Review',      cls: 'status-pending' },
-  under_review:       { ar: 'قيد المراجعة',          en: 'Under Review',        cls: 'status-pending' },
-  plagiarism_failed:  { ar: 'فشل فحص الانتحال',     en: 'Plagiarism Failed',   cls: 'status-rejected' },
-  plagiarism_passed:  { ar: 'اجتاز فحص الانتحال',   en: 'Plagiarism Passed',   cls: 'status-noted'   },
-  accepted:           { ar: 'مقبول',                 en: 'Accepted',            cls: 'status-done'    },
-  rejected:           { ar: 'مرفوض',                 en: 'Rejected',            cls: 'status-rejected'},
-  noted:              { ar: 'تمت الملاحظة',           en: 'Notes Added',         cls: 'status-noted'   },
+  pending: { ar: 'بانتظار المراجعة', en: 'Pending Review', cls: 'status-pending' },
+  under_review: { ar: 'قيد المراجعة', en: 'Under Review', cls: 'status-pending' },
+  plagiarism_failed: { ar: 'فشل فحص الانتحال', en: 'Plagiarism Failed', cls: 'status-rejected' },
+  plagiarism_passed: { ar: 'اجتاز فحص الانتحال', en: 'Plagiarism Passed', cls: 'status-noted' },
+  accepted: { ar: 'مقبول', en: 'Accepted', cls: 'status-done' },
+  rejected: { ar: 'مرفوض', en: 'Rejected', cls: 'status-rejected' },
+  noted: { ar: 'تمت الملاحظة', en: 'Notes Added', cls: 'status-noted' },
 };
 
 const getStatus = (paper) => {
@@ -41,17 +51,46 @@ const getStatus = (paper) => {
   return STATUS_MAP[paper.status] ?? { ar: paper.status, en: paper.status, cls: 'status-pending' };
 };
 
+// ← حالة تقرير الـ IEEE (status العام: pending / completed / failed...الخ) — عرض عام لأي قيمة غير معروفة
+const IEEE_STATUS_CLS = {
+  pending: 'status-pending',
+  completed: 'status-done',
+  failed: 'status-rejected',
+};
+
+// ← حالة تقرير تحليل الادعاءات والأدلة (نفس فلسفة IEEE_STATUS_CLS)
+const CLAIM_STATUS_CLS = {
+  pending: 'status-pending',
+  completed: 'status-done',
+  failed: 'status-rejected',
+};
+
 const PREV_NAMES = {
   ar: ['الرئيسية', 'الأبحاث', 'الباحثون', 'النزاهة', 'تواصل معنا'],
   en: ['HOME', 'RESEARCH', 'RESEARCHERS', 'INTEGRITY', 'CONTACT'],
 };
 
 /* ══════════════════
+   HELPER — بيرجع لون حسب الدرجة (أخضر/أصفر/أحمر) — مستخدم بعرض
+   درجة جودة الميتاداتا وبنودها الفرعية
+══════════════════ */
+function scoreColor(score) {
+  if (score >= 70) return 'var(--ac2)';
+  if (score >= 40) return '#F59E0B';
+  return '#EF4444';
+}
+
+/* ══════════════════
    MAIN COMPONENT
 ══════════════════ */
 export default function EditorAssistant() {
-  const [theme, setThemeState] = useState('dark');
+  const { theme: globalTheme, setTheme } = useTheme();
+  const { user } = useAuth();
+  const [theme, setThemeState] = useState(globalTheme || 'light');
   const [lang, setLangState] = useState('ar');
+
+  // ← تبديل بين تاب "الأبحاث المقدمة" وتاب "تقارير فحص IEEE" وتاب "تحليل الادعاءات والأدلة"
+  const [activeView, setActiveView] = useState('ieee'); // 'papers' | 'ieee' | 'claims'
 
   // ← API state بدل INITIAL_PAPERS
   const [papers, setPapers] = useState([]);
@@ -93,6 +132,49 @@ export default function EditorAssistant() {
   const [loadingKeywords, setLoadingKeywords] = useState(false);
   const [keywordsError, setKeywordsError] = useState(null);
 
+  // ══ IEEE Reports tab state ══
+  const [ieeeReports, setIeeeReports] = useState([]);
+  const [ieeeReportsLoaded, setIeeeReportsLoaded] = useState(false); // ← تحميل كسول أول مرة بس
+  const [loadingIeeeReports, setLoadingIeeeReports] = useState(false);
+  const [ieeeReportsError, setIeeeReportsError] = useState(null);
+
+  const [activeIeeeReport, setActiveIeeeReport] = useState(null);
+  const [ieeeDetailOpen, setIeeeDetailOpen] = useState(false);
+  const [loadingIeeeDetail, setLoadingIeeeDetail] = useState(false);
+  const [ieeeDetailError, setIeeeDetailError] = useState(null);
+
+  // ══ IEEE check state (من داخل بانل تفاصيل البحث) ══
+  const [ieeeCheckData, setIeeeCheckData] = useState(null);
+  const [loadingIeeeCheck, setLoadingIeeeCheck] = useState(false);
+  const [ieeeCheckError, setIeeeCheckError] = useState(null);
+
+  // ══ حذف تقرير IEEE من الكارد ══
+  const [deletingIeeeId, setDeletingIeeeId] = useState(null);
+
+  // ══ Claim-Evidence Reports tab state (تحليل الادعاءات والأدلة) ══
+  const [claimReports, setClaimReports] = useState([]);
+  const [claimReportsLoaded, setClaimReportsLoaded] = useState(false); // ← تحميل كسول أول مرة بس
+  const [loadingClaimReports, setLoadingClaimReports] = useState(false);
+  const [claimReportsError, setClaimReportsError] = useState(null);
+
+  const [activeClaimReport, setActiveClaimReport] = useState(null);
+  const [claimDetailOpen, setClaimDetailOpen] = useState(false);
+  const [loadingClaimDetail, setLoadingClaimDetail] = useState(false);
+  const [claimDetailError, setClaimDetailError] = useState(null);
+
+  // ══ Claim-Evidence analysis state (من داخل بانل تفاصيل البحث) ══
+  const [claimAnalysisData, setClaimAnalysisData] = useState(null);
+  const [loadingClaimAnalysis, setLoadingClaimAnalysis] = useState(false);
+  const [claimAnalysisError, setClaimAnalysisError] = useState(null);
+
+  // ══ حذف تقرير Claim-Evidence من الكارد ══
+  const [deletingClaimId, setDeletingClaimId] = useState(null);
+
+  // ══ ✅ جديد: درجة جودة الميتاداتا (GET metadata-score) — من داخل بانل تفاصيل البحث ══
+  const [metadataScoreData, setMetadataScoreData] = useState(null);
+  const [loadingMetadataScore, setLoadingMetadataScore] = useState(false);
+  const [metadataScoreError, setMetadataScoreError] = useState(null);
+
   const menuRef = useRef(null);
   const menuTopRef = useRef(null);
   const menuLinksRef = useRef([]);
@@ -100,6 +182,14 @@ export default function EditorAssistant() {
   const cgRef = useRef(null);
 
   /* ── Theme / Lang applied to root ── */
+  useEffect(() => {
+    setThemeState(globalTheme || 'light');
+  }, [globalTheme]);
+
+  useEffect(() => {
+    setTheme(theme);
+  }, [theme, setTheme]);
+
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
@@ -131,6 +221,56 @@ export default function EditorAssistant() {
     return () => { cancelled = true; };
   }, []);
 
+  /* ── Fetch IEEE reports lazily عند أول ما نفتح التاب ── */
+  useEffect(() => {
+    if (activeView !== 'ieee' || ieeeReportsLoaded) return;
+    let cancelled = false;
+    setLoadingIeeeReports(true);
+    setIeeeReportsError(null);
+
+    getIEEEReports()
+      .then(data => {
+        if (!cancelled) {
+          setIeeeReports(Array.isArray(data) ? data : data.results ?? []);
+          setIeeeReportsLoaded(true);
+          setLoadingIeeeReports(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setIeeeReportsError(err);
+          setLoadingIeeeReports(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [activeView, ieeeReportsLoaded]);
+
+  /* ── Fetch Claim-Evidence reports lazily عند أول ما نفتح التاب ── */
+  useEffect(() => {
+    if (activeView !== 'claims' || claimReportsLoaded) return;
+    let cancelled = false;
+    setLoadingClaimReports(true);
+    setClaimReportsError(null);
+
+    getClaimEvidenceReports()
+      .then(data => {
+        if (!cancelled) {
+          setClaimReports(Array.isArray(data) ? data : data.results ?? []);
+          setClaimReportsLoaded(true);
+          setLoadingClaimReports(false);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setClaimReportsError(err);
+          setLoadingClaimReports(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [activeView, claimReportsLoaded]);
+
   /* ── Scroll nav ── */
   useEffect(() => {
     const handler = () => setNavScrolled(window.scrollY > 20);
@@ -160,52 +300,35 @@ export default function EditorAssistant() {
     const handler = e => {
       if (e.key === 'Escape') {
         if (menuOpen) closeMenu();
+        else if (claimDetailOpen) closeClaimDetail();
+        else if (ieeeDetailOpen) closeIeeeDetail();
         else if (detailOpen) closeDetail();
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [menuOpen, detailOpen]);
+  }, [menuOpen, detailOpen, ieeeDetailOpen, claimDetailOpen]);
 
-  /* ── GSAP Menu ── */
+  /* ── Shared menu state ── */
   function openMenu() {
     if (menuOpen) return;
     setMenuOpen(true);
-    const menu = menuRef.current;
-    const top = menuTopRef.current;
-    const links = menuLinksRef.current;
-    const foot = menuFootRef.current;
-    gsap.set(menu, { clipPath: 'inset(0 0 100% 0)', pointerEvents: 'auto' });
-    gsap.set(top, { opacity: 0, y: -16 });
-    gsap.set(links, { y: '100%', opacity: 0 });
-    gsap.set(foot, { opacity: 0, y: 20 });
-    document.body.style.overflow = 'hidden';
-    gsap.timeline()
-      .to(menu, { clipPath: 'inset(0 0 0% 0)', duration: .7, ease: 'power3.inOut' })
-      .to(top, { opacity: 1, y: 0, duration: .45, ease: 'power2.out' }, '-=0.38')
-      .to(links, { y: '0%', opacity: 1, duration: .6, ease: 'power3.out', stagger: .07 }, '-=0.35')
-      .to(foot, { opacity: 1, y: 0, duration: .45, ease: 'power2.out' }, '-=0.4');
   }
 
   function closeMenu() {
     if (!menuOpen) return;
     setMenuOpen(false);
-    const menu = menuRef.current;
-    const top = menuTopRef.current;
-    const links = menuLinksRef.current;
-    const foot = menuFootRef.current;
     setPreviewIdx(null);
-    gsap.timeline({ onComplete: () => { menu.style.pointerEvents = 'none'; document.body.style.overflow = ''; } })
-      .to(links, { y: '100%', opacity: 0, duration: .3, ease: 'power2.in', stagger: { amount: .18, from: 'end' } })
-      .to(top, { opacity: 0, y: -12, duration: .25, ease: 'power2.in' }, '-=0.2')
-      .to(foot, { opacity: 0, y: 14, duration: .2, ease: 'power2.in' }, '<')
-      .to(menu, { clipPath: 'inset(0 0 100% 0)', duration: .5, ease: 'power3.inOut' }, '-=0.1');
   }
 
-  /* ── Detail panel ── */
+  /* ── Detail panel (Papers) ── */
   function openDetail(id) {
     const p = papers.find(x => x.id === id);
     if (!p) return;
+    console.log('PDF:', p); // ← ضيف هاد مؤقتاً
+    console.log('PDF FILE:', p.pdf_file); // ← وهاد كمان
+    closeIeeeDetail(); // ← تأكيد إغلاق بانل IEEE إذا كان مفتوح
+    closeClaimDetail(); // ← تأكيد إغلاق بانل تحليل الادعاءات والأدلة إذا كان مفتوح
     setActivePaper(p);
     setDetailOpen(true);
     setNoteEditorOpen(false);
@@ -221,6 +344,12 @@ export default function EditorAssistant() {
     setPlagiarismError(null);
     setKeywordsData(null);
     setKeywordsError(null);
+    setIeeeCheckData(null);
+    setIeeeCheckError(null);
+    setClaimAnalysisData(null);
+    setClaimAnalysisError(null);
+    setMetadataScoreData(null);
+    setMetadataScoreError(null);
     document.body.style.overflow = 'hidden';
   }
 
@@ -240,6 +369,12 @@ export default function EditorAssistant() {
     setPlagiarismError(null);
     setKeywordsData(null);
     setKeywordsError(null);
+    setIeeeCheckData(null);
+    setIeeeCheckError(null);
+    setClaimAnalysisData(null);
+    setClaimAnalysisError(null);
+    setMetadataScoreData(null);
+    setMetadataScoreError(null);
     document.body.style.overflow = '';
   }
 
@@ -288,6 +423,73 @@ export default function EditorAssistant() {
     }
   }
 
+  /* ── ✅ جديد: جلب درجة جودة الميتاداتا (GET metadata-score) ──
+     الباك بيرجع overall_score + sub_scores + breakdown (تفصيلي لكل بند مع الدرجة والوزن ورسالة)
+     + recommendations + status، زي مثال الـ response يلي شفناه بالـ Postman */
+  async function loadMetadataScore() {
+    if (!activePaper) return;
+    setLoadingMetadataScore(true);
+    setMetadataScoreError(null);
+    try {
+      const data = await getMetadataScore(activePaper.id);
+      setMetadataScoreData(data);
+    } catch (err) {
+      setMetadataScoreError(err);
+    } finally {
+      setLoadingMetadataScore(false);
+    }
+  }
+
+  /* ── تشغيل فحص IEEE على ملف البحث الحالي (POST ieee/check) ── */
+  async function runIeeeCheck() {
+    if (!activePaper?.pdf_file) return;
+    setLoadingIeeeCheck(true);
+    setIeeeCheckError(null);
+    try {
+      // نجيب ملف الـ PDF المرفوع مسبقاً كـ blob ونعيد رفعه كـ document_file
+      const fileRes = await fetch(activePaper.pdf_file);
+      const blob = await fileRes.blob();
+      const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
+      const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+
+      const formData = new FormData();
+      formData.append('document_file', file);
+
+      const data = await submitIEEECheck(formData);
+      setIeeeCheckData(data);
+    } catch (err) {
+      setIeeeCheckError(err);
+    } finally {
+      setLoadingIeeeCheck(false);
+    }
+  }
+
+  /* ── تشغيل تحليل الادعاءات والأدلة على ملف البحث الحالي (POST claim-evidence/analyze) ── */
+  async function runClaimAnalysis() {
+    if (!activePaper?.pdf_file) return;
+    setLoadingClaimAnalysis(true);
+    setClaimAnalysisError(null);
+    try {
+      // نفس منطق فحص IEEE: نجيب ملف الـ PDF كـ blob ونرفعه كـ document_file
+      const fileRes = await fetch(activePaper.pdf_file);
+      const blob = await fileRes.blob();
+      const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
+      const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+
+      const formData = new FormData();
+      formData.append('document_file', file);
+
+      const data = await submitClaimEvidenceAnalysis(formData);
+      setClaimAnalysisData(data);
+      // ← نخلي تاب "تحليل الادعاءات والأدلة" يعيد التحميل لما نفتحه، عشان يطلع فيه التحليل الجديد
+      setClaimReportsLoaded(false);
+    } catch (err) {
+      setClaimAnalysisError(err);
+    } finally {
+      setLoadingClaimAnalysis(false);
+    }
+  }
+
   /* ── Save note (payload يطابق تماماً schema الـ backend) ── */
   async function saveNote() {
     if (!activePaper || !noteText.trim()) return;
@@ -327,7 +529,98 @@ export default function EditorAssistant() {
     }
   }
 
-  /* ── Filtering ── */
+  /* ── Detail panel (IEEE Reports) ── */
+  async function openIeeeDetail(id) {
+    closeDetail(); // ← تأكيد إغلاق بانل البحث إذا كان مفتوح
+    closeClaimDetail(); // ← تأكيد إغلاق بانل تحليل الادعاءات والأدلة إذا كان مفتوح
+    setIeeeDetailOpen(true);
+    setActiveIeeeReport(null);
+    setIeeeDetailError(null);
+    setLoadingIeeeDetail(true);
+    document.body.style.overflow = 'hidden';
+    try {
+      const data = await getIEEEReportDetail(id);
+      setActiveIeeeReport(data);
+    } catch (err) {
+      setIeeeDetailError(err);
+    } finally {
+      setLoadingIeeeDetail(false);
+    }
+  }
+
+  function closeIeeeDetail() {
+    setIeeeDetailOpen(false);
+    setActiveIeeeReport(null);
+    setIeeeDetailError(null);
+    document.body.style.overflow = '';
+  }
+  /* ── حذف تقرير IEEE (DELETE ieee/reports/{id}) ── */
+  async function handleDeleteIeeeReport(e, id) {
+    e.stopPropagation(); // ← منع فتح البانل عند الضغط على زر الحذف
+    const confirmMsg = lang === 'ar'
+      ? 'هل أنت متأكد من حذف هذا التقرير؟'
+      : 'Are you sure you want to delete this report?';
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingIeeeId(id);
+    try {
+      await deleteIEEEReport(id);
+      setIeeeReports(prev => prev.filter(r => r.id !== id));
+      if (activeIeeeReport?.id === id) closeIeeeDetail();
+    } catch (err) {
+      alert(lang === 'ar' ? 'فشل حذف التقرير، حاول مرة أخرى' : 'Failed to delete report, please try again');
+    } finally {
+      setDeletingIeeeId(null);
+    }
+  }
+
+  /* ── Detail panel (Claim-Evidence Reports) ── */
+  async function openClaimDetail(id) {
+    closeDetail(); // ← تأكيد إغلاق بانل البحث إذا كان مفتوح
+    closeIeeeDetail(); // ← تأكيد إغلاق بانل IEEE إذا كان مفتوح
+    setClaimDetailOpen(true);
+    setActiveClaimReport(null);
+    setClaimDetailError(null);
+    setLoadingClaimDetail(true);
+    document.body.style.overflow = 'hidden';
+    try {
+      const data = await getClaimEvidenceReportDetail(id);
+      setActiveClaimReport(data);
+    } catch (err) {
+      setClaimDetailError(err);
+    } finally {
+      setLoadingClaimDetail(false);
+    }
+  }
+
+  function closeClaimDetail() {
+    setClaimDetailOpen(false);
+    setActiveClaimReport(null);
+    setClaimDetailError(null);
+    document.body.style.overflow = '';
+  }
+
+  /* ── حذف تقرير تحليل الادعاءات والأدلة (DELETE claim-evidence/reports/{id}) ── */
+  async function handleDeleteClaimReport(e, id) {
+    e.stopPropagation(); // ← منع فتح البانل عند الضغط على زر الحذف
+    const confirmMsg = lang === 'ar'
+      ? 'هل أنت متأكد من حذف هذا التحليل؟'
+      : 'Are you sure you want to delete this analysis?';
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingClaimId(id);
+    try {
+      await deleteClaimEvidenceReport(id);
+      setClaimReports(prev => prev.filter(r => r.id !== id));
+      if (activeClaimReport?.id === id) closeClaimDetail();
+    } catch (err) {
+      alert(lang === 'ar' ? 'فشل حذف التحليل، حاول مرة أخرى' : 'Failed to delete analysis, please try again');
+    } finally {
+      setDeletingClaimId(null);
+    }
+  }
+
+  /* ── Filtering (Papers) ── */
   const filtered = papers.filter(p => {
     if (activeFilter === 'noted' && !p.is_reviewed_by_assistant) return false;
     if (activeFilter === 'pending' && p.is_reviewed_by_assistant) return false;
@@ -341,49 +634,73 @@ export default function EditorAssistant() {
     return true;
   });
 
+  // ← فلترة تقارير IEEE بنفس صندوق البحث (بالاسم/عنوان البحث)
+  const filteredIeee = ieeeReports.filter(r => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !r.original_filename?.toLowerCase().includes(q) &&
+        !r.paper_title?.toLowerCase().includes(q)
+      ) return false;
+    }
+    return true;
+  });
+
+  // ← فلترة تقارير تحليل الادعاءات والأدلة بنفس صندوق البحث (بالاسم/عنوان البحث)
+  const filteredClaims = claimReports.filter(r => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !r.original_filename?.toLowerCase().includes(q) &&
+        !r.paper_title?.toLowerCase().includes(q)
+      ) return false;
+    }
+    return true;
+  });
+
   const statPending = papers.filter(p => !p.is_reviewed_by_assistant).length;
-  const statNoted   = papers.filter(p => p.is_reviewed_by_assistant).length;
+  const statNoted = papers.filter(p => p.is_reviewed_by_assistant).length;
 
   const t = key => {
     const map = {
-      total:      { ar: 'إجمالي الأبحاث',             en: 'Total Papers' },
-      pending:    { ar: 'بانتظار المراجعة',            en: 'Pending Review' },
-      noted:      { ar: 'تمت مراجعتها',                en: 'Reviewed' },
-      submitted:  { ar: 'الأبحاث المقدَّمة',           en: 'Submitted Papers' },
-      all:        { ar: 'الكل',                        en: 'All' },
-      search_ph:  { ar: 'ابحث بالعنوان أو الكاتب...', en: 'Search by title or author...' },
-      no_results: { ar: 'لا توجد نتائج',               en: 'No results found' },
-      no_sub:     { ar: 'جرّب تغيير الفلتر أو البحث بكلمة أخرى', en: 'Try changing the filter or search keyword' },
-      loading:    { ar: 'جارٍ التحميل...',             en: 'Loading...' },
-      error:      { ar: 'خطأ في تحميل البيانات',       en: 'Failed to load papers' },
-      details:    { ar: 'تفاصيل البحث',                en: 'Paper Details' },
-      ref_id:     { ar: 'الرقم المرجعي',               en: 'Reference ID' },
-      author:     { ar: 'الباحث',                      en: 'Author' },
-      submitted_d:{ ar: 'نوع المراجعة',                en: 'Review Type' },
-      status_l:   { ar: 'الحالة',                      en: 'Status' },
-      abstract:   { ar: 'الملخص',                      en: 'Abstract' },
-      file:       { ar: 'ملف البحث',                   en: 'Research File' },
-      download:   { ar: 'تحميل',                       en: 'Download' },
-      no_file:    { ar: 'لا يوجد ملف مرفق',            en: 'No file attached' },
-      notes_l:    { ar: 'تقرير مساعد المحرر',          en: 'Editor Report' },
-      no_notes:   { ar: 'لا يوجد تقرير بعد',           en: 'No report yet' },
-      add_note:   { ar: 'أضف تقريرك',                  en: 'Add Your Report' },
-      note_ph:    { ar: 'اكتب تقريرك هنا...',          en: 'Write your report here...' },
-      cancel:     { ar: 'إلغاء',                       en: 'Cancel' },
-      save_note:  { ar: 'حفظ التقرير',                 en: 'Save Report' },
-      saving:     { ar: 'جارٍ الحفظ...',               en: 'Saving...' },
-      save_fail:  { ar: 'فشل حفظ التقرير، حاول مرة أخرى', en: 'Failed to save report, please try again' },
-      plagiarism: { ar: 'درجة الانتحال',               en: 'Plagiarism Score' },
-      keywords:   { ar: 'الكلمات المفتاحية',           en: 'AI Keywords' },
-      open_access:{ ar: 'وصول مفتوح مدفوع',           en: 'Paid Open Access' },
-      yes:        { ar: 'نعم',                         en: 'Yes' },
-      no:         { ar: 'لا',                          en: 'No' },
-      appearance: { ar: 'المظهر',                      en: 'Appearance' },
-      logout:     { ar: 'تسجيل الخروج',               en: 'Logout' },
-      menu_l:     { ar: 'القائمة',                     en: 'Menu' },
-      close_l:    { ar: 'إغلاق',                       en: 'Close' },
-      journal:    { ar: 'المجلة الأكاديمية',           en: 'Academic Journal' },
-      role:       { ar: 'مساعد المحرر',                en: 'Assistant Editor' },
+      total: { ar: 'إجمالي الأبحاث', en: 'Total Papers' },
+      pending: { ar: 'بانتظار المراجعة', en: 'Pending Review' },
+      noted: { ar: 'تمت مراجعتها', en: 'Reviewed' },
+      submitted: { ar: 'الأبحاث المقدَّمة', en: 'Submitted Papers' },
+      all: { ar: 'الكل', en: 'All' },
+      search_ph: { ar: 'ابحث بالعنوان أو الكاتب...', en: 'Search by title or author...' },
+      no_results: { ar: 'لا توجد نتائج', en: 'No results found' },
+      no_sub: { ar: 'جرّب تغيير الفلتر أو البحث بكلمة أخرى', en: 'Try changing the filter or search keyword' },
+      loading: { ar: 'جارٍ التحميل...', en: 'Loading...' },
+      error: { ar: 'خطأ في تحميل البيانات', en: 'Failed to load papers' },
+      details: { ar: 'تفاصيل البحث', en: 'Paper Details' },
+      ref_id: { ar: 'الرقم المرجعي', en: 'Reference ID' },
+      author: { ar: 'الباحث', en: 'Author' },
+      submitted_d: { ar: 'نوع المراجعة', en: 'Review Type' },
+      status_l: { ar: 'الحالة', en: 'Status' },
+      abstract: { ar: 'الملخص', en: 'Abstract' },
+      file: { ar: 'ملف البحث', en: 'Research File' },
+      download: { ar: 'تحميل', en: 'Download' },
+      no_file: { ar: 'لا يوجد ملف مرفق', en: 'No file attached' },
+      notes_l: { ar: 'تقرير مساعد المحرر', en: 'Editor Report' },
+      no_notes: { ar: 'لا يوجد تقرير بعد', en: 'No report yet' },
+      add_note: { ar: 'أضف تقريرك', en: 'Add Your Report' },
+      note_ph: { ar: 'اكتب تقريرك هنا...', en: 'Write your report here...' },
+      cancel: { ar: 'إلغاء', en: 'Cancel' },
+      save_note: { ar: 'حفظ التقرير', en: 'Save Report' },
+      saving: { ar: 'جارٍ الحفظ...', en: 'Saving...' },
+      save_fail: { ar: 'فشل حفظ التقرير، حاول مرة أخرى', en: 'Failed to save report, please try again' },
+      plagiarism: { ar: 'درجة الانتحال', en: 'Plagiarism Score' },
+      keywords: { ar: 'الكلمات المفتاحية', en: 'AI Keywords' },
+      open_access: { ar: 'وصول مفتوح مدفوع', en: 'Paid Open Access' },
+      yes: { ar: 'نعم', en: 'Yes' },
+      no: { ar: 'لا', en: 'No' },
+      appearance: { ar: 'المظهر', en: 'Appearance' },
+      logout: { ar: 'تسجيل الخروج', en: 'Logout' },
+      menu_l: { ar: 'القائمة', en: 'Menu' },
+      close_l: { ar: 'إغلاق', en: 'Close' },
+      journal: { ar: 'المجلة الأكاديمية', en: 'Academic Journal' },
+      role: { ar: 'مساعد المحرر', en: 'Assistant Editor' },
       welcome_ar: 'مرحباً،',
       welcome_en: 'Welcome back,',
       papers_await_ar: 'بانتظار مراجعتك',
@@ -392,25 +709,305 @@ export default function EditorAssistant() {
       sub_en: 'All recently submitted papers are listed below. Click any paper to view details and add your report.',
       plag_report_l: { ar: 'تقرير فحص الانتحال', en: 'Plagiarism Report' },
       plag_load_btn: { ar: 'عرض تقرير الانتحال', en: 'Load Plagiarism Report' },
-      plag_pending:  { ar: 'التقرير قيد الإنشاء، حاول لاحقاً', en: 'Report is being generated, try again later' },
-      plag_total:    { ar: 'نسبة التشابه الكلية', en: 'Total Similarity' },
+      plag_pending: { ar: 'التقرير قيد الإنشاء، حاول لاحقاً', en: 'Report is being generated, try again later' },
+      plag_total: { ar: 'نسبة التشابه الكلية', en: 'Total Similarity' },
       plag_internal: { ar: 'تشابه داخلي', en: 'Internal Similarity' },
       plag_external: { ar: 'تشابه خارجي', en: 'External Similarity' },
-      plag_human:    { ar: 'يتطلب مراجعة بشرية', en: 'Requires Human Review' },
-      plag_fail:     { ar: 'فشل تحميل تقرير الانتحال، حاول مرة أخرى', en: 'Failed to load plagiarism report, please try again' },
-      kw_l:          { ar: 'اقتراح كلمات مفتاحية', en: 'Keyword Suggestions' },
-      kw_load_btn:   { ar: 'اقترح كلمات مفتاحية', en: 'Suggest Keywords' },
-      kw_none:       { ar: 'لا توجد اقتراحات متاحة حالياً', en: 'No suggestions available right now' },
-      kw_fail:       { ar: 'فشل تحميل الكلمات المفتاحية', en: 'Failed to load keyword suggestions' },
-      decision_l:    { ar: 'القرار', en: 'Decision' },
-      approve:       { ar: 'قبول (APPROVE)', en: 'Approve' },
-      reject:        { ar: 'رفض (REJECT)', en: 'Reject' },
-      format_ok_l:   { ar: 'الفورمات مطابق للمعايير', en: 'Format is compliant' },
-      complete_l:    { ar: 'البحث مكتمل', en: 'Paper is complete' },
-      policy_notes_l:{ ar: 'ملاحظات السياسات (اختياري)', en: 'Policy Notes (optional)' },
-      policy_ph:     { ar: 'اكتب أي ملاحظات متعلقة بسياسات النشر...', en: 'Any policy-related notes...' },
+      plag_human: { ar: 'يتطلب مراجعة بشرية', en: 'Requires Human Review' },
+      plag_fail: { ar: 'فشل تحميل تقرير الانتحال، حاول مرة أخرى', en: 'Failed to load plagiarism report, please try again' },
+      kw_l: { ar: 'اقتراح كلمات مفتاحية', en: 'Keyword Suggestions' },
+      kw_load_btn: { ar: 'اقترح كلمات مفتاحية', en: 'Suggest Keywords' },
+      kw_none: { ar: 'لا توجد اقتراحات متاحة حالياً', en: 'No suggestions available right now' },
+      kw_fail: { ar: 'فشل تحميل الكلمات المفتاحية', en: 'Failed to load keyword suggestions' },
+      decision_l: { ar: 'القرار', en: 'Decision' },
+      approve: { ar: 'قبول (APPROVE)', en: 'Approve' },
+      reject: { ar: 'رفض (REJECT)', en: 'Reject' },
+      format_ok_l: { ar: 'الفورمات مطابق للمعايير', en: 'Format is compliant' },
+      complete_l: { ar: 'البحث مكتمل', en: 'Paper is complete' },
+      policy_notes_l: { ar: 'ملاحظات السياسات (اختياري)', en: 'Policy Notes (optional)' },
+      policy_ph: { ar: 'اكتب أي ملاحظات متعلقة بسياسات النشر...', en: 'Any policy-related notes...' },
+
+      // ══ IEEE tab ══
+      tab_papers: { ar: 'الأبحاث المقدَّمة', en: 'Submitted Papers' },
+      tab_ieee: { ar: 'تقارير فحص IEEE', en: 'IEEE Check Reports' },
+      ieee_search_ph: { ar: 'ابحث باسم الملف أو عنوان البحث...', en: 'Search by filename or paper title...' },
+      ieee_loading: { ar: 'جارٍ تحميل التقارير...', en: 'Loading reports...' },
+      ieee_error: { ar: 'خطأ في تحميل تقارير IEEE', en: 'Failed to load IEEE reports' },
+      ieee_empty: { ar: 'لا توجد تقارير', en: 'No reports found' },
+      ieee_empty_sub: { ar: 'لسا ما في تقارير فحص IEEE مضافة', en: 'No IEEE check reports yet' },
+      ieee_details: { ar: 'تفاصيل تقرير IEEE', en: 'IEEE Report Details' },
+      ieee_filename: { ar: 'اسم الملف', en: 'File Name' },
+      ieee_paper_title: { ar: 'عنوان البحث', en: 'Paper Title' },
+      ieee_lang: { ar: 'اللغة المكتشفة', en: 'Detected Language' },
+      ieee_pages: { ar: 'عدد الصفحات', en: 'Total Pages' },
+      ieee_created: { ar: 'تاريخ الإنشاء', en: 'Created At' },
+      overall_score: { ar: 'الدرجة الكلية', en: 'Overall Score' },
+      citation_match: { ar: 'تطابق الاستشهادات', en: 'Citation Matching' },
+      format_score_l: { ar: 'درجة الفورمات', en: 'Format Score' },
+      crossref_score_l: { ar: 'درجة CrossRef', en: 'CrossRef Score' },
+      crossref_checked_l: { ar: 'مراجع تم فحصها بـ CrossRef', en: 'CrossRef Checked' },
+      crossref_verified_l: { ar: 'مراجع تم التحقق منها', en: 'CrossRef Verified' },
+      missing_cit: { ar: 'استشهادات ناقصة', en: 'Missing Citations' },
+      unused_ref: { ar: 'مراجع غير مستخدمة', en: 'Unused References' },
+      total_cit: { ar: 'إجمالي الاستشهادات', en: 'Total Citations' },
+      total_ref: { ar: 'إجمالي المراجع', en: 'Total References' },
+      ieee_summary: { ar: 'ملخص التقرير', en: 'Report Summary' },
+      recommendations_l: { ar: 'التوصيات', en: 'Recommendations' },
+      references_l: { ar: 'قائمة المراجع', en: 'References List' },
+      ieee_fail: { ar: 'فشل تحميل تفاصيل التقرير، حاول مرة أخرى', en: 'Failed to load report details, please try again' },
+      ieee_check_l: { ar: 'فحص IEEE', en: 'IEEE Check' },
+      ieee_check_btn: { ar: 'تشغيل فحص IEEE', en: 'Run IEEE Check' },
+      ieee_check_fail: { ar: 'فشل تشغيل فحص IEEE، حاول مرة أخرى', en: 'Failed to run IEEE check, please try again' },
+
+      // ══ Claim-Evidence tab (تحليل الادعاءات والأدلة) ══
+      tab_claims: { ar: 'تحليل الادعاءات والأدلة', en: 'Claim-Evidence Analysis' },
+      claim_search_ph: { ar: 'ابحث باسم الملف أو عنوان البحث...', en: 'Search by filename or paper title...' },
+      claim_loading: { ar: 'جارٍ تحميل التحاليل...', en: 'Loading analyses...' },
+      claim_error: { ar: 'خطأ في تحميل تحاليل الادعاءات والأدلة', en: 'Failed to load claim-evidence analyses' },
+      claim_empty: { ar: 'لا توجد تحاليل', en: 'No analyses found' },
+      claim_empty_sub: { ar: 'لسا ما في تحاليل ادعاءات وأدلة مضافة', en: 'No claim-evidence analyses yet' },
+      claim_details: { ar: 'تفاصيل تحليل الادعاءات والأدلة', en: 'Claim-Evidence Analysis Details' },
+      claim_check_l: { ar: 'تحليل الادعاءات والأدلة', en: 'Claim-Evidence Analysis' },
+      claim_check_btn: { ar: 'تشغيل تحليل الادعاءات والأدلة', en: 'Run Claim-Evidence Analysis' },
+      claim_check_fail: { ar: 'فشل تشغيل التحليل، حاول مرة أخرى', en: 'Failed to run analysis, please try again' },
+      claims_count_l: { ar: 'عدد الادعاءات', en: 'Claims Count' },
+      evidence_count_l: { ar: 'عدد الأدلة', en: 'Evidence Count' },
+      neutral_count_l: { ar: 'عدد المحايدة', en: 'Neutral Count' },
+      edges_count_l: { ar: 'عدد الروابط', en: 'Edges Count' },
+      similarity_threshold_l: { ar: 'حد التشابه', en: 'Similarity Threshold' },
+      top_claims_count_l: { ar: 'عدد أهم الادعاءات', en: 'Top Claims Count' },
+      top_claims_l: { ar: 'أهم الادعاءات', en: 'Top Claims' },
+      source_excerpt_l: { ar: 'مقتطف من المصدر', en: 'Source Excerpt' },
+      claim_summary_l: { ar: 'ملخص التحليل', en: 'Analysis Summary' },
+      processing_time_l: { ar: 'زمن المعالجة (ثانية)', en: 'Processing Time (s)' },
+      claim_created: { ar: 'تاريخ الإنشاء', en: 'Created At' },
+      claim_fail: { ar: 'فشل تحميل تفاصيل التحليل، حاول مرة أخرى', en: 'Failed to load analysis details, please try again' },
+      analysis_results_l: { ar: 'نتائج التحليل', en: 'Analysis Results' },
+      claim_status_pending_title: { ar: 'التحليل قيد المعالجة', en: 'Analysis in progress' },
+      claim_status_pending_sub: { ar: 'الخدمة عم تشتغل على الملف حالياً، رجاءً حاول تحديث النتيجة بعد شوي.', en: 'The file is currently being processed. Please check back shortly.' },
+      claim_status_failed_title: { ar: 'فشل تحليل الملف', en: 'File analysis failed' },
+      claim_status_failed_sub: { ar: 'صار في مشكلة تقنية أثناء تشغيل التحليل على هالملف. جرّب ترفع الملف من جديد، وإذا استمرت المشكلة بلّغ فريق التطوير.', en: 'A technical issue occurred while analyzing this file. Try re-uploading it, and contact the dev team if the issue persists.' },
+      claim_status_done_title: { ar: 'التحليل مكتمل', en: 'Analysis complete' },
+      claim_tech_details: { ar: 'تفاصيل تقنية (للمطوّرين)', en: 'Technical details (for developers)' },
+      no_claims_summary: { ar: 'لا يوجد ملخص لهالتحليل', en: 'No summary for this analysis' },
+
+      // ══ ✅ جديد: درجة جودة الميتاداتا (metadata-score) ══
+      metadata_score_l: { ar: 'درجة جودة الميتاداتا', en: 'Metadata Quality Score' },
+      metadata_score_btn: { ar: 'عرض درجة جودة الميتاداتا', en: 'Show Metadata Score' },
+      metadata_score_fail: { ar: 'فشل تحميل درجة جودة الميتاداتا، حاول مرة أخرى', en: 'Failed to load metadata score, please try again' },
+      metadata_overall_l: { ar: 'الدرجة الكلية', en: 'Overall Score' },
+      metadata_status_l: { ar: 'الحالة', en: 'Status' },
+      metadata_breakdown_l: { ar: 'تفاصيل الدرجة حسب البند', en: 'Score Breakdown' },
+      metadata_weight_l: { ar: 'الوزن', en: 'Weight' },
+      metadata_no_recommendations: { ar: 'لا توجد ملاحظات، الميتاداتا بحالة جيدة', en: 'No notes — metadata looks good' },
     };
     return (map[key]?.[lang]) ?? (map[key]) ?? key;
+  };
+
+  /* ── عرض موحّد لنتيجة تحليل الادعاءات والأدلة حسب الـ status (قيد المعالجة / فشل / نجح) ──
+     مستخدم بمكانين: بانل تفاصيل البحث (نتيجة فورية بعد السبمت) وبانل تفاصيل التحليل (من القائمة) */
+  function renderClaimAnalysisResult(data) {
+    if (!data) return null;
+
+    const isFailed = data.status === 'failed';
+    const isDone = data.status === 'completed' || data.status === 'success' || data.status === 'done';
+    const isPending = !isFailed && !isDone; // ← يغطي pending / processing / أي قيمة غير معروفة بعد
+
+    if (isPending) {
+      return (
+        <div className="no-notes-msg" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>⏳</span>
+          <div>
+            <div style={{ fontWeight: 600 }}>{t('claim_status_pending_title')}</div>
+            <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>{t('claim_status_pending_sub')}</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isFailed) {
+      return (
+        <div className="no-notes-msg" style={{ borderColor: '#EF4444', color: '#EF4444', display: 'flex', alignItems: 'flex-start', gap: 10, textAlign: lang === 'ar' ? 'right' : 'left' }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>⚠️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600 }}>{t('claim_status_failed_title')}</div>
+            <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>{t('claim_status_failed_sub')}</div>
+            {data.error_message && (
+              <details style={{ marginTop: 10 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 11, opacity: 0.75, color: 'inherit' }}>
+                  {t('claim_tech_details')}
+                </summary>
+                <div style={{ fontSize: 11, marginTop: 6, direction: 'ltr', textAlign: 'left', opacity: 0.75, wordBreak: 'break-word', fontFamily: 'monospace' }}>
+                  {data.error_message}
+                </div>
+              </details>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── نجح التحليل: نعرض النتيجة فوراً ──
+    return (
+      <>
+        <div className="no-notes-msg" style={{ borderColor: 'var(--ac2)', color: 'var(--ac2)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>✅</span>
+          <div style={{ fontWeight: 600 }}>{t('claim_status_done_title')}</div>
+        </div>
+
+        <div className="dp-info-grid" style={{ marginTop: 12 }}>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('claims_count_l')}</div>
+            <div className="dp-info-val">{data.claims_count}</div>
+          </div>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('evidence_count_l')}</div>
+            <div className="dp-info-val">{data.evidence_count}</div>
+          </div>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('neutral_count_l')}</div>
+            <div className="dp-info-val">{data.neutral_count}</div>
+          </div>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('edges_count_l')}</div>
+            <div className="dp-info-val">{data.edges_count}</div>
+          </div>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('similarity_threshold_l')}</div>
+            <div className="dp-info-val">{data.similarity_threshold}</div>
+          </div>
+          <div className="dp-info-cell">
+            <div className="dp-info-label">{t('top_claims_count_l')}</div>
+            <div className="dp-info-val">{data.top_claims_count}</div>
+          </div>
+        </div>
+
+        <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('claim_summary_l')}</div>
+        <div className="dp-abstract">{data.summary || t('no_claims_summary')}</div>
+
+        {data.source_excerpt && (
+          <>
+            <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('source_excerpt_l')}</div>
+            <div className="dp-abstract">{data.source_excerpt}</div>
+          </>
+        )}
+
+        {data.top_claims?.length > 0 && (
+          <>
+            <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('top_claims_l')}</div>
+            <ul style={{ margin: 0, paddingInlineStart: 18, fontSize: 13, lineHeight: 1.8 }}>
+              {data.top_claims.map((c, i) => (
+                <li key={i}>{typeof c === 'string' ? c : JSON.stringify(c)}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </>
+    );
+  }
+
+  /* ── ✅ جديد: عرض نتيجة درجة جودة الميتاداتا (title/abstract/keywords/author_info...الخ) ──
+     الشكل: درجة كلية بارزة + حالة + تفصيل كل بند (label/score/weight/message) + توصيات */
+  function renderMetadataScoreResult(data) {
+    if (!data) return null;
+
+    const overall = data.overall_score ?? 0;
+
+    return (
+      <>
+        {/* الدرجة الكلية + الحالة */}
+        <div
+          className="no-notes-msg"
+          style={{
+            borderColor: scoreColor(overall),
+            color: scoreColor(overall),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontSize: 22, fontWeight: 700 }}>{overall}%</span>
+            <span style={{ fontSize: 12, opacity: 0.85 }}>{t('metadata_overall_l')}</span>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>
+            {t('metadata_status_l')}: {data.status_display || data.status}
+          </span>
+        </div>
+
+        {/* تفصيل كل بند */}
+        {data.breakdown?.length > 0 && (
+          <>
+            <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('metadata_breakdown_l')}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {data.breakdown.map((b, i) => (
+                <div key={b.dimension ?? i} className="dp-info-cell" style={{ display: 'flex', flexDirection: 'column', gap: 4, textAlign: lang === 'ar' ? 'right' : 'left' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ fontWeight: 600, fontSize: 13 }}>{b.label}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, opacity: 0.6 }}>{t('metadata_weight_l')}: {b.weight}</span>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: scoreColor(b.score) }}>{b.score}%</span>
+                    </span>
+                  </div>
+                  {b.message && (
+                    <div style={{ fontSize: 12, opacity: 0.75 }}>{b.message}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* التوصيات */}
+        <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('recommendations_l')}</div>
+        {data.recommendations?.length > 0 ? (
+          <ul style={{ margin: 0, paddingInlineStart: 18, fontSize: 13, lineHeight: 1.8 }}>
+            {data.recommendations.map((rec, i) => (
+              <li key={i}>{typeof rec === 'string' ? rec : JSON.stringify(rec)}</li>
+            ))}
+          </ul>
+        ) : (
+          <div className="no-notes-msg">{t('metadata_no_recommendations')}</div>
+        )}
+      </>
+    );
+  }
+
+  const footerData = {
+    brand: lang === 'ar'
+      ? 'مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.'
+      : 'A digital academic journal spotlighting student research at Al-Sham Private University.',
+    cols: [
+      {
+        title: lang === 'ar' ? 'الأبحاث' : 'Research',
+        links: [
+          { label: lang === 'ar' ? 'آخر الإضافات' : 'Latest', path: '/' },
+          { label: lang === 'ar' ? 'الأكثر تقييماً' : 'Top Rated', path: '/research_review' },
+          { label: lang === 'ar' ? 'حسب التخصص' : 'By Discipline', path: '/research_review' },
+          { label: lang === 'ar' ? 'الأرشيف' : 'Archive', path: '/research_review' },
+        ],
+      },
+      {
+        title: lang === 'ar' ? 'للطلبة' : 'Students',
+        links: [
+          { label: lang === 'ar' ? 'تقديم بحث' : 'Submit Paper', path: '/submit' },
+          { label: lang === 'ar' ? 'إرشادات النشر' : 'Guidelines', path: '/submit' },
+          { label: lang === 'ar' ? 'فحص التشابه' : 'Similarity Check', path: '/EditorAssistant' },
+        ],
+      },
+      {
+        title: lang === 'ar' ? 'للأساتذة' : 'Faculty',
+        links: [
+          { label: lang === 'ar' ? 'لوحة المراجعة' : 'Review Panel', path: '/EditorAssistant' },
+          { label: lang === 'ar' ? 'تقارير النزاهة' : 'Integrity Reports', path: '/EditorAssistant' },
+          { label: lang === 'ar' ? 'إدارة اللجنة' : 'Committee', path: '/Editor' },
+        ],
+      },
+    ],
+    copy: lang === 'ar' ? '© 2025 ASPU Insight — جامعة الشام الخاصة' : '© 2025 ASPU Insight — Al-Sham Private University',
+    sub: lang === 'ar' ? 'مشروع تخرج · 2025–2026' : 'Graduation Project · 2025–2026',
   };
 
   /* ══════════ RENDER ══════════ */
@@ -419,100 +1016,14 @@ export default function EditorAssistant() {
       {/* Cursor glow */}
       <div className="ea-cg" ref={cgRef} />
 
-      {/* ══ MORPH MENU ══ */}
-      <div
-        className="ea-menu"
-        ref={menuRef}
-        style={{ clipPath: 'inset(0 0 100% 0)', pointerEvents: 'none' }}
-      >
-        <div className="menu-top" ref={menuTopRef} style={{ opacity: 0 }}>
-          <div className="menu-logo-row">
-            <LogoSVG />
-            <div>
-              <div className="menu-ln">ASPU Insight</div>
-              <div className="menu-ls">{lang === 'ar' ? 'المجلة الأكاديمية الرقمية' : 'Digital Academic Journal'}</div>
-            </div>
-          </div>
-          <button className="menu-close-btn" onClick={closeMenu}>
-            {t('close_l')}
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div className="menu-body">
-          <div className={`menu-links ${previewIdx !== null ? 'has-hover' : ''}`}>
-            {['الرئيسية|HOME', 'الأبحاث|RESEARCH', 'الباحثون|RESEARCHERS', 'النزاهة|INTEGRITY', 'تواصل معنا|CONTACT'].map((item, i) => {
-              const [ar, en] = item.split('|');
-              return (
-                <div className="ml-wrap" key={i}>
-                  <a
-                    className={`menu-link${previewIdx === i ? ' hov' : ''}`}
-                    href="#"
-                    ref={el => menuLinksRef.current[i] = el}
-                    onMouseEnter={() => setPreviewIdx(i)}
-                    onMouseLeave={() => setPreviewIdx(null)}
-                  >
-                    <div className="ml-row">
-                      <span className="ml-name">{lang === 'ar' ? ar : en}</span>
-                      <span className="ml-num">0{i + 1}</span>
-                    </div>
-                    <span className="ml-sub">{lang === 'ar' ? 'استعرض' : 'EXPLORE'}</span>
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="menu-preview">
-            <div className={`preview-inner ${previewIdx !== null ? 'show' : ''}`}>
-              <div className="preview-ring">
-                <div className="preview-ring-spin" />
-                <LogoSVG />
-              </div>
-              <div className="preview-divider" />
-              <div className="preview-name">
-                {previewIdx !== null ? PREV_NAMES[lang][previewIdx] : 'ASPU'}
-              </div>
-              <div className="preview-tag">ASPU Insight</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="menu-foot" ref={menuFootRef} style={{ opacity: 0 }}>
-          <span className="mf-label">{t('appearance')}</span>
-          <div className="menu-tpill">
-            <button className={`mtp-btn ${theme === 'dark' ? 'on' : ''}`} onClick={() => setThemeState('dark')}>🌙</button>
-            <button className={`mtp-btn ${theme === 'light' ? 'on' : ''}`} onClick={() => setThemeState('light')}>☀️</button>
-          </div>
-          <div className="menu-tpill">
-            <button className={`mtp-btn ${lang === 'ar' ? 'on' : ''}`} onClick={() => setLangState('ar')}>ع</button>
-            <button className={`mtp-btn ${lang === 'en' ? 'on' : ''}`} onClick={() => setLangState('en')}>EN</button>
-          </div>
-          <button className="menu-login-btn">{t('logout')} →</button>
-        </div>
-      </div>
-
-      {/* ══ NAVBAR ══ */}
-      <nav className={`ea-nav ${navScrolled ? 'scrolled' : ''}`}>
-        <a href="#" className="nav-logo">
-          <LogoSVG />
-          <div>
-            <div className="logo-n">ASPU Insight</div>
-            <div className="logo-s">{t('journal')}</div>
-          </div>
-        </a>
-        <div className="nav-space" />
-        <button className={`nav-menu-btn ${menuOpen ? 'is-open' : ''}`} onClick={openMenu}>
-          <span className="nmb-label">{t('menu_l')}</span>
-          <div className="nmb-lines">
-            <div className="nmb-line l1" />
-            <div className="nmb-line l2" />
-            <div className="nmb-line l3" />
-          </div>
-        </button>
-      </nav>
+      <Navbar
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        hoveredMenu={previewIdx}
+        setHoveredMenu={setPreviewIdx}
+        scrolled={navScrolled}
+        Logo={Logo}
+      />
 
       {/* ══ HERO ══ */}
       <section className="ea-hero">
@@ -527,10 +1038,10 @@ export default function EditorAssistant() {
           </div>
           <h1 className="hero-title">
             {lang === 'ar' ? (
-              <>{t('welcome_ar')} <span className="ht-gold">محمد.</span><br />
+              <>{t('welcome_ar')} <span className="ht-gold">{user?.full_name || user?.email || 'محمد'}.</span><br />
                 <span className="ht-blue">{statPending} {lang === 'ar' ? 'بحثاً' : 'papers'}</span> {t('papers_await_ar')}</>
             ) : (
-              <>{t('welcome_en')} <span className="ht-gold">Mohammad.</span><br />
+              <>{t('welcome_en')} <span className="ht-gold">{user?.full_name || user?.email || 'Mohammad'}.</span><br />
                 <span className="ht-blue">{statPending} papers</span> {t('papers_await_en')}</>
             )}
           </h1>
@@ -552,158 +1063,343 @@ export default function EditorAssistant() {
         </div>
       </section>
 
-      {/* ══ PAPERS LIST ══ */}
+      {/* ══ MAIN LIST (Papers / IEEE Reports / Claim-Evidence Reports) ══ */}
       <div className="main-wrap">
         <div className="sec-head">
           <div className="sec-dot" />
-          <span className="sec-title">{t('submitted')}</span>
+          <span className="sec-title">
+            {activeView === 'papers' ? t('submitted') : activeView === 'ieee' ? t('tab_ieee') : t('tab_claims')}
+          </span>
           <div className="sec-rule" />
-          <div className="sec-count">{filtered.length}</div>
-        </div>
-
-        <div className="filter-bar">
-          {[
-            { key: 'all',     label: t('all') },
-            { key: 'pending', label: t('pending') },
-            { key: 'noted',   label: t('noted') },
-          ].map(f => (
-            <button
-              key={f.key}
-              className={`filter-pill ${activeFilter === f.key ? 'active' : ''}`}
-              onClick={() => setActiveFilter(f.key)}
-            >{f.label}</button>
-          ))}
-          <div className="filter-space" />
-          <div className="search-mini">
-            <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="6.5" cy="6.5" r="5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
-            </svg>
-            <input
-              type="text"
-              placeholder={t('search_ph')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
+          <div className="sec-count">
+            {activeView === 'papers' ? filtered.length : activeView === 'ieee' ? filteredIeee.length : filteredClaims.length}
           </div>
         </div>
 
-        <div className="papers-grid">
-          {/* Loading state */}
-          {loading && (
-            <div className="empty-state">
-              <div className="empty-ico">⏳</div>
-              <div className="empty-title">{t('loading')}</div>
-            </div>
-          )}
-
-          {/* Error state */}
-          {!loading && error && (
-            <div className="empty-state">
-              <div className="empty-ico">⚠️</div>
-              <div className="empty-title">{t('error')}</div>
-              <p className="empty-sub">{error.message}</p>
-            </div>
-          )}
-
-          {/* Empty results */}
-          {!loading && !error && filtered.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-ico">🔍</div>
-              <div className="empty-title">{t('no_results')}</div>
-              <p className="empty-sub">{t('no_sub')}</p>
-            </div>
-          )}
-
-          {/* Papers */}
-          {!loading && !error && filtered.map((p, i) => {
-            const s = getStatus(p);
-            return (
-              <div
-                key={p.id}
-                className="paper-card"
-                style={{ animationDelay: `${i * 0.05}s` }}
-                onClick={() => openDetail(p.id)}
-              >
-                <div className="pc-meta">
-                  {/* review_blindness_type بدل dept */}
-                  <span className="pc-dept">
-                    {p.review_blindness_type === 'double_blind'
-                      ? (lang === 'ar' ? 'تحكيم مزدوج' : 'Double Blind')
-                      : (lang === 'ar' ? 'تحكيم فردي' : 'Single Blind')}
-                  </span>
-                  <span className="pc-date">
-                    {p.is_paid_open_access
-                      ? (lang === 'ar' ? '🔓 مفتوح' : '🔓 Open Access')
-                      : (lang === 'ar' ? '🔒 مقيّد' : '🔒 Restricted')}
-                  </span>
-                </div>
-
-                <div className="pc-num">RES-{String(p.id).padStart(3, '0')}</div>
-                <h3 className="pc-title">{p.title}</h3>
-
-                <div className="pc-author">
-                  <div className="pc-author-dot" />
-                  {p.author_name}
-                </div>
-
-                <p className="pc-summary">{p.abstract}</p>
-
-                <div className="pc-foot">
-                  <span className={`pc-status ${s.cls}`}>
-                    <span className="pc-status-dot" />
-                    {lang === 'ar' ? s.ar : s.en}
-                  </span>
-                  <span className="pc-arrow">
-                    <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                      <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        {/* ← تاب التبديل بين الأبحاث وتقارير IEEE وتحليل الادعاءات والأدلة */}
+        <div className="filter-bar" style={{ marginBottom: 10 }}>
+          <button
+            className={`filter-pill ${activeView === 'papers' ? 'active' : ''}`}
+            onClick={() => { setActiveView('papers'); setSearchQuery(''); }}
+          >
+            {t('tab_papers')}
+          </button>
+          <button
+            className={`filter-pill ${activeView === 'ieee' ? 'active' : ''}`}
+            onClick={() => { setActiveView('ieee'); setSearchQuery(''); }}
+          >
+            {t('tab_ieee')}
+          </button>
+          <button
+            className={`filter-pill ${activeView === 'claims' ? 'active' : ''}`}
+            onClick={() => { setActiveView('claims'); setSearchQuery(''); }}
+          >
+            {t('tab_claims')}
+          </button>
         </div>
+
+        {activeView === 'papers' ? (
+          <>
+            <div className="filter-bar">
+              {[
+                { key: 'all', label: t('all') },
+                { key: 'pending', label: t('pending') },
+                { key: 'noted', label: t('noted') },
+              ].map(f => (
+                <button
+                  key={f.key}
+                  className={`filter-pill ${activeFilter === f.key ? 'active' : ''}`}
+                  onClick={() => setActiveFilter(f.key)}
+                >{f.label}</button>
+              ))}
+              <div className="filter-space" />
+              <div className="search-mini">
+                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="6.5" cy="6.5" r="5" /><line x1="10.5" y1="10.5" x2="14" y2="14" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder={t('search_ph')}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="papers-grid">
+              {/* Loading state */}
+              {loading && (
+                <div className="empty-state">
+                  <div className="empty-ico">⏳</div>
+                  <div className="empty-title">{t('loading')}</div>
+                </div>
+              )}
+
+              {/* Error state */}
+              {!loading && error && (
+                <div className="empty-state">
+                  <div className="empty-ico">⚠️</div>
+                  <div className="empty-title">{t('error')}</div>
+                  <p className="empty-sub">{error.message}</p>
+                </div>
+              )}
+
+              {/* Empty results */}
+              {!loading && !error && filtered.length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-ico">🔍</div>
+                  <div className="empty-title">{t('no_results')}</div>
+                  <p className="empty-sub">{t('no_sub')}</p>
+                </div>
+              )}
+
+              {/* Papers */}
+              {!loading && !error && filtered.map((p, i) => {
+                const s = getStatus(p);
+                return (
+                  <div
+                    key={p.id}
+                    className="paper-card"
+                    style={{ animationDelay: `${i * 0.05}s` }}
+                    onClick={() => openDetail(p.id)}
+                  >
+                    <div className="pc-meta">
+                      <span className="pc-dept">
+                        {p.review_blindness_type === 'double_blind'
+                          ? (lang === 'ar' ? 'تحكيم مزدوج' : 'Double Blind')
+                          : (lang === 'ar' ? 'تحكيم فردي' : 'Single Blind')}
+                      </span>
+                      <span className="pc-date">
+                        {p.is_paid_open_access
+                          ? (lang === 'ar' ? '🔓 مفتوح' : '🔓 Open Access')
+                          : (lang === 'ar' ? '🔒 مقيّد' : '🔒 Restricted')}
+                      </span>
+                    </div>
+
+                    <div className="pc-num">RES-{String(p.id).padStart(3, '0')}</div>
+                    <h3 className="pc-title">{p.title}</h3>
+
+                    <div className="pc-author">
+                      <div className="pc-author-dot" />
+                      {p.author_name}
+                    </div>
+
+                    <p className="pc-summary">{p.abstract}</p>
+
+                    <div className="pc-foot">
+                      <span className={`pc-status ${s.cls}`}>
+                        <span className="pc-status-dot" />
+                        {lang === 'ar' ? s.ar : s.en}
+                      </span>
+                      <span className="pc-arrow">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                          <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : activeView === 'ieee' ? (
+          <>
+            <div className="filter-bar">
+              <div className="filter-space" />
+              <div className="search-mini">
+                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="6.5" cy="6.5" r="5" /><line x1="10.5" y1="10.5" x2="14" y2="14" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder={t('ieee_search_ph')}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="papers-grid">
+              {loadingIeeeReports && (
+                <div className="empty-state">
+                  <div className="empty-ico">⏳</div>
+                  <div className="empty-title">{t('ieee_loading')}</div>
+                </div>
+              )}
+
+              {!loadingIeeeReports && ieeeReportsError && (
+                <div className="empty-state">
+                  <div className="empty-ico">⚠️</div>
+                  <div className="empty-title">{t('ieee_error')}</div>
+                  <p className="empty-sub">{ieeeReportsError.message}</p>
+                </div>
+              )}
+
+              {!loadingIeeeReports && !ieeeReportsError && filteredIeee.length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-ico">📄</div>
+                  <div className="empty-title">{t('ieee_empty')}</div>
+                  <p className="empty-sub">{t('ieee_empty_sub')}</p>
+                </div>
+              )}
+
+              {!loadingIeeeReports && !ieeeReportsError && filteredIeee.map((r, i) => {
+                const cls = IEEE_STATUS_CLS[r.status] ?? 'status-pending';
+                return (
+                  <div
+                    key={r.id}
+                    className="paper-card"
+                    style={{ animationDelay: `${i * 0.05}s`, position: 'relative' }}
+                    onClick={() => openIeeeDetail(r.id)}
+                  >
+                    <button
+                      className="pc-delete-btn"
+                      onClick={(e) => handleDeleteIeeeReport(e, r.id)}
+                      disabled={deletingIeeeId === r.id}
+                      title={lang === 'ar' ? 'حذف التقرير' : 'Delete report'}
+                    >
+                      {deletingIeeeId === r.id ? '⏳' : '✕'}
+                    </button>
+
+                    <div className="pc-meta">
+                      <span className="pc-dept">
+                        {r.detected_language ? r.detected_language.toUpperCase() : (lang === 'ar' ? 'غير محدد' : 'N/A')}
+                      </span>
+                      <span className="pc-date">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString(lang === 'ar' ? 'ar' : 'en') : ''}
+                      </span>
+                    </div>
+
+                    <div className="pc-num">IEEE-{String(r.id).padStart(3, '0')}</div>
+                    <h3 className="pc-title">{r.paper_title || r.original_filename}</h3>
+
+                    <div className="pc-author">
+                      <div className="pc-author-dot" />
+                      {r.original_filename}
+                    </div>
+
+                    <p className="pc-summary">
+                      {r.summary || (lang === 'ar' ? 'لا يوجد ملخص بعد' : 'No summary yet')}
+                    </p>
+
+                    <div className="pc-foot">
+                      <span className={`pc-status ${cls}`}>
+                        <span className="pc-status-dot" />
+                        {r.status_display || r.status}
+                      </span>
+                      <span className="pc-arrow">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                          <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="filter-bar">
+              <div className="filter-space" />
+              <div className="search-mini">
+                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="6.5" cy="6.5" r="5" /><line x1="10.5" y1="10.5" x2="14" y2="14" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder={t('claim_search_ph')}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="papers-grid">
+              {loadingClaimReports && (
+                <div className="empty-state">
+                  <div className="empty-ico">⏳</div>
+                  <div className="empty-title">{t('claim_loading')}</div>
+                </div>
+              )}
+
+              {!loadingClaimReports && claimReportsError && (
+                <div className="empty-state">
+                  <div className="empty-ico">⚠️</div>
+                  <div className="empty-title">{t('claim_error')}</div>
+                  <p className="empty-sub">{claimReportsError.message}</p>
+                </div>
+              )}
+
+              {!loadingClaimReports && !claimReportsError && filteredClaims.length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-ico">🧩</div>
+                  <div className="empty-title">{t('claim_empty')}</div>
+                  <p className="empty-sub">{t('claim_empty_sub')}</p>
+                </div>
+              )}
+
+              {!loadingClaimReports && !claimReportsError && filteredClaims.map((r, i) => {
+                const cls = CLAIM_STATUS_CLS[r.status] ?? 'status-pending';
+                return (
+                  <div
+                    key={r.id}
+                    className="paper-card"
+                    style={{ animationDelay: `${i * 0.05}s`, position: 'relative' }}
+                    onClick={() => openClaimDetail(r.id)}
+                  >
+                    <button
+                      className="pc-delete-btn"
+                      onClick={(e) => handleDeleteClaimReport(e, r.id)}
+                      disabled={deletingClaimId === r.id}
+                      title={lang === 'ar' ? 'حذف التحليل' : 'Delete analysis'}
+                    >
+                      {deletingClaimId === r.id ? '⏳' : '✕'}
+                    </button>
+
+                    <div className="pc-meta">
+                      <span className="pc-dept">
+                        {r.detected_language ? r.detected_language.toUpperCase() : (lang === 'ar' ? 'غير محدد' : 'N/A')}
+                      </span>
+                      <span className="pc-date">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString(lang === 'ar' ? 'ar' : 'en') : ''}
+                      </span>
+                    </div>
+
+                    <div className="pc-num">CLM-{String(r.id).padStart(3, '0')}</div>
+                    <h3 className="pc-title">{r.paper_title || r.original_filename}</h3>
+
+                    <div className="pc-author">
+                      <div className="pc-author-dot" />
+                      {r.original_filename}
+                    </div>
+
+                    <p className="pc-summary">
+                      {r.summary || (lang === 'ar' ? 'لا يوجد ملخص بعد' : 'No summary yet')}
+                    </p>
+
+                    <div className="pc-foot">
+                      <span className={`pc-status ${cls}`}>
+                        <span className="pc-status-dot" />
+                        {r.status_display || r.status}
+                      </span>
+                      <span className="pc-arrow">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                          <path d="M6 12l4-4-4-4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="ea-footer">
-        <div className="ft-grid">
-          <div>
-            <div className="ft-brand">
-              <LogoSVG />
-              <div>
-                <div className="logo-n">ASPU Insight</div>
-                <div className="logo-s">{lang === 'ar' ? 'المجلة الأكاديمية الرقمية' : 'Digital Academic Journal'}</div>
-              </div>
-            </div>
-            <p className="ft-desc">
-              {lang === 'ar'
-                ? 'مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.'
-                : 'A digital academic journal spotlighting student research at Al-Sham Private University.'}
-            </p>
-          </div>
-          {[
-            { title_ar: 'الأبحاث', title_en: 'Research', links: [['آخر الإضافات','Latest'],['الأكثر تقييماً','Top Rated'],['حسب التخصص','By Discipline'],['الأرشيف','Archive']] },
-            { title_ar: 'للطلبة',  title_en: 'Students', links: [['تقديم بحث','Submit Paper'],['إرشادات النشر','Guidelines'],['فحص التشابه','Similarity Check']] },
-            { title_ar: 'للأساتذة',title_en: 'Faculty',  links: [['لوحة المراجعة','Review Panel'],['تقارير النزاهة','Integrity Reports'],['إدارة اللجنة','Committee']] },
-          ].map((col, i) => (
-            <div className="ft-col" key={i}>
-              <h5>{lang === 'ar' ? col.title_ar : col.title_en}</h5>
-              <ul>
-                {col.links.map(([ar, en], j) => (
-                  <li key={j}><a href="#">{lang === 'ar' ? ar : en}</a></li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="ft-btm">
-          <span>© 2025 ASPU Insight — {lang === 'ar' ? 'جامعة الشام الخاصة' : 'Al-Sham Private University'}</span>
-          <span>{lang === 'ar' ? 'مشروع تخرج · 2025–2026' : 'Graduation Project · 2025–2026'}</span>
-        </div>
-      </footer>
+      <Footer isAr={lang === 'ar'} footer={footerData} Logo={Logo} />
 
-      {/* ══ DETAIL PANEL ══ */}
+      {/* ══ DETAIL PANEL (Paper) ══ */}
       <div className={`detail-overlay ${detailOpen ? 'open' : ''}`} onClick={closeDetail} />
       <div className={`detail-panel ${detailOpen ? 'open' : ''}`}>
         {activePaper && (
@@ -711,7 +1407,7 @@ export default function EditorAssistant() {
             <div className="dp-header">
               <button className="dp-back-btn" onClick={closeDetail}>
                 <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               <span className="dp-header-title">{t('details')}</span>
@@ -741,10 +1437,10 @@ export default function EditorAssistant() {
 
               <div className="dp-info-grid">
                 {[
-                  { label: t('ref_id'),     val: `RES-${String(activePaper.id).padStart(3,'0')}` },
-                  { label: t('status_l'),   val: lang === 'ar' ? getStatus(activePaper).ar : getStatus(activePaper).en, color: activePaper.is_reviewed_by_assistant ? 'var(--ac2)' : '#F59E0B' },
+                  { label: t('ref_id'), val: `RES-${String(activePaper.id).padStart(3, '0')}` },
+                  { label: t('status_l'), val: lang === 'ar' ? getStatus(activePaper).ar : getStatus(activePaper).en, color: activePaper.is_reviewed_by_assistant ? 'var(--ac2)' : '#F59E0B' },
                   { label: t('plagiarism'), val: activePaper.plagiarism_score != null ? `${activePaper.plagiarism_score}%` : (lang === 'ar' ? 'غير محدد' : 'N/A') },
-                  { label: t('open_access'),val: activePaper.is_paid_open_access ? t('yes') : t('no') },
+                  { label: t('open_access'), val: activePaper.is_paid_open_access ? t('yes') : t('no') },
                 ].map((cell, i) => (
                   <div className="dp-info-cell" key={i}>
                     <div className="dp-info-label">{cell.label}</div>
@@ -809,7 +1505,7 @@ export default function EditorAssistant() {
                 </p>
               )}
 
-              {/* Keyword Suggestions (API خاص بالاقتراح، جنب مربعات الانتحال) */}
+              {/* Keyword Suggestions */}
               <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('kw_l')}</div>
               {!keywordsData ? (
                 <button className="add-note-btn" onClick={loadKeywordsSuggestion} disabled={loadingKeywords}>
@@ -839,6 +1535,86 @@ export default function EditorAssistant() {
                 </p>
               )}
 
+              {/* ✅ جديد: Metadata Quality Score — جنب باقي الفحوصات (الانتحال/الكلمات المفتاحية/IEEE/الادعاءات والأدلة) */}
+              <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('metadata_score_l')}</div>
+              {!metadataScoreData ? (
+                <button
+                  className="add-note-btn"
+                  onClick={loadMetadataScore}
+                  disabled={loadingMetadataScore}
+                >
+                  {loadingMetadataScore ? t('saving') : t('metadata_score_btn')}
+                </button>
+              ) : (
+                renderMetadataScoreResult(metadataScoreData)
+              )}
+              {metadataScoreError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {t('metadata_score_fail')}
+                </p>
+              )}
+
+              {/* IEEE Check */}
+              <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('ieee_check_l')}</div>
+              {!ieeeCheckData ? (
+                <button
+                  className="add-note-btn"
+                  onClick={runIeeeCheck}
+                  disabled={loadingIeeeCheck || !activePaper.pdf_file}
+                >
+                  {loadingIeeeCheck ? t('saving') : t('ieee_check_btn')}
+                </button>
+              ) : ieeeCheckData.status === 'error' ? (
+                <div className="no-notes-msg" style={{ color: '#EF4444' }}>
+                  {ieeeCheckData.summary || t('ieee_check_fail')}
+                </div>
+              ) : ieeeCheckData.status === 'pending' ? (
+                <div className="no-notes-msg">{t('plag_pending')}</div>
+              ) : (
+                <div className="dp-info-grid">
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('overall_score')}</div>
+                    <div className="dp-info-val">{ieeeCheckData.overall_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('citation_match')}</div>
+                    <div className="dp-info-val">{ieeeCheckData.citation_matching_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('format_score_l')}</div>
+                    <div className="dp-info-val">{ieeeCheckData.format_score}%</div>
+                  </div>
+                  <div className="dp-info-cell">
+                    <div className="dp-info-label">{t('crossref_score_l')}</div>
+                    <div className="dp-info-val">{ieeeCheckData.crossref_score}%</div>
+                  </div>
+                </div>
+              )}
+              {ieeeCheckError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {t('ieee_check_fail')}
+                </p>
+              )}
+
+              {/* Claim-Evidence Analysis (تحليل الادعاءات والأدلة) — جنب إخواته IEEE / الانتحال / الكلمات المفتاحية */}
+              <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('claim_check_l')}</div>
+              {!claimAnalysisData ? (
+                <button
+                  className="add-note-btn"
+                  onClick={runClaimAnalysis}
+                  disabled={loadingClaimAnalysis || !activePaper.pdf_file}
+                >
+                  {loadingClaimAnalysis ? t('saving') : t('claim_check_btn')}
+                </button>
+              ) : (
+                renderClaimAnalysisResult(claimAnalysisData)
+              )}
+              {claimAnalysisError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {t('claim_check_fail')}
+                </p>
+              )}
+
               {/* PDF File */}
               <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('file')}</div>
               {activePaper.pdf_file ? (
@@ -846,8 +1622,8 @@ export default function EditorAssistant() {
                   <div className="dp-pdf-bar">
                     <div className="dp-pdf-ico">
                       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--ac)" strokeWidth="1.8">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                     <span className="dp-pdf-name">
@@ -860,7 +1636,7 @@ export default function EditorAssistant() {
                       rel="noopener noreferrer"
                     >
                       <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                        <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       {t('download')}
                     </a>
@@ -902,7 +1678,7 @@ export default function EditorAssistant() {
               {!activePaper.is_reviewed_by_assistant && !noteEditorOpen && (
                 <button className="add-note-btn" onClick={() => { setNoteEditorOpen(true); setSaveError(null); }}>
                   <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                    <line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/>
+                    <line x1="8" y1="3" x2="8" y2="13" /><line x1="3" y1="8" x2="13" y2="8" />
                   </svg>
                   {t('add_note')}
                 </button>
@@ -910,7 +1686,6 @@ export default function EditorAssistant() {
 
               {noteEditorOpen && (
                 <div className="note-editor open">
-                  {/* القرار: APPROVE / REJECT */}
                   <div className="dp-sec-label" style={{ marginTop: 4 }}>{t('decision_l')}</div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                     <button
@@ -931,7 +1706,6 @@ export default function EditorAssistant() {
                     </button>
                   </div>
 
-                  {/* الملاحظات الأساسية → تُرسل كـ notes */}
                   <textarea
                     className="note-textarea"
                     placeholder={t('note_ph')}
@@ -942,7 +1716,6 @@ export default function EditorAssistant() {
                     disabled={savingNote}
                   />
 
-                  {/* checkboxes */}
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 13 }}>
                     <input
                       type="checkbox"
@@ -962,7 +1735,6 @@ export default function EditorAssistant() {
                     {t('complete_l')}
                   </label>
 
-                  {/* policy_notes (اختياري) */}
                   <div className="dp-sec-label" style={{ marginTop: 12 }}>{t('policy_notes_l')}</div>
                   <textarea
                     className="note-textarea"
@@ -1003,6 +1775,223 @@ export default function EditorAssistant() {
                     </p>
                   )}
                 </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ══ DETAIL PANEL (IEEE Report) ══ */}
+      <div className={`detail-overlay ${ieeeDetailOpen ? 'open' : ''}`} onClick={closeIeeeDetail} />
+      <div className={`detail-panel ${ieeeDetailOpen ? 'open' : ''}`}>
+        {ieeeDetailOpen && (
+          <>
+            <div className="dp-header">
+              <button className="dp-back-btn" onClick={closeIeeeDetail}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <span className="dp-header-title">{t('ieee_details')}</span>
+            </div>
+
+            <div className="dp-body">
+              {loadingIeeeDetail && (
+                <div className="empty-state">
+                  <div className="empty-ico">⏳</div>
+                  <div className="empty-title">{t('ieee_loading')}</div>
+                </div>
+              )}
+
+              {!loadingIeeeDetail && ieeeDetailError && (
+                <div className="no-notes-msg" style={{ color: '#EF4444' }}>
+                  {t('ieee_fail')}
+                </div>
+              )}
+
+              {!loadingIeeeDetail && !ieeeDetailError && activeIeeeReport && (
+                <>
+                  <h2 className="dp-title">
+                    {activeIeeeReport.paper_title || activeIeeeReport.original_filename}
+                  </h2>
+
+                  <div className="dp-info-grid">
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('ieee_filename')}</div>
+                      <div className="dp-info-val">{activeIeeeReport.original_filename}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('status_l')}</div>
+                      <div className="dp-info-val">{activeIeeeReport.status_display || activeIeeeReport.status}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('ieee_lang')}</div>
+                      <div className="dp-info-val">{activeIeeeReport.detected_language || (lang === 'ar' ? 'غير محدد' : 'N/A')}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('ieee_pages')}</div>
+                      <div className="dp-info-val">{activeIeeeReport.total_pages}</div>
+                    </div>
+                  </div>
+
+                  {activeIeeeReport.status === 'pending' ? (
+                    <div className="no-notes-msg" style={{ marginTop: 16 }}>
+                      {activeIeeeReport.status_display || t('plag_pending')}
+                    </div>
+                  ) : activeIeeeReport.status === 'error' ? (
+                    <div className="no-notes-msg" style={{ marginTop: 16, color: '#EF4444' }}>
+                      {activeIeeeReport.summary || t('ieee_check_fail')}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="dp-sec-label" style={{ marginTop: 20 }}>{lang === 'ar' ? 'نتائج الفحص' : 'Check Results'}</div>
+                      <div className="dp-info-grid">
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('overall_score')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.overall_score}%</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('citation_match')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.citation_matching_score}%</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('format_score_l')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.format_score}%</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('crossref_score_l')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.crossref_score}%</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('total_cit')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.total_citations_in_text}</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('total_ref')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.total_references}</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('missing_cit')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.missing_citations_count}</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('unused_ref')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.unused_references_count}</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('crossref_checked_l')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.crossref_checked}</div>
+                        </div>
+                        <div className="dp-info-cell">
+                          <div className="dp-info-label">{t('crossref_verified_l')}</div>
+                          <div className="dp-info-val">{activeIeeeReport.crossref_verified}</div>
+                        </div>
+                      </div>
+
+                      {activeIeeeReport.summary && (
+                        <>
+                          <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('ieee_summary')}</div>
+                          <div className="dp-abstract">{activeIeeeReport.summary}</div>
+                        </>
+                      )}
+
+                      {activeIeeeReport.recommendations?.length > 0 && (
+                        <>
+                          <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('recommendations_l')}</div>
+                          <ul style={{ margin: 0, paddingInlineStart: 18, fontSize: 13, lineHeight: 1.8 }}>
+                            {activeIeeeReport.recommendations.map((rec, i) => (
+                              <li key={i}>{typeof rec === 'string' ? rec : JSON.stringify(rec)}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+
+                      {activeIeeeReport.references_list?.length > 0 && (
+                        <>
+                          <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('references_l')}</div>
+                          <ul style={{ margin: 0, paddingInlineStart: 18, fontSize: 13, lineHeight: 1.8 }}>
+                            {activeIeeeReport.references_list.map((ref, i) => (
+                              <li key={i}>{typeof ref === 'string' ? ref : JSON.stringify(ref)}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('ieee_created')}</div>
+                  <div className="dp-abstract">
+                    {activeIeeeReport.created_at ? new Date(activeIeeeReport.created_at).toLocaleString(lang === 'ar' ? 'ar' : 'en') : '—'}
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ══ DETAIL PANEL (Claim-Evidence Report) ══ */}
+      <div className={`detail-overlay ${claimDetailOpen ? 'open' : ''}`} onClick={closeClaimDetail} />
+      <div className={`detail-panel ${claimDetailOpen ? 'open' : ''}`}>
+        {claimDetailOpen && (
+          <>
+            <div className="dp-header">
+              <button className="dp-back-btn" onClick={closeClaimDetail}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <span className="dp-header-title">{t('claim_details')}</span>
+            </div>
+
+            <div className="dp-body">
+              {loadingClaimDetail && (
+                <div className="empty-state">
+                  <div className="empty-ico">⏳</div>
+                  <div className="empty-title">{t('claim_loading')}</div>
+                </div>
+              )}
+
+              {!loadingClaimDetail && claimDetailError && (
+                <div className="no-notes-msg" style={{ color: '#EF4444' }}>
+                  {t('claim_fail')}
+                </div>
+              )}
+
+              {!loadingClaimDetail && !claimDetailError && activeClaimReport && (
+                <>
+                  <h2 className="dp-title">
+                    {activeClaimReport.paper_title || activeClaimReport.original_filename}
+                  </h2>
+
+                  <div className="dp-info-grid">
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('ieee_filename')}</div>
+                      <div className="dp-info-val">{activeClaimReport.original_filename}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('status_l')}</div>
+                      <div className="dp-info-val">{activeClaimReport.status_display || activeClaimReport.status}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('ieee_lang')}</div>
+                      <div className="dp-info-val">{activeClaimReport.detected_language || (lang === 'ar' ? 'غير محدد' : 'N/A')}</div>
+                    </div>
+                    <div className="dp-info-cell">
+                      <div className="dp-info-label">{t('processing_time_l')}</div>
+                      <div className="dp-info-val">{activeClaimReport.processing_time_seconds ?? '—'}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 20 }}>
+                    {renderClaimAnalysisResult(activeClaimReport)}
+                  </div>
+
+                  <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('claim_created')}</div>
+                  <div className="dp-abstract">
+                    {activeClaimReport.created_at ? new Date(activeClaimReport.created_at).toLocaleString(lang === 'ar' ? 'ar' : 'en') : '—'}
+                  </div>
+                </>
               )}
             </div>
           </>

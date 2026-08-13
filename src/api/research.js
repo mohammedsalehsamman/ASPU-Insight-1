@@ -1,5 +1,8 @@
 import api from './client';
-
+import {
+  getIEEEReports as getIEEEReportsFromAi,
+  getIEEEReportDetail as getIEEEReportDetailFromAi,
+} from './aiService';
 
 //خالص
 export const getPapers = async (params = {}) => {
@@ -155,5 +158,75 @@ export const suggestKeywords = async (paperId) => {
   const { data } = await api.post('/api/ai/ai2004-R/keywords/suggest/', {
     paper_id: paperId,
   });
+  return data;
+};
+
+// ══ IEEE CHECK ══
+
+export const getIEEEReports = async () => getIEEEReportsFromAi();
+export const getIEEEReportDetail = async (id) => getIEEEReportDetailFromAi(id);
+
+// أضف هاد جنب باقي دوال IEEE
+export const deleteIEEEReport = async (id) => {
+  const { data } = await api.delete(`/api/ai/ai2004-R/ieee/reports/${id}/`);
+  return data;
+};
+
+export const submitIEEECheck = async (formData) => {
+  const { data } = await api.post('/api/ai/ai2004-R/ieee/check/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+// ══ CLAIM TO EVIDENCE (تحليل الادعاءات والأدلة) ══
+
+// تشغيل التحليل على ملف بحث (multipart: document_file)
+export const submitClaimEvidenceAnalysis = async (formData) => {
+  const { data } = await api.post('/api/ai/ai2004-R/claim-evidence/analyze/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+// جلب كل تقارير تحليل الادعاءات والأدلة
+export const getClaimEvidenceReports = async () => {
+  const { data } = await api.get('/api/ai/ai2004-R/claim-evidence/reports/');
+  return data;
+};
+
+// جلب تفاصيل تقرير تحليل ادعاءات وأدلة معيّن
+export const getClaimEvidenceReportDetail = async (id) => {
+  const { data } = await api.get(`/api/ai/ai2004-R/claim-evidence/reports/${id}/`);
+  return data;
+};
+
+// حذف تقرير تحليل ادعاءات وأدلة
+export const deleteClaimEvidenceReport = async (id) => {
+  const { data } = await api.delete(`/api/ai/ai2004-R/claim-evidence/reports/${id}/`);
+  return data;
+};
+
+/* ══════════════════════════════════════════════════
+   جلب حالة اللجنة الكاملة لبحث معيّن (أعضاء + ردودهم + قراراتهم)
+   يستخدم لعرض تقدّم التحكيم للمحرر بعد إرسال البحث للجنة
+══════════════════════════════════════════════════ */
+export async function getCommitteeStatus(paperId) {
+    const { data } = await api.get(`/api/v1/committees-app/papers/${paperId}/committee/`);
+    return data;
+}
+// ══ METADATA QUALITY SCORE ══
+
+// جلب درجة جودة الميتاداتا لبحث معين
+export const getMetadataScore = async (paperId) => {
+  const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/metadata-quality/`);
+  return data;
+};
+
+// ══ RECOMMENDATIONS (أبحاث مشابهة) ══
+
+// جلب الأبحاث المشابهة لبحث معين
+export const getRecommendations = async (paperId) => {
+  const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/recommendations/`);
   return data;
 };

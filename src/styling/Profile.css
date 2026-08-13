@@ -802,3 +802,55 @@ textarea.field-input {
   color: #2a8a5a;
   background: rgba(42, 138, 90, 0.08);
 }
+
+.invitations-list { display: flex; flex-direction: column; gap: 14px; }
+
+.invitation-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 18px 20px;
+}
+
+.inv-card-head { display: flex; align-items: flex-start; gap: 12px; }
+.inv-icon { font-size: 18px; opacity: 0.7; margin-top: 3px; }
+.inv-head-text { flex: 1; }
+.inv-paper-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.inv-meta-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; opacity: 0.65; align-items: center; }
+.inv-meta-item { display: flex; align-items: center; gap: 5px; }
+
+.inv-badge.substitute {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px;
+    background: rgba(196,165,90,0.15); color: #C4A55A;
+}
+
+.inv-status-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+}
+.status-pending { background: rgba(255,193,7,0.12); color: #FFC107; }
+.status-accepted { background: rgba(76,175,80,0.12); color: #4CAF50; }
+.status-declined { background: rgba(244,67,54,0.12); color: #F44336; }
+
+.inv-abstract {
+    font-size: 13.5px; opacity: 0.75; line-height: 1.7; margin: 12px 0;
+    display: flex; gap: 8px;
+}
+.inv-abstract-icon { margin-top: 3px; flex-shrink: 0; opacity: 0.5; }
+
+.inv-card-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.inv-decision-tag { font-size: 12.5px; opacity: 0.8; }
+.inv-actions { display: flex; gap: 8px; }
+.edit-btn.sm { padding: 6px 14px; font-size: 12.5px; }
+
+.invitations-empty, .invitations-error {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 60px 20px; opacity: 0.6; text-align: center;
+}
+
+.skeleton-card { padding: 20px; }
+.sk-line { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); animation: pulse 1.4s infinite; margin-bottom: 10px; }
+.sk-title { width: 40%; height: 16px; }
+.sk-text { width: 100%; }
+.sk-text.short { width: 60%; }
+@keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
