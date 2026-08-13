@@ -1,0 +1,122 @@
+.all-notif-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  direction: rtl;
+}
+
+.all-notif-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text-color, #1a1a1a);
+}
+
+.all-notif-state {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 15px;
+  color: #888;
+}
+
+.all-notif-empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 15px;
+  color: #888;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+}
+
+.all-notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.all-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+}
+
+.all-notif-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+  transform: translateY(-1px);
+}
+
+.all-notif-item.unread {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.all-notif-dot {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+
+.all-notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.all-notif-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.all-notif-count {
+  font-weight: 400;
+  color: #888;
+  font-size: 13px;
+}
+
+.all-notif-item-body {
+  font-size: 13.5px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.all-notif-item-time {
+  font-size: 12px;
+  color: #a3a3a3;
+}
+
+/* دعم الوضع الداكن — عدّل المتغيرات حسب ThemeContext عندك */
+[data-theme="dark"] .all-notif-item {
+  background: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .all-notif-item:hover {
+  background: #262626;
+}
+
+[data-theme="dark"] .all-notif-item.unread {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+[data-theme="dark"] .all-notif-item-title {
+  color: #f2f2f2;
+}
+
+[data-theme="dark"] .all-notif-item-body {
+  color: #b5b5b5;
+}
+
+[data-theme="dark"] .all-notif-empty {
+  background: rgba(255, 255, 255, 0.04);
+}

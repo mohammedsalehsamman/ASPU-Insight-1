@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { FiX, FiMoon, FiSun } from 'react-icons/fi';
+import NotificationBell from "../components/NotificationBell";
 
 // ══ MENU ITEMS — ثابتة وتظهر دائماً بالترتيب الكامل ══
 const MENU_ITEMS = [
@@ -160,6 +161,7 @@ export default function Navbar({
           </div>
         </a>
         <div className="aspu-nav-space" />
+        <NotificationBell />
         <button
           className={`aspu-nav-menu-btn${menuOpen ? ' is-open' : ''}`}
           onClick={() => setMenuOpen(true)}

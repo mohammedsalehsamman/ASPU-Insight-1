@@ -1,0 +1,290 @@
+/* ══════════════════════════════════════════════════════════════
+   NotificationBell.css
+   يستخدم design tokens الموجودة أصلاً بالمشروع (بفولباك احتياطي
+   لو ما كانت الـ CSS variables معرّفة بمكان عام)
+   ══════════════════════════════════════════════════════════════ */
+
+.aspu-notif-wrap {
+  --notif-gold: var(--aspu-gold, #c4a55a);
+  --notif-steel: var(--aspu-steel, #5a8fa0);
+  --notif-bg: var(--aspu-bg-elevated, #16181d);
+  --notif-bg-panel: var(--aspu-bg-panel, #1c1f26);
+  --notif-border: rgba(196, 165, 90, 0.18);
+  --notif-text: var(--aspu-text, #f2f0ea);
+  --notif-text-dim: var(--aspu-text-dim, #9a9a94);
+
+  position: relative;
+  display: inline-flex;
+}
+
+.aspu-notif-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;   /* ← بدل var(--notif-text) */
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.aspu-notif-bell:hover {
+  background: rgba(196, 165, 90, 0.08);
+  border-color: var(--notif-border);
+}
+
+.aspu-notif-bell.active {
+  background: rgba(196, 165, 90, 0.12);
+  border-color: var(--notif-gold);
+}
+
+.aspu-notif-bell:active {
+  transform: scale(0.94);
+}
+
+.aspu-notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--notif-gold);
+  color: #16181d;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--notif-bg);
+}
+
+[dir="rtl"] .aspu-notif-badge {
+  right: auto;
+  left: 2px;
+}
+
+.aspu-notif-status-dot {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--notif-text-dim);
+  box-shadow: 0 0 0 2px var(--notif-bg);
+  animation: aspu-notif-pulse 1.4s ease-in-out infinite;
+}
+
+[dir="rtl"] .aspu-notif-status-dot {
+  right: auto;
+  left: 3px;
+}
+
+@keyframes aspu-notif-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ─── البوب أب ────────────────────────────────────────────── */
+.aspu-notif-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--notif-bg-panel);
+  border: 1px solid var(--notif-border);
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  z-index: 100;
+  animation: aspu-notif-drop 0.18s ease;
+}
+
+[dir="rtl"] .aspu-notif-panel {
+  right: auto;
+  left: 0;
+}
+
+@keyframes aspu-notif-drop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.aspu-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--notif-border);
+}
+
+.aspu-notif-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--notif-text);
+  letter-spacing: 0.01em;
+}
+
+.aspu-notif-markall {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--notif-steel);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.aspu-notif-markall:hover {
+  background: rgba(90, 143, 160, 0.12);
+  color: var(--notif-gold);
+}
+
+/* ─── قائمة الإشعارات ─────────────────────────────────────── */
+.aspu-notif-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.aspu-notif-list::-webkit-scrollbar {
+  width: 6px;
+}
+.aspu-notif-list::-webkit-scrollbar-thumb {
+  background: rgba(196, 165, 90, 0.25);
+  border-radius: 999px;
+}
+
+.aspu-notif-empty {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--notif-text-dim);
+}
+
+.aspu-notif-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.aspu-notif-item:last-child {
+  border-bottom: none;
+}
+
+.aspu-notif-item:hover {
+  background: rgba(196, 165, 90, 0.06);
+}
+
+.aspu-notif-item.unread {
+  background: rgba(90, 143, 160, 0.06);
+}
+
+.aspu-notif-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-top: 1px;
+}
+
+.aspu-notif-icon.warning { background: rgba(196, 165, 90, 0.15); color: var(--notif-gold); }
+.aspu-notif-icon.info { background: rgba(90, 143, 160, 0.15); color: var(--notif-steel); }
+.aspu-notif-icon.success { background: rgba(93, 168, 118, 0.15); color: #5da876; }
+.aspu-notif-icon.error { background: rgba(196, 90, 90, 0.15); color: #c45a5a; }
+
+.aspu-notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.aspu-notif-item-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--notif-text);
+}
+
+.aspu-notif-item-text {
+  font-size: 12px;
+  color: var(--notif-text-dim);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.aspu-notif-item-time {
+  font-size: 10.5px;
+  color: var(--notif-text-dim);
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.aspu-notif-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--notif-gold);
+  margin-top: 6px;
+}
+
+/* ─── زر See all ──────────────────────────────────────────── */
+.aspu-notif-seeall {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--notif-border);
+  color: var(--notif-steel);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.aspu-notif-seeall:hover {
+  background: rgba(196, 165, 90, 0.08);
+  color: var(--notif-gold);
+}
+
+/* ─── موبايل ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .aspu-notif-panel {
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+  [dir="rtl"] .aspu-notif-panel {
+    left: 16px;
+  }
+}

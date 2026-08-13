@@ -369,6 +369,11 @@
 
 .aspu-nav-space { flex: 1; }
 
+/* ── مسافة مناسبة بين جرس الإشعارات وزر القائمة ── */
+.aspu-notif-wrap {
+  margin-inline-end: 24px;
+}
+
 .aspu-nav-menu-btn {
   display: flex;
   align-items: center;

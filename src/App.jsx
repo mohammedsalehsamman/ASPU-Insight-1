@@ -19,6 +19,8 @@ import AdminPapers from './pages/admin/Papers';
 import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
 import EditPaper from './pages/EditPaper';
+import AllNotifications from "./pages/AllNotifications";
+
 function App() {
   return (
     <ThemeProvider>
@@ -108,6 +110,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/notifications" element={<AllNotifications />} />
           </Routes>
         </Router>
       </AuthProvider>
