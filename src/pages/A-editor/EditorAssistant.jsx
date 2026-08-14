@@ -51,6 +51,14 @@ const getStatus = (paper) => {
   return STATUS_MAP[paper.status] ?? { ar: paper.status, en: paper.status, cls: 'status-pending' };
 };
 
+/* ══════════════════
+   خريطة قرار مساعد المحرر (assistant-review.decision) — APPROVE | REJECT
+══════════════════ */
+const ASSISTANT_DECISION_MAP = {
+  APPROVE: { ar: 'قبول', en: 'Approve', cls: 'status-done' },
+  REJECT: { ar: 'رفض', en: 'Reject', cls: 'status-rejected' },
+};
+
 // ← حالة تقرير الـ IEEE (status العام: pending / completed / failed...الخ) — عرض عام لأي قيمة غير معروفة
 const IEEE_STATUS_CLS = {
   pending: 'status-pending',
@@ -385,9 +393,15 @@ export default function EditorAssistant() {
     setReviewError(null);
     try {
       const data = await getAssistantReview(activePaper.id);
-      setReviewData(Array.isArray(data) ? data : data?.results ?? data);
+      // ✅ الباك بيرجّع كائن واحد مش مصفوفة/paginated — منطبّع القيمة لكائن وحيد أو null
+      const normalized = Array.isArray(data)
+        ? (data.length > 0 ? data[0] : null)
+        : (data ?? null);
+      setReviewData(normalized);
     } catch (err) {
-      setReviewError(err);
+      // 404 = لا يوجد تقرير بعد، هاد مش خطأ حقيقي
+      if (err?.response?.status === 404) setReviewData(null);
+      else setReviewError(err);
     } finally {
       setLoadingReview(false);
     }
@@ -726,6 +740,12 @@ export default function EditorAssistant() {
       complete_l: { ar: 'البحث مكتمل', en: 'Paper is complete' },
       policy_notes_l: { ar: 'ملاحظات السياسات (اختياري)', en: 'Policy Notes (optional)' },
       policy_ph: { ar: 'اكتب أي ملاحظات متعلقة بسياسات النشر...', en: 'Any policy-related notes...' },
+      assistant_l: { ar: 'مساعد المحرر', en: 'Assistant' },
+      assistant_notes_l: { ar: 'ملاحظات مساعد المحرر', en: "Assistant's Notes" },
+      reviewed_at_l: { ar: 'تاريخ المراجعة', en: 'Reviewed At' },
+      suggested_reviewers_l: { ar: 'المحكّمون المقترحون', en: 'Suggested Reviewers' },
+      recommended_decision_l: { ar: 'القرار الموصى به', en: 'Recommended Decision' },
+      ieee_report_l: { ar: 'تقرير IEEE', en: 'IEEE Report' },
 
       // ══ IEEE tab ══
       tab_papers: { ar: 'الأبحاث المقدَّمة', en: 'Submitted Papers' },
@@ -1648,32 +1668,124 @@ export default function EditorAssistant() {
 
               {/* Editor Report */}
               <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('notes_l')}</div>
-              <div className="dp-notes-wrap">
-                {!activePaper.is_reviewed_by_assistant ? (
-                  <div className="no-notes-msg">{t('no_notes')}</div>
-                ) : reviewData ? (
-                  Array.isArray(reviewData) && reviewData.length > 0 ? (
-                    reviewData.map((rev, i) => (
-                      <div className="note-item" key={rev.id ?? i}>
-                        <div className="note-body">
-                          {rev.report || rev.report_text || rev.content || rev.body || rev.assistant_editor_report || JSON.stringify(rev)}
+              {!activePaper.is_reviewed_by_assistant ? (
+                <div className="no-notes-msg">{t('no_notes')}</div>
+              ) : reviewData ? (
+                <>
+                  <div className="dp-author-row">
+                    <div className="dp-avatar">
+                      {reviewData.assistant?.full_name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="dp-author-info">
+                      <div className="dp-author-name">{reviewData.assistant?.full_name || t('assistant_l')}</div>
+                      <div className="dp-author-meta">{reviewData.assistant?.email}</div>
+                    </div>
+                    {reviewData.decision && (
+                      <span
+                        className={`pc-status ${ASSISTANT_DECISION_MAP[reviewData.decision]?.cls || 'status-pending'}`}
+                        style={{ marginInlineStart: 'auto' }}
+                      >
+                        <span className="pc-status-dot" />
+                        {ASSISTANT_DECISION_MAP[reviewData.decision]
+                          ? (lang === 'ar' ? ASSISTANT_DECISION_MAP[reviewData.decision].ar : ASSISTANT_DECISION_MAP[reviewData.decision].en)
+                          : reviewData.decision}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="dp-info-grid">
+                    {[
+                      { label: t('format_ok_l'), val: reviewData.is_format_compliant ? t('yes') : t('no') },
+                      { label: t('complete_l'), val: reviewData.is_complete ? t('yes') : t('no') },
+                      {
+                        label: t('reviewed_at_l'),
+                        val: reviewData.reviewed_at
+                          ? new Date(reviewData.reviewed_at).toLocaleString(lang === 'ar' ? 'ar' : 'en')
+                          : '—',
+                      },
+                      ...(reviewData.recommended_decision ? [{
+                        label: t('recommended_decision_l'),
+                        val: ASSISTANT_DECISION_MAP[reviewData.recommended_decision]
+                          ? (lang === 'ar' ? ASSISTANT_DECISION_MAP[reviewData.recommended_decision].ar : ASSISTANT_DECISION_MAP[reviewData.recommended_decision].en)
+                          : reviewData.recommended_decision,
+                      }] : []),
+                    ].map((cell, i) => (
+                      <div className="dp-info-cell" key={i}>
+                        <div className="dp-info-label">{cell.label}</div>
+                        <div className="dp-info-val">{cell.val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('assistant_notes_l')}</div>
+                  <div className="dp-notes-wrap">
+                    <div className="note-item">
+                      <div className="note-body">{reviewData.notes || t('no_notes')}</div>
+                    </div>
+                  </div>
+
+                  {reviewData.policy_notes && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('policy_notes_l')}</div>
+                      <div className="dp-notes-wrap">
+                        <div className="note-item">
+                          <div className="note-body">{reviewData.policy_notes}</div>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="no-notes-msg">{t('no_notes')}</div>
-                  )
-                ) : (
-                  <button className="add-note-btn" onClick={loadReview} disabled={loadingReview}>
-                    {loadingReview ? t('saving') : (lang === 'ar' ? 'عرض التقرير' : 'View Report')}
-                  </button>
-                )}
-                {reviewError && (
-                  <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
-                    {lang === 'ar' ? 'فشل تحميل التقرير، حاول مرة أخرى' : 'Failed to load report, please try again'}
-                  </p>
-                )}
-              </div>
+                    </>
+                  )}
+
+                  {reviewData.suggested_reviewers?.length > 0 && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('suggested_reviewers_l')}</div>
+                      <div className="dp-notes-wrap">
+                        {reviewData.suggested_reviewers.map((rev, i) => (
+                          <div className="note-item" key={rev?.id ?? rev?.user_id ?? i}>
+                            <div className="note-body">
+                              {typeof rev === 'string'
+                                ? rev
+                                : (rev?.full_name ?? rev?.name ?? rev?.email ?? JSON.stringify(rev))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {reviewData.ieee_report && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('ieee_report_l')}</div>
+                      <div className="dp-notes-wrap">
+                        {typeof reviewData.ieee_report === 'object' ? (
+                          <div className="dp-info-grid">
+                            {Object.entries(reviewData.ieee_report)
+                              .filter(([, v]) => v !== null && v !== undefined && v !== '')
+                              .map(([k, v]) => (
+                                <div className="dp-info-cell" key={k}>
+                                  <div className="dp-info-label">{k.replace(/_/g, ' ')}</div>
+                                  <div className="dp-info-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <div className="note-item">
+                            <div className="note-body">{String(reviewData.ieee_report)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <button className="add-note-btn" onClick={loadReview} disabled={loadingReview}>
+                  {loadingReview ? t('saving') : (lang === 'ar' ? 'عرض التقرير' : 'View Report')}
+                </button>
+              )}
+              {reviewError && (
+                <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
+                  {lang === 'ar' ? 'فشل تحميل التقرير، حاول مرة أخرى' : 'Failed to load report, please try again'}
+                </p>
+              )}
 
               {!activePaper.is_reviewed_by_assistant && !noteEditorOpen && (
                 <button className="add-note-btn" onClick={() => { setNoteEditorOpen(true); setSaveError(null); }}>

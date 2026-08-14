@@ -34,6 +34,7 @@ import {
   publishPaper, // ⚠ لازم تكون مضافة بـ ../../api/research.js — شوف الملاحظة تحت
   getEditorReviewFinal,
   submitEditorReviewFinal,
+  getAssistantReview,
 } from "../../api/research";
 import { logout } from "../../api/auth";
 import "../../styling/EditorAssistant.css"
@@ -68,6 +69,15 @@ const STATUS_MAP = {
   accepted: { ar: 'مقبول', en: 'Accepted', cls: 'status-done' },
   rejected: { ar: 'مرفوض', en: 'Rejected', cls: 'status-rejected' },
   noted: { ar: 'تمت الملاحظة', en: 'Notes Added', cls: 'status-noted' },
+};
+
+/* ══════════════════
+   خريطة قرار مساعد المحرر (assistant-review.decision) — APPROVE | REJECT
+   ⚠ منفصلة عن DECISION_OPTIONS (يلي بيغطي قرار المحرر الأولي فقط)
+══════════════════ */
+const ASSISTANT_DECISION_MAP = {
+  APPROVE: { ar: 'قبول', en: 'Approve', cls: 'status-done' },
+  REJECT: { ar: 'رفض', en: 'Reject', cls: 'status-rejected' },
 };
 
 /* ✅ FIX #2: كان عم يتشيك على paper.assistant_report (حقل غير موجود بالـ API)
@@ -330,6 +340,11 @@ export default function Editor() {
   const [loadingInitialReview, setLoadingInitialReview] = useState(false);
   const [initialReviewError, setInitialReviewError] = useState(null);
 
+  // ← تقرير مساعد المحرر (GET assistant-review)
+  const [assistantReview, setAssistantReview] = useState(null);
+  const [loadingAssistantReview, setLoadingAssistantReview] = useState(false);
+  const [assistantReviewError, setAssistantReviewError] = useState(null);
+
   // ← لجنة التحكيم (تظهر فقط إذا decision === SEND_TO_COMMITTEE)
   // ✅ FIX: الباك بيتوقع تمييز صريح بين أعضاء أساسيين (primary_users — بالضبط 3)
   //   وأعضاء احتياطيين (substitute_users — عدد حر)، بالإضافة لـ blinding_type.
@@ -547,6 +562,26 @@ export default function Editor() {
     }
   }
 
+  /* ── جلب تقرير مساعد المحرر (GET assistant-review) — نفس منطق loadReviews تماماً ── */
+  async function loadAssistantReview(paperId) {
+    setLoadingAssistantReview(true);
+    setAssistantReviewError(null);
+
+    try {
+      const data = await getAssistantReview(paperId);
+      const normalized = Array.isArray(data)
+        ? (data.length > 0 ? data[0] : null)
+        : (data ?? null);
+      setAssistantReview(normalized);
+    } catch (err) {
+      // 404 = لا يوجد تقرير مساعد بعد، هاد مش خطأ حقيقي
+      if (err?.response?.status === 404) setAssistantReview(null);
+      else setAssistantReviewError(err);
+    } finally {
+      setLoadingAssistantReview(false);
+    }
+  }
+
   /* ── Detail panel ── */
   function openDetail(id) {
     const p = papers.find(x => x.id === id);
@@ -556,6 +591,7 @@ export default function Editor() {
     resetReviewUI(p);
     document.body.style.overflow = 'hidden';
     loadReviews(p.id);
+    loadAssistantReview(p.id);
   }
 
   function closeDetail() {
@@ -572,6 +608,10 @@ export default function Editor() {
     setSaveError(null);
     setInitialReview(null);
     setInitialReviewError(null);
+    // ← تصفير تقرير مساعد المحرر
+    setAssistantReview(null);
+    setLoadingAssistantReview(false);
+    setAssistantReviewError(null);
     // ← تصفير حالة اللجنة
     setCommitteePanelOpen(false);
     setAvailableReviewers([]);
@@ -993,6 +1033,16 @@ export default function Editor() {
       publish_btn: { ar: 'نشر البحث', en: 'Publish Paper' },
       publishing_l: { ar: 'جارٍ النشر...', en: 'Publishing...' },
       publish_success: { ar: 'تم نشر البحث بنجاح', en: 'Paper published successfully' },
+      // ── تقرير مساعد المحرر (قراءة فقط) ──
+      assistant_l: { ar: 'مساعد المحرر', en: 'Assistant' },
+      assistant_notes_l: { ar: 'ملاحظات مساعد المحرر', en: "Assistant's Notes" },
+      format_ok_l: { ar: 'الفورمات مطابق للمعايير', en: 'Format Compliant' },
+      complete_l: { ar: 'البحث مكتمل', en: 'Paper Complete' },
+      policy_notes_l: { ar: 'ملاحظات السياسات', en: 'Policy Notes' },
+      reviewed_at_l: { ar: 'تاريخ المراجعة', en: 'Reviewed At' },
+      suggested_reviewers_l: { ar: 'المحكّمون المقترحون', en: 'Suggested Reviewers' },
+      recommended_decision_l: { ar: 'القرار الموصى به', en: 'Recommended Decision' },
+      ieee_report_l: { ar: 'تقرير IEEE', en: 'IEEE Report' },
     };
     return (map[key]?.[lang]) ?? (map[key]) ?? key;
   };
@@ -1375,21 +1425,121 @@ export default function Editor() {
                 <div className="no-notes-msg">{t('no_file')}</div>
               )}
 
-              {/* ══ Editor Report — Initial only (Final مؤجّلة لحد ما تصير اللجنة جاهزة) ══ */}
-              <div className="editor-field">
-                <label className="editor-label">
-                  {t("assistant_report")}
-                </label>
+              {/* ══ تقرير مساعد المحرر (GET assistant-review) ══ */}
+              <div className="dp-sec-label" style={{ marginTop: 24 }}>{t('assistant_report')}</div>
+              {loadingAssistantReview ? (
+                <div className="no-notes-msg">{t('loading')}</div>
+              ) : assistantReviewError ? (
+                <p style={{ color: '#EF4444', fontSize: 12 }}>{extractErrorMessage(assistantReviewError, lang) || t('load_fail')}</p>
+              ) : assistantReview ? (
+                <>
+                  <div className="dp-author-row">
+                    <div className="dp-avatar">
+                      {assistantReview.assistant?.full_name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="dp-author-info">
+                      <div className="dp-author-name">{assistantReview.assistant?.full_name || t('assistant_l')}</div>
+                      <div className="dp-author-meta">{assistantReview.assistant?.email}</div>
+                    </div>
+                    {assistantReview.decision && (
+                      <span
+                        className={`pc-status ${ASSISTANT_DECISION_MAP[assistantReview.decision]?.cls || 'status-pending'}`}
+                        style={{ marginInlineStart: 'auto' }}
+                      >
+                        <span className="pc-status-dot" />
+                        {ASSISTANT_DECISION_MAP[assistantReview.decision]
+                          ? (lang === 'ar' ? ASSISTANT_DECISION_MAP[assistantReview.decision].ar : ASSISTANT_DECISION_MAP[assistantReview.decision].en)
+                          : assistantReview.decision}
+                      </span>
+                    )}
+                  </div>
 
-                {/* ✅ FIX #1: كان عم يتشيك على activePaper.assistant_report
-                    (حقل غير موجود بالـ API response) بدل activePaper.assistant_editor_report
-                    (الحقل الحقيقي)، فكان دايماً بيطلع "لا يوجد تقرير بعد" */}
-                <div className="assistant-report-box">
-                  {activePaper?.assistant_editor_report
-                    ? activePaper.assistant_editor_report
-                    : t("no_notes")}
-                </div>
-              </div>
+                  <div className="dp-info-grid">
+                    {[
+                      { label: t('format_ok_l'), val: assistantReview.is_format_compliant ? t('yes') : t('no') },
+                      { label: t('complete_l'), val: assistantReview.is_complete ? t('yes') : t('no') },
+                      {
+                        label: t('reviewed_at_l'),
+                        val: assistantReview.reviewed_at
+                          ? new Date(assistantReview.reviewed_at).toLocaleString(lang === 'ar' ? 'ar' : 'en')
+                          : '—',
+                      },
+                      ...(assistantReview.recommended_decision ? [{
+                        label: t('recommended_decision_l'),
+                        val: ASSISTANT_DECISION_MAP[assistantReview.recommended_decision]
+                          ? (lang === 'ar' ? ASSISTANT_DECISION_MAP[assistantReview.recommended_decision].ar : ASSISTANT_DECISION_MAP[assistantReview.recommended_decision].en)
+                          : assistantReview.recommended_decision,
+                      }] : []),
+                    ].map((cell, i) => (
+                      <div className="dp-info-cell" key={i}>
+                        <div className="dp-info-label">{cell.label}</div>
+                        <div className="dp-info-val">{cell.val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('assistant_notes_l')}</div>
+                  <div className="dp-notes-wrap">
+                    <div className="note-item">
+                      <div className="note-body">{assistantReview.notes || t('no_notes')}</div>
+                    </div>
+                  </div>
+
+                  {assistantReview.policy_notes && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('policy_notes_l')}</div>
+                      <div className="dp-notes-wrap">
+                        <div className="note-item">
+                          <div className="note-body">{assistantReview.policy_notes}</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {assistantReview.suggested_reviewers?.length > 0 && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('suggested_reviewers_l')}</div>
+                      <div className="dp-notes-wrap">
+                        {assistantReview.suggested_reviewers.map((rev, i) => (
+                          <div className="note-item" key={rev?.id ?? rev?.user_id ?? i}>
+                            <div className="note-body">
+                              {typeof rev === 'string'
+                                ? rev
+                                : (rev?.full_name ?? rev?.name ?? rev?.email ?? JSON.stringify(rev))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {assistantReview.ieee_report && (
+                    <>
+                      <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 16 }}>{t('ieee_report_l')}</div>
+                      <div className="dp-notes-wrap">
+                        {typeof assistantReview.ieee_report === 'object' ? (
+                          <div className="dp-info-grid">
+                            {Object.entries(assistantReview.ieee_report)
+                              .filter(([, v]) => v !== null && v !== undefined && v !== '')
+                              .map(([k, v]) => (
+                                <div className="dp-info-cell" key={k}>
+                                  <div className="dp-info-label">{k.replace(/_/g, ' ')}</div>
+                                  <div className="dp-info-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <div className="note-item">
+                            <div className="note-body">{String(assistantReview.ieee_report)}</div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="no-notes-msg">{t('no_notes')}</div>
+              )}
 
               <div className="dp-sec-label" style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
                 {t('initial_notes')}

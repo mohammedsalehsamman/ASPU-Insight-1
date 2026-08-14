@@ -54,7 +54,7 @@ export default function Auth() {
       return;
     }
 
-    if (data?.user?.role === "reviewer_assistant") {
+    if (data?.user?.role === "assistant_editor") {
       navigate("/EditorAssistant");
       return;
     }
