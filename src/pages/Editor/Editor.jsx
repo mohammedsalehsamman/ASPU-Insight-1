@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import {
   FiX,
@@ -34,6 +35,7 @@ import {
   getEditorReviewFinal,
   submitEditorReviewFinal,
 } from "../../api/research";
+import { logout } from "../../api/auth";
 import "../../styling/EditorAssistant.css"
 
 /* ══════════════════
@@ -80,6 +82,19 @@ const PREV_NAMES = {
   ar: ['الرئيسية', 'الأبحاث', 'الباحثون', 'النزاهة', 'تواصل معنا'],
   en: ['HOME', 'RESEARCH', 'RESEARCHERS', 'INTEGRITY', 'CONTACT'],
 };
+
+/* ══════════════════
+   روابط قائمة التنقل (المورف مينيو)
+   ⚠ "الباحثون" و"النزاهة" و"تواصل معنا" ما إلهن صفحات مخصصة بالمشروع بعد،
+   فمؤقتاً بيوجّهوا للصفحة الرئيسية لحد ما تُبنى
+══════════════════ */
+const MENU_NAV_ITEMS = [
+  { ar: 'الرئيسية', en: 'HOME', path: '/' },
+  { ar: 'الأبحاث', en: 'RESEARCH', path: '/research_review' },
+  { ar: 'الباحثون', en: 'RESEARCHERS', path: '/' },
+  { ar: 'النزاهة', en: 'INTEGRITY', path: '/' },
+  { ar: 'تواصل معنا', en: 'CONTACT', path: '/' },
+];
 
 /* ══════════════════
    خيارات القرار (decision) — نفس القيم يلي بيتوقعها الباك
@@ -283,6 +298,7 @@ function committeeHasVerdict(status) {
    MAIN COMPONENT
 ══════════════════ */
 export default function Editor() {
+  const navigate = useNavigate();
   const [theme, setThemeState] = useState('light');
   const [lang, setLangState] = useState('ar');
 
@@ -488,6 +504,22 @@ export default function Editor() {
       .to(top, { opacity: 0, y: -12, duration: .25, ease: 'power2.in' }, '-=0.2')
       .to(foot, { opacity: 0, y: 14, duration: .2, ease: 'power2.in' }, '<')
       .to(menu, { clipPath: 'inset(0 0 100% 0)', duration: .5, ease: 'power3.inOut' }, '-=0.1');
+  }
+
+  /* ── التنقل من روابط قائمة المورف مينيو ── */
+  function goTo(path) {
+    closeMenu();
+    navigate(path);
+  }
+
+  /* ── تسجيل الخروج ── */
+  async function handleLogout() {
+    closeMenu();
+    try {
+      await logout();
+    } finally {
+      navigate('/');
+    }
   }
 
   /* ── جلب الملاحظات الأولية عند فتح البحث
@@ -992,26 +1024,24 @@ export default function Editor() {
 
         <div className="menu-body">
           <div className={`menu-links ${previewIdx !== null ? 'has-hover' : ''}`}>
-            {['الرئيسية|HOME', 'الأبحاث|RESEARCH', 'الباحثون|RESEARCHERS', 'النزاهة|INTEGRITY', 'تواصل معنا|CONTACT'].map((item, i) => {
-              const [ar, en] = item.split('|');
-              return (
-                <div className="ml-wrap" key={i}>
-                  <a
-                    className={`menu-link${previewIdx === i ? ' hov' : ''}`}
-                    href="#"
-                    ref={el => menuLinksRef.current[i] = el}
-                    onMouseEnter={() => setPreviewIdx(i)}
-                    onMouseLeave={() => setPreviewIdx(null)}
-                  >
-                    <div className="ml-row">
-                      <span className="ml-name">{lang === 'ar' ? ar : en}</span>
-                      <span className="ml-num">0{i + 1}</span>
-                    </div>
-                    <span className="ml-sub">{lang === 'ar' ? 'استعرض' : 'EXPLORE'}</span>
-                  </a>
-                </div>
-              );
-            })}
+            {MENU_NAV_ITEMS.map((item, i) => (
+              <div className="ml-wrap" key={i}>
+                <a
+                  className={`menu-link${previewIdx === i ? ' hov' : ''}`}
+                  href={item.path}
+                  ref={el => menuLinksRef.current[i] = el}
+                  onMouseEnter={() => setPreviewIdx(i)}
+                  onMouseLeave={() => setPreviewIdx(null)}
+                  onClick={e => { e.preventDefault(); goTo(item.path); }}
+                >
+                  <div className="ml-row">
+                    <span className="ml-name">{lang === 'ar' ? item.ar : item.en}</span>
+                    <span className="ml-num">0{i + 1}</span>
+                  </div>
+                  <span className="ml-sub">{lang === 'ar' ? 'استعرض' : 'EXPLORE'}</span>
+                </a>
+              </div>
+            ))}
           </div>
 
           <div className="menu-preview">
@@ -1039,13 +1069,13 @@ export default function Editor() {
             <button className={`mtp-btn ${lang === 'ar' ? 'on' : ''}`} onClick={() => setLangState('ar')}>ع</button>
             <button className={`mtp-btn ${lang === 'en' ? 'on' : ''}`} onClick={() => setLangState('en')}>EN</button>
           </div>
-          <button className="menu-login-btn">{t('logout')} <FiLogOut size={14} /></button>
+          <button className="menu-login-btn" onClick={handleLogout}>{t('logout')} <FiLogOut size={14} /></button>
         </div>
       </div>
 
       {/* ══ NAVBAR ══ */}
       <nav className={`ea-nav ${navScrolled ? 'scrolled' : ''}`}>
-        <a href="#" className="nav-logo">
+        <a href="/" className="nav-logo" onClick={e => { e.preventDefault(); navigate('/'); }}>
           <LogoSVG />
           <div>
             <div className="logo-n">ASPU Insight</div>
