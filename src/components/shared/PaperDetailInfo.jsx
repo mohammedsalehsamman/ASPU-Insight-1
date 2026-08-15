@@ -1,10 +1,31 @@
 import { getStatus } from './statusHelpers';
+import { downloadPaper } from '../../api/research';
 
 // ← الجزء الثابت جوا لوحة التفاصيل: العنوان، صف الباحث، الشبكة المعلوماتية،
 //   الكلمات المفتاحية، الملخص، وملف الـ PDF — مطابق بالصفحتين
 // isReviewed: بتحدد لون خلية الحالة (خضر/أصفر) — كل صفحة بتحسبها بمنطقها الخاص
 export default function PaperDetailInfo({ activePaper, lang, t, isReviewed }) {
   const s = getStatus(activePaper);
+
+  /* ── تحميل ملف الـ PDF عبر الـ API الموثّق (blob) بدل رابط /media/ الخام ── */
+  async function handleDownloadPdf() {
+    if (!activePaper?.pdf_file) return;
+    try {
+      const blob = await downloadPaper(activePaper.id);
+      const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <>
       <h2 className="dp-title">{activePaper.title}</h2>
@@ -71,17 +92,16 @@ export default function PaperDetailInfo({ activePaper, lang, t, isReviewed }) {
             <span className="dp-pdf-name">
               {activePaper.pdf_file.split('/').pop()}
             </span>
-            <a
+            <button
+              type="button"
               className="dp-pdf-dl"
-              href={activePaper.pdf_file}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={handleDownloadPdf}
             >
               <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
                 <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               {t('download')}
-            </a>
+            </button>
           </div>
         </div>
       ) : (

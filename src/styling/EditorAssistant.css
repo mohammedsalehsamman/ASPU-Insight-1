@@ -657,6 +657,10 @@
   margin-top: 10px;
 }
 .add-note-btn:hover { border-color: var(--ac); color: var(--ac); background: var(--glow); }
+.add-note-btn:disabled { opacity: .5; cursor: not-allowed; }
+.add-note-btn:disabled:hover { border-color: var(--bd2); color: var(--tx2); background: transparent; }
+
+.dp-hint-msg { color: var(--tx3); font-size: 12px; margin-top: 6px; text-align: center; }
 
 .note-editor { margin-top: 10px; animation: fu .3s both; }
 .note-textarea {

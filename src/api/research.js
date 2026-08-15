@@ -12,9 +12,8 @@ export const getPapers = async (params = {}) => {
 
 //خالص
 export const createPaper = async (payload) => {
-  const { data } = await api.post('/api/research/researchAspu2004/papers/', payload, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  // ← ما منحدّد Content-Type يدوياً: axios/المتصفح بيحسبوها تلقائياً مع الـ boundary الصحيح لـ FormData
+  const { data } = await api.post('/api/research/researchAspu2004/papers/', payload);
   return data;
 };
 
@@ -26,9 +25,7 @@ export const getPaper = async (id) => {
 
 //خالص
 export const updatePaper = async (id, payload) => {
-  const { data } = await api.put(`/api/research/researchAspu2004/papers/${id}/`, payload, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.put(`/api/research/researchAspu2004/papers/${id}/`, payload);
   return data;
 };
 
@@ -173,9 +170,7 @@ export const deleteIEEEReport = async (id) => {
 };
 
 export const submitIEEECheck = async (formData) => {
-  const { data } = await api.post('/api/ai/ai2004-R/ieee/check/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post('/api/ai/ai2004-R/ieee/check/', formData);
   return data;
 };
 
@@ -183,9 +178,7 @@ export const submitIEEECheck = async (formData) => {
 
 // تشغيل التحليل على ملف بحث (multipart: document_file)
 export const submitClaimEvidenceAnalysis = async (formData) => {
-  const { data } = await api.post('/api/ai/ai2004-R/claim-evidence/analyze/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await api.post('/api/ai/ai2004-R/claim-evidence/analyze/', formData);
   return data;
 };
 

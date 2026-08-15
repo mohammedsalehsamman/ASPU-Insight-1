@@ -110,7 +110,7 @@ const Submit = () => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('abstract', abstract);
-    formData.append('file', file);
+    formData.append('pdf_file', file);
     formData.append('keywords', keywords.join(','));
     formData.append('publisher', publisher);
     formData.append('rtype', rtype);

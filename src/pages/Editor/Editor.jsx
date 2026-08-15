@@ -35,6 +35,7 @@ import {
   getEditorReviewFinal,
   submitEditorReviewFinal,
   getAssistantReview,
+  downloadPaper,
 } from "../../api/research";
 import { logout } from "../../api/auth";
 import "../../styling/EditorAssistant.css"
@@ -883,6 +884,25 @@ export default function Editor() {
     }
   }
 
+  /* ── تحميل ملف الـ PDF عبر الـ API الموثّق (blob) بدل رابط /media/ الخام ── */
+  async function handleDownloadPdf() {
+    if (!activePaper?.pdf_file) return;
+    try {
+      const blob = await downloadPaper(activePaper.id);
+      const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   /* ── Filtering ── */
   const filtered = papers.filter(p => {
     if (activeFilter === 'noted' && !p.is_reviewed_by_assistant) return false;
@@ -1410,15 +1430,14 @@ export default function Editor() {
                     <span className="dp-pdf-name">
                       {activePaper.pdf_file.split('/').pop()}
                     </span>
-                    <a
+                    <button
+                      type="button"
                       className="dp-pdf-dl"
-                      href={activePaper.pdf_file}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={handleDownloadPdf}
                     >
                       <FiDownload size={12} />
                       {t('download')}
-                    </a>
+                    </button>
                   </div>
                 </div>
               ) : (

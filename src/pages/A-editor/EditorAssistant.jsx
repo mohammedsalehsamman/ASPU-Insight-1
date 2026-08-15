@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import {
-  getPapers, submitAssistantReport, getAssistantReview, getPlagiarismReport, suggestKeywords,
+  getPapers, getPaper, submitAssistantReport, getAssistantReview, getPlagiarismReport, suggestKeywords,
   getIEEEReports, getIEEEReportDetail, submitIEEECheck, deleteIEEEReport,
   submitClaimEvidenceAnalysis, getClaimEvidenceReports, getClaimEvidenceReportDetail, deleteClaimEvidenceReport,
-  getMetadataScore, // ⚠ لازم تكون مضافة بـ ../../api/research.js — شوف الملاحظة تحت
+  getMetadataScore, downloadPaper, // ⚠ لازم تكون مضافة بـ ../../api/research.js — شوف الملاحظة تحت
 } from "../../api/research";
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -109,6 +109,7 @@ export default function EditorAssistant() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activePaper, setActivePaper] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
@@ -330,14 +331,12 @@ export default function EditorAssistant() {
   }
 
   /* ── Detail panel (Papers) ── */
-  function openDetail(id) {
-    const p = papers.find(x => x.id === id);
-    if (!p) return;
-    console.log('PDF:', p); // ← ضيف هاد مؤقتاً
-    console.log('PDF FILE:', p.pdf_file); // ← وهاد كمان
+  async function openDetail(id) {
+    const cached = papers.find(x => x.id === id);
+    if (!cached) return;
     closeIeeeDetail(); // ← تأكيد إغلاق بانل IEEE إذا كان مفتوح
     closeClaimDetail(); // ← تأكيد إغلاق بانل تحليل الادعاءات والأدلة إذا كان مفتوح
-    setActivePaper(p);
+    setActivePaper(cached); // ← فتح فوري بالبيانات المخزّنة، ثم نحدّثها بأحدث نسخة تحت
     setDetailOpen(true);
     setNoteEditorOpen(false);
     setNoteText('');
@@ -359,6 +358,21 @@ export default function EditorAssistant() {
     setMetadataScoreData(null);
     setMetadataScoreError(null);
     document.body.style.overflow = 'hidden';
+
+    // ← جلب نسخة حديثة من البحث بدل الاعتماد على القائمة المخزّنة عند تحميل الصفحة —
+    // بدونها، ملف PDF مرفوع حديثاً (أو أي حقل آخر تغيّر) ما كان يظهر إلا بعد إعادة تحميل الصفحة كاملة.
+    setLoadingDetail(true);
+    try {
+      const fresh = await getPaper(id);
+      if (fresh) {
+        setActivePaper(fresh);
+        setPapers(prev => prev.map(x => (x.id === id ? fresh : x)));
+      }
+    } catch (err) {
+      console.error('Failed to refresh paper detail:', err);
+    } finally {
+      setLoadingDetail(false);
+    }
   }
 
   function closeDetail() {
@@ -460,9 +474,8 @@ export default function EditorAssistant() {
     setLoadingIeeeCheck(true);
     setIeeeCheckError(null);
     try {
-      // نجيب ملف الـ PDF المرفوع مسبقاً كـ blob ونعيد رفعه كـ document_file
-      const fileRes = await fetch(activePaper.pdf_file);
-      const blob = await fileRes.blob();
+      // نجيب ملف الـ PDF المرفوع مسبقاً عبر الـ API الموثّق (مش رابط /media/ الخام) ونعيد رفعه كـ document_file
+      const blob = await downloadPaper(activePaper.id);
       const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
       const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
 
@@ -484,9 +497,8 @@ export default function EditorAssistant() {
     setLoadingClaimAnalysis(true);
     setClaimAnalysisError(null);
     try {
-      // نفس منطق فحص IEEE: نجيب ملف الـ PDF كـ blob ونرفعه كـ document_file
-      const fileRes = await fetch(activePaper.pdf_file);
-      const blob = await fileRes.blob();
+      // نفس منطق فحص IEEE: نجيب ملف الـ PDF عبر الـ API الموثّق ونرفعه كـ document_file
+      const blob = await downloadPaper(activePaper.id);
       const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
       const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
 
@@ -501,6 +513,25 @@ export default function EditorAssistant() {
       setClaimAnalysisError(err);
     } finally {
       setLoadingClaimAnalysis(false);
+    }
+  }
+
+  /* ── تحميل ملف الـ PDF عبر الـ API الموثّق (blob) بدل رابط /media/ الخام ── */
+  async function handleDownloadPdf() {
+    if (!activePaper?.pdf_file) return;
+    try {
+      const blob = await downloadPaper(activePaper.id);
+      const filename = activePaper.pdf_file.split('/').pop() || 'paper.pdf';
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -778,6 +809,7 @@ export default function EditorAssistant() {
       ieee_check_l: { ar: 'فحص IEEE', en: 'IEEE Check' },
       ieee_check_btn: { ar: 'تشغيل فحص IEEE', en: 'Run IEEE Check' },
       ieee_check_fail: { ar: 'فشل تشغيل فحص IEEE، حاول مرة أخرى', en: 'Failed to run IEEE check, please try again' },
+      ieee_check_no_pdf: { ar: 'يجب إرفاق ملف PDF بالبحث لتشغيل هذا الفحص', en: 'A PDF must be attached to this paper before running this check' },
 
       // ══ Claim-Evidence tab (تحليل الادعاءات والأدلة) ══
       tab_claims: { ar: 'تحليل الادعاءات والأدلة', en: 'Claim-Evidence Analysis' },
@@ -790,6 +822,7 @@ export default function EditorAssistant() {
       claim_check_l: { ar: 'تحليل الادعاءات والأدلة', en: 'Claim-Evidence Analysis' },
       claim_check_btn: { ar: 'تشغيل تحليل الادعاءات والأدلة', en: 'Run Claim-Evidence Analysis' },
       claim_check_fail: { ar: 'فشل تشغيل التحليل، حاول مرة أخرى', en: 'Failed to run analysis, please try again' },
+      claim_check_no_pdf: { ar: 'يجب إرفاق ملف PDF بالبحث لتشغيل هذا الفحص', en: 'A PDF must be attached to this paper before running this check' },
       claims_count_l: { ar: 'عدد الادعاءات', en: 'Claims Count' },
       evidence_count_l: { ar: 'عدد الأدلة', en: 'Evidence Count' },
       neutral_count_l: { ar: 'عدد المحايدة', en: 'Neutral Count' },
@@ -1577,13 +1610,18 @@ export default function EditorAssistant() {
               {/* IEEE Check */}
               <div className="dp-sec-label" style={{ marginTop: 16 }}>{t('ieee_check_l')}</div>
               {!ieeeCheckData ? (
-                <button
-                  className="add-note-btn"
-                  onClick={runIeeeCheck}
-                  disabled={loadingIeeeCheck || !activePaper.pdf_file}
-                >
-                  {loadingIeeeCheck ? t('saving') : t('ieee_check_btn')}
-                </button>
+                <>
+                  <button
+                    className="add-note-btn"
+                    onClick={runIeeeCheck}
+                    disabled={loadingIeeeCheck || !activePaper.pdf_file}
+                  >
+                    {loadingIeeeCheck ? t('saving') : t('ieee_check_btn')}
+                  </button>
+                  {!activePaper.pdf_file && (
+                    <p className="dp-hint-msg">{t('ieee_check_no_pdf')}</p>
+                  )}
+                </>
               ) : ieeeCheckData.status === 'error' ? (
                 <div className="no-notes-msg" style={{ color: '#EF4444' }}>
                   {ieeeCheckData.summary || t('ieee_check_fail')}
@@ -1629,6 +1667,9 @@ export default function EditorAssistant() {
               ) : (
                 renderClaimAnalysisResult(claimAnalysisData)
               )}
+              {!claimAnalysisData && !activePaper.pdf_file && (
+                <p className="dp-hint-msg">{t('claim_check_no_pdf')}</p>
+              )}
               {claimAnalysisError && (
                 <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
                   {t('claim_check_fail')}
@@ -1649,17 +1690,16 @@ export default function EditorAssistant() {
                     <span className="dp-pdf-name">
                       {activePaper.pdf_file.split('/').pop()}
                     </span>
-                    <a
+                    <button
+                      type="button"
                       className="dp-pdf-dl"
-                      href={activePaper.pdf_file}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={handleDownloadPdf}
                     >
                       <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
                         <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       {t('download')}
-                    </a>
+                    </button>
                   </div>
                 </div>
               ) : (
