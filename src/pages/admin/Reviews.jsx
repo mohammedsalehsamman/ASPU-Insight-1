@@ -33,9 +33,11 @@ function formatCell(key, value, lang) {
     return isNaN(d) ? String(value) : d.toLocaleString(lang === 'ar' ? 'ar' : 'en');
   }
   if (Array.isArray(value)) {
-    return value.map((v) => (typeof v === 'object' ? (v.full_name || v.name || v.email || JSON.stringify(v)) : v)).join(', ');
+    return value
+      .map((v) => (typeof v === 'object' ? (v.full_name || v.name || v.email || v.user?.full_name || v.user?.name || v.user?.email || JSON.stringify(v)) : v))
+      .join(', ');
   }
-  if (typeof value === 'object') return value.full_name || value.name || value.title || JSON.stringify(value);
+  if (typeof value === 'object') return value.full_name || value.name || value.title || value.user?.full_name || value.user?.email || JSON.stringify(value);
   const str = String(value);
   return str.length > 80 ? `${str.slice(0, 80)}…` : str;
 }

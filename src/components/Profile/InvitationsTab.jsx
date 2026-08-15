@@ -16,6 +16,7 @@ import {
     getCommitteePaperDetails,
     submitPaperDecision, // ⚠ تأكد إنها موجودة بـ api/committees.js — شوف الملاحظة تحت الرد
 } from "../../api/committees";
+import { downloadPaper } from "../../api/research";
 
 /* ══ قيم القرار بالحرف متل ما الباك مستنيها (DECISION_CHOICES) ══ */
 const DECISION_OPTIONS = [
@@ -113,6 +114,25 @@ function PaperDetailsModal({ invitation, isAr, onClose, onDecisionSubmitted }) {
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    /* ── تحميل ملف الـ PDF عبر الـ API الموثّق (blob) بدل رابط /media/ الخام ── */
+    const handleDownloadPdf = async () => {
+        if (!data?.pdf_file) return;
+        try {
+            const blob = await downloadPaper(invitation.paper_id);
+            const filename = data.pdf_file.split('/').pop() || 'paper.pdf';
+            const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const handleSubmitDecision = async () => {
         if (!decision) return;
@@ -221,16 +241,15 @@ function PaperDetailsModal({ invitation, isAr, onClose, onDecisionSubmitted }) {
                         )}
 
                         {data.pdf_file ? (
-                            <a
-                                href={data.pdf_file}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                type="button"
+                                onClick={handleDownloadPdf}
                                 className="edit-btn primary sm"
-                                style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", marginBottom: 22 }}
+                                style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 22 }}
                             >
                                 <FaDownload size={12} />
                                 {isAr ? "تحميل ملف البحث" : "Download Paper"}
-                            </a>
+                            </button>
                         ) : (
                             <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 22 }}>
                                 {isAr ? "لا يوجد ملف مرفق" : "No file attached"}

@@ -8,7 +8,7 @@ import {
   CaretRight,
 } from '@phosphor-icons/react';
 import AdminLayout from './AdminLayout';
-import { getDashboardPapers, getDashboardPaperDetail, assignEditor, getUsers, getResearchHistory } from '../../api/admin';
+import { getDashboardPapers, getDashboardPaperDetail, getUsers, getResearchHistory } from '../../api/admin';
 import { useAdminLang, adminT } from './adminI18n';
 
 const STATUS_OPTIONS = ['pending', 'under_review', 'plagiarism_failed', 'plagiarism_passed', 'accepted', 'rejected', 'noted', 'published'];
@@ -35,7 +35,7 @@ function statusLabel(status, lang) {
 }
 
 /* ── Paper detail drawer ── */
-function PaperDrawer({ paperId, lang, onClose, editors, onAssigned }) {
+function PaperDrawer({ paperId, lang, onClose }) {
   const t = (key) => adminT(lang, key);
   const isAr = lang === 'ar';
 
@@ -43,8 +43,6 @@ function PaperDrawer({ paperId, lang, onClose, editors, onAssigned }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [savingEditor, setSavingEditor] = useState(false);
-  const [assignMsg, setAssignMsg] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,23 +62,6 @@ function PaperDrawer({ paperId, lang, onClose, editors, onAssigned }) {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [paperId]);
-
-  const handleAssign = async (e) => {
-    const val = e.target.value;
-    const editorId = val === '' ? null : Number(val);
-    setSavingEditor(true);
-    setAssignMsg(null);
-    try {
-      const updated = await assignEditor(paperId, editorId);
-      setPaper((prev) => ({ ...prev, ...(updated ?? {}), editor_id: editorId }));
-      setAssignMsg({ type: 'success', text: isAr ? 'تم تعيين المحرر بنجاح' : 'Editor assigned successfully' });
-      onAssigned?.(paperId, editorId);
-    } catch (err) {
-      setAssignMsg({ type: 'error', text: isAr ? 'فشل تعيين المحرر' : 'Failed to assign editor' });
-    } finally {
-      setSavingEditor(false);
-    }
-  };
 
   return (
     <>
@@ -142,21 +123,6 @@ function PaperDrawer({ paperId, lang, onClose, editors, onAssigned }) {
                   <p style={{ fontSize: 13.5, lineHeight: 1.8, color: 'var(--tx)' }}>{paper.abstract}</p>
                 </>
               )}
-
-              <div className="admin-sec-label">{isAr ? 'تعيين محرر' : 'Assign Editor'}</div>
-              <select
-                className="admin-select"
-                style={{ width: '100%' }}
-                value={paper.editor_id ?? paper.editor?.id ?? ''}
-                onChange={handleAssign}
-                disabled={savingEditor}
-              >
-                <option value="">{isAr ? 'بدون محرر' : 'No Editor'}</option>
-                {editors.map((ed) => (
-                  <option key={ed.user_id ?? ed.id} value={ed.user_id ?? ed.id}>{ed.full_name || ed.email}</option>
-                ))}
-              </select>
-              {assignMsg && <p className={`admin-msg admin-msg-${assignMsg.type}`}>{assignMsg.text}</p>}
 
               <div className="admin-sec-label">{isAr ? 'سجل تغيّر الحالة' : 'Status History'}</div>
               {history.length === 0 ? (
@@ -240,10 +206,6 @@ export default function Papers() {
       .then((data) => setEditors(Array.isArray(data) ? data : (data.results ?? [])))
       .catch(() => setEditors([]));
   }, []);
-
-  const handleAssigned = (paperId, editorId) => {
-    setPapers((prev) => prev.map((p) => (p.id === paperId ? { ...p, editor_id: editorId } : p)));
-  };
 
   return (
     <AdminLayout>
@@ -360,9 +322,7 @@ export default function Papers() {
         <PaperDrawer
           paperId={activePaperId}
           lang={lang}
-          editors={editors}
           onClose={() => setActivePaperId(null)}
-          onAssigned={handleAssigned}
         />
       )}
     </AdminLayout>
