@@ -8,7 +8,7 @@ import RegisterPage from "./Auth/RegisterPage";
 import QRPage from "./Auth/QRPage";
 import OTPPage from "./Auth/OTPPage";
 import SuccessBox from "../../components/SuccessBox";
-import "../../styling/auth.css";
+import "../../styling/Auth.css";
 import { FiCheck } from "react-icons/fi";
 
 export default function Auth() {
