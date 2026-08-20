@@ -1,154 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import {
-  MagnifyingGlass,
-  Warning,
-  ArrowClockwise,
-  X,
-  CaretLeft,
-  CaretRight,
-} from '@phosphor-icons/react';
 import AdminLayout from './AdminLayout';
-import { getDashboardPapers, getDashboardPaperDetail, getUsers, getResearchHistory } from '../../api/admin';
+import { getDashboardPapers, getUsers } from '../../api/admin';
 import { useAdminLang, adminT } from './adminI18n';
-
-const STATUS_OPTIONS = ['pending', 'under_review', 'plagiarism_failed', 'plagiarism_passed', 'accepted', 'rejected', 'noted', 'published'];
-
-const STATUS_LABELS = {
-  ar: {
-    pending: 'بانتظار المراجعة', under_review: 'قيد المراجعة', plagiarism_failed: 'فشل فحص الانتحال',
-    plagiarism_passed: 'اجتاز فحص الانتحال', accepted: 'مقبول', rejected: 'مرفوض', noted: 'تمت الملاحظة', published: 'منشور',
-  },
-  en: {
-    pending: 'Pending', under_review: 'Under Review', plagiarism_failed: 'Plagiarism Failed',
-    plagiarism_passed: 'Plagiarism Passed', accepted: 'Accepted', rejected: 'Rejected', noted: 'Noted', published: 'Published',
-  },
-};
-
-const STATUS_BADGE = {
-  pending: 'admin-badge-amber', under_review: 'admin-badge-amber', plagiarism_failed: 'admin-badge-red',
-  plagiarism_passed: 'admin-badge-blue', accepted: 'admin-badge-green', rejected: 'admin-badge-red',
-  noted: 'admin-badge-blue', published: 'admin-badge-green',
-};
-
-function statusLabel(status, lang) {
-  return STATUS_LABELS[lang]?.[status] ?? status;
-}
-
-/* ── Paper detail drawer ── */
-function PaperDrawer({ paperId, lang, onClose }) {
-  const t = (key) => adminT(lang, key);
-  const isAr = lang === 'ar';
-
-  const [paper, setPaper] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      getDashboardPaperDetail(paperId),
-      getResearchHistory(paperId).catch(() => []),
-    ])
-      .then(([detail, hist]) => {
-        if (cancelled) return;
-        setPaper(detail);
-        const histArr = Array.isArray(hist) ? hist : (hist?.results ?? detail?.status_history ?? []);
-        setHistory(Array.isArray(histArr) ? histArr : []);
-      })
-      .catch((err) => { if (!cancelled) setError(err.response?.data?.detail || err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [paperId]);
-
-  return (
-    <>
-      <div className="admin-drawer-overlay open" onClick={onClose} />
-      <div className="admin-drawer open">
-        <div className="admin-drawer-head">
-          <strong>{isAr ? 'تفاصيل البحث' : 'Paper Details'}</strong>
-          <button className="admin-drawer-close" onClick={onClose}><X size={16} weight="bold" /></button>
-        </div>
-
-        <div className="admin-drawer-body">
-          {loading && (
-            <div className="admin-state-center">
-              <div className="admin-spinner" />
-              <span>{t('loading')}</span>
-            </div>
-          )}
-
-          {!loading && error && (
-            <div className="admin-state-center">
-              <Warning size={30} weight="duotone" style={{ color: 'var(--ac)' }} />
-              <span className="admin-empty-sub">{String(error)}</span>
-            </div>
-          )}
-
-          {!loading && !error && paper && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>{paper.title}</h2>
-              <p style={{ fontSize: 13, color: 'var(--tx2)' }}>{paper.author_name}</p>
-
-              <div className="admin-info-grid">
-                <div className="admin-info-cell">
-                  <div className="admin-info-label">{isAr ? 'الرقم المرجعي' : 'Reference ID'}</div>
-                  <div className="admin-info-val">RES-{String(paper.id).padStart(3, '0')}</div>
-                </div>
-                <div className="admin-info-cell">
-                  <div className="admin-info-label">{t('status')}</div>
-                  <div className="admin-info-val">
-                    <span className={`admin-badge ${STATUS_BADGE[paper.status] ?? 'admin-badge-gray'}`}>
-                      {statusLabel(paper.status, lang)}
-                    </span>
-                  </div>
-                </div>
-                {paper.plagiarism_score != null && (
-                  <div className="admin-info-cell">
-                    <div className="admin-info-label">{isAr ? 'درجة الانتحال' : 'Plagiarism Score'}</div>
-                    <div className="admin-info-val">{paper.plagiarism_score}%</div>
-                  </div>
-                )}
-                <div className="admin-info-cell">
-                  <div className="admin-info-label">{isAr ? 'وصول مفتوح مدفوع' : 'Paid Open Access'}</div>
-                  <div className="admin-info-val">{paper.is_paid_open_access ? t('yes') : t('no')}</div>
-                </div>
-              </div>
-
-              {paper.abstract && (
-                <>
-                  <div className="admin-sec-label">{isAr ? 'الملخص' : 'Abstract'}</div>
-                  <p style={{ fontSize: 13.5, lineHeight: 1.8, color: 'var(--tx)' }}>{paper.abstract}</p>
-                </>
-              )}
-
-              <div className="admin-sec-label">{isAr ? 'سجل تغيّر الحالة' : 'Status History'}</div>
-              {history.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--tx2)' }}>{isAr ? 'لا يوجد سجل بعد' : 'No history yet'}</p>
-              ) : (
-                history.map((h, i) => (
-                  <div className="admin-history-item" key={h.id ?? i}>
-                    <div>
-                      <strong>{h.new_status ?? h.status ?? h.action ?? '—'}</strong>
-                      {h.changed_by_name && <span style={{ color: 'var(--tx2)' }}> — {h.changed_by_name}</span>}
-                      {h.created_at && <div style={{ fontSize: 11.5, color: 'var(--tx2)' }}>{new Date(h.created_at).toLocaleString(isAr ? 'ar' : 'en')}</div>}
-                    </div>
-                  </div>
-                ))
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+import StateCenter from '../../components/admin/StateCenter';
+import Pagination from '../../components/admin/Pagination';
+import SearchBox from '../../components/admin/SearchBox';
+import PaperDrawer, { STATUS_OPTIONS, STATUS_BADGE, statusLabel } from '../../components/admin/PaperDrawer';
+import { getErrorMessage } from '../../i18n/errorMessages';
 
 export default function Papers() {
   const [lang] = useAdminLang();
-  const t = (key) => adminT(lang, key);
+  const t = (key, vars) => adminT(lang, key, vars);
   const isAr = lang === 'ar';
 
   const [papers, setPapers] = useState([]);
@@ -188,7 +50,7 @@ export default function Papers() {
         setPrevUrl(data.previous ?? null);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || err.message);
+      setError(getErrorMessage(err, lang));
     } finally {
       setLoading(false);
     }
@@ -213,21 +75,13 @@ export default function Papers() {
         <div>
           <div className="admin-page-title">{t('papers')}</div>
           <div className="admin-page-sub">
-            {isAr ? 'إشراف شامل على كل الأبحاث المقدَّمة وحالتها ومحرريها' : 'Full oversight of all submitted papers, status, and editors'}
+            {t('papers_page_sub')}
           </div>
         </div>
       </div>
 
       <div className="admin-filter-bar">
-        <div className="admin-search-box">
-          <MagnifyingGlass size={15} weight="duotone" />
-          <input
-            type="text"
-            placeholder={isAr ? 'ابحث بالعنوان أو الباحث...' : 'Search by title or author...'}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchBox value={search} onChange={setSearch} placeholder={t('papers_search_ph')} />
 
         <select className="admin-select" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="all">{t('all')}</option>
@@ -235,37 +89,13 @@ export default function Papers() {
         </select>
 
         <select className="admin-select" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-          <option value="-created_at">{isAr ? 'الأحدث أولاً' : 'Newest First'}</option>
-          <option value="created_at">{isAr ? 'الأقدم أولاً' : 'Oldest First'}</option>
-          <option value="title">{isAr ? 'العنوان (أ-ي)' : 'Title (A-Z)'}</option>
+          <option value="-created_at">{t('newest_first')}</option>
+          <option value="created_at">{t('oldest_first')}</option>
+          <option value="title">{t('title_asc')}</option>
         </select>
       </div>
 
-      {loading && (
-        <div className="admin-state-center">
-          <div className="admin-spinner" />
-          <span>{t('loading')}</span>
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="admin-state-center">
-          <Warning size={36} weight="duotone" style={{ color: 'var(--ac)' }} />
-          <span className="admin-empty-title">{t('error')}</span>
-          <span className="admin-empty-sub">{String(error)}</span>
-          <button className="admin-btn admin-btn-primary" onClick={fetchPapers} style={{ marginTop: 6 }}>
-            <ArrowClockwise size={14} weight="bold" />
-            {t('retry')}
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && papers.length === 0 && (
-        <div className="admin-state-center">
-          <span className="admin-empty-title">{t('no_results')}</span>
-          <span className="admin-empty-sub">{t('no_results_sub')}</span>
-        </div>
-      )}
+      <StateCenter loading={loading} error={error} onRetry={fetchPapers} isEmpty={papers.length === 0} t={t} />
 
       {!loading && !error && papers.length > 0 && (
         <>
@@ -273,10 +103,10 @@ export default function Papers() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>{isAr ? 'العنوان' : 'Title'}</th>
-                  <th>{isAr ? 'الباحث' : 'Author'}</th>
+                  <th>{t('title_col')}</th>
+                  <th>{t('author_col')}</th>
                   <th>{t('status')}</th>
-                  <th>{isAr ? 'المحرر' : 'Editor'}</th>
+                  <th>{t('editor_col')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,7 +122,7 @@ export default function Papers() {
                           {statusLabel(p.status, lang)}
                         </span>
                       </td>
-                      <td>{p.editor_name || editorObj?.full_name || (isAr ? 'غير معيّن' : 'Unassigned')}</td>
+                      <td>{p.editor_name || editorObj?.full_name || t('unassigned')}</td>
                     </tr>
                   );
                 })}
@@ -300,21 +130,15 @@ export default function Papers() {
             </table>
           </div>
 
-          {(nextUrl || prevUrl) && (
-            <div className="admin-pagination">
-              <button className="admin-btn admin-btn-sm" disabled={!prevUrl} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                {isAr ? <CaretRight size={14} /> : <CaretLeft size={14} />}
-                {t('prev')}
-              </button>
-              <span style={{ fontSize: 13, color: 'var(--tx2)' }}>
-                {count != null ? (isAr ? `${count} بحث` : `${count} papers`) : ''}
-              </span>
-              <button className="admin-btn admin-btn-sm" disabled={!nextUrl} onClick={() => setPage((p) => p + 1)}>
-                {t('next')}
-                {isAr ? <CaretLeft size={14} /> : <CaretRight size={14} />}
-              </button>
-            </div>
-          )}
+          <Pagination
+            isAr={isAr}
+            t={t}
+            hasPrev={!!prevUrl}
+            hasNext={!!nextUrl}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+            countLabel={count != null ? t('papers_count', { count }) : ''}
+          />
         </>
       )}
 

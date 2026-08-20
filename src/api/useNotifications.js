@@ -80,14 +80,12 @@ function useNotificationSocket({ onMessage, enabled = true }) {
   return { status };
 }
 
-// ─── الـ Hook الرئيسي ──────────────────────────────────────────────
 export function useNotifications({ enabled = true } = {}) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // تحميل أولي عبر REST
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
@@ -116,9 +114,7 @@ export function useNotifications({ enabled = true } = {}) {
     };
   }, [enabled]);
 
-  // رسالة جديدة جاية من WebSocket
   const handleWsMessage = useCallback((payload) => {
-    // ⚠️ إذا شكل الـ payload الفعلي يلي بيبعته الباك مختلف، عدّل هون فقط
     setNotifications((prev) => {
       const exists = prev.some((n) => n.id === payload.id);
       if (exists) return prev;
@@ -135,7 +131,6 @@ export function useNotifications({ enabled = true } = {}) {
   });
 
   const markAsRead = useCallback(async (id) => {
-    // تحديث متفائل (optimistic) بالواجهة
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
@@ -155,8 +150,7 @@ export function useNotifications({ enabled = true } = {}) {
     try {
       await notificationsApi.markAllRead();
     } catch (err) {
-      console.error("[notifications] فشل تعليم الكل كمقروء:", err);
-      // تراجع عند الفشل
+      console.error("[notifications] failed to mark all as read:", err);
       setNotifications(prevNotifications);
       setUnreadCount(prevUnread);
     }
@@ -171,7 +165,7 @@ export function useNotifications({ enabled = true } = {}) {
       setNotifications(listRes.data.results ?? []);
       setUnreadCount(countRes.data.unread_count ?? 0);
     } catch (err) {
-      console.error("[notifications] فشل التحديث:", err);
+      console.error("[notifications] failed to refresh:", err);
     }
   }, []);
 

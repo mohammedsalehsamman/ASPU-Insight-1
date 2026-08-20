@@ -165,8 +165,8 @@ function PaperDetailsModal({ invitation, isAr, onClose, onDecisionSubmitted }) {
         >
             <div
                 style={{
-                    background: "var(--card-bg, #171b21)",
-                    border: "1px solid var(--border, rgba(255,255,255,0.08))",
+                    background: "var(--surf2, #171b21)",
+                    border: "1px solid var(--bd, rgba(255,255,255,0.08))",
                     borderRadius: 16,
                     maxWidth: 560,
                     width: "100%",
@@ -258,7 +258,7 @@ function PaperDetailsModal({ invitation, isAr, onClose, onDecisionSubmitted }) {
 
                         {/* ══ قسم قرار المحكّم ══ */}
                         <div style={{
-                            borderTop: "1px solid var(--border, rgba(255,255,255,0.08))",
+                            borderTop: "1px solid var(--bd, rgba(255,255,255,0.08))",
                             paddingTop: 18,
                         }}>
                             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
@@ -306,7 +306,7 @@ function PaperDetailsModal({ invitation, isAr, onClose, onDecisionSubmitted }) {
                                             marginBottom: 12,
                                             background: "transparent",
                                             color: "inherit",
-                                            border: "1px solid var(--border, rgba(255,255,255,0.15))",
+                                            border: "1px solid var(--bd, rgba(255,255,255,0.15))",
                                         }}
                                     />
 

@@ -1,25 +1,25 @@
-import { User } from '@phosphor-icons/react';
+import { PiUserDuotone } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
-const ROLE_LABELS = {
-  author: 'باحث',
-  reviewer: 'مراجع',
-  editor: 'محرر',
+const ROLE_KEYS = {
+  author: 'role_author',
+  reviewer: 'role_reviewer',
+  editor: 'role_editor',
 };
 
-export default function PublisherInfo({ profile, profileLoading }) {
-  const roleLabel = ROLE_LABELS[profile?.role] || profile?.role || '';
+export default function PublisherInfo({ profile, profileLoading, t }) {
+  const roleLabel = t(ROLE_KEYS[profile?.role]) || profile?.role || '';
 
   return (
     <div>
-      <div className={styles.filterLabel}>الناشر</div>
+      <div className={styles.filterLabel}>{t('publisher_label')}</div>
       <div className={styles.discItem} style={{ cursor: 'default' }}>
         <span className={styles.discIco}>
-          <User size={14} weight="duotone" />
+          <PiUserDuotone size={14} />
         </span>
         <span>
           {profileLoading
-            ? 'جارٍ التحميل...'
+            ? t('loading')
             : `${profile?.full_name || '—'} (${roleLabel})`}
         </span>
       </div>
@@ -27,4 +27,4 @@ export default function PublisherInfo({ profile, profileLoading }) {
   );
 }
 
-export { ROLE_LABELS };
+export { ROLE_KEYS };

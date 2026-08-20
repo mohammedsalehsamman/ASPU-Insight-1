@@ -1,10 +1,10 @@
-import { UploadSimple, CaretDown } from '@phosphor-icons/react';
+import { PiUploadSimpleDuotone, PiCaretDown } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
 export default function FileSection({
   openSection, toggleSection,
   file, fileInputRef, handleFileChange, handleFileDrop,
-  dragOver, setDragOver,
+  dragOver, setDragOver, t,
 }) {
   return (
     <div className={styles.section}>
@@ -15,11 +15,11 @@ export default function FileSection({
         aria-expanded={openSection === 3}
       >
         <span className={styles.sectionTitleText}>
-          ملف البحث
-          <span className={styles.sectionSubtitle}>رفع ملف PDF</span>
+          {t('file_section_title')}
+          <span className={styles.sectionSubtitle}>{t('file_section_subtitle')}</span>
         </span>
         <span className={`${styles.chevron} ${openSection === 3 ? styles.open : ''}`}>
-          <CaretDown size={14} />
+          <PiCaretDown size={14} />
         </span>
       </button>
 
@@ -47,14 +47,14 @@ export default function FileSection({
                 onDrop={handleFileDrop}
               >
                 <div className={styles.uploadIcon}>
-                  <UploadSimple size={32} weight="duotone" />
+                  <PiUploadSimpleDuotone size={32} />
                 </div>
                 {file ? (
                   <span className={styles.fileName}>
                     {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                   </span>
                 ) : (
-                  <span>اسحب ملف البحث بصيغة PDF أو انقر للاختيار</span>
+                  <span>{t('file_drop_text')}</span>
                 )}
               </label>
             </div>

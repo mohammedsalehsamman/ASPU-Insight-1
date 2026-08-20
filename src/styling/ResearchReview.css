@@ -329,11 +329,37 @@ input[type="range"]::-webkit-slider-thumb {
 .ab-student { background: var(--ac2); }
 .ab-prof    { background: #6DCFAD; }
 
+.rr-status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+  white-space: nowrap;
+}
+.rr-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.rr-sb-pending  { background: rgba(196,165,90,.1);  border: 1px solid rgba(196,165,90,.3);  color: #C4A55A; }
+.rr-sb-approved { background: rgba(34,197,94,.1);   border: 1px solid rgba(34,197,94,.3);   color: #22C55E; }
+.rr-sb-rejected { background: rgba(239,68,68,.1);   border: 1px solid rgba(239,68,68,.3);   color: #F87171; }
+
+.rr-oa-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px;
+  border: 1px solid var(--bd2); color: var(--tx2); white-space: nowrap;
+}
+
+.rr-paper-id { font-size: 12px; color: var(--tx3); font-weight: 600; flex-shrink: 0; }
+
 .rcp-title { font-size: 16px; font-weight: 700; color: var(--tx); line-height: 1.45; margin-bottom: 10px; word-break: break-word; }
 .rcp-excerpt { font-size: 13px; color: var(--tx2); line-height: 1.75; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .rcp-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx3); flex-wrap: wrap; margin-bottom: 16px; }
 .rcp-author { color: var(--ac); font-weight: 500; }
 .rcp-sep { opacity: .35; }
+
+.rr-card-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-top: 1px solid var(--bd); padding-top: 14px; margin-top: auto;
+  font-size: 12px; color: var(--tx3);
+}
+.rr-pdf-indicator { display: inline-flex; align-items: center; gap: 6px; }
+.rr-view-more { display: inline-flex; align-items: center; gap: 6px; color: var(--ac); font-weight: 500; }
 
 .rcp-stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--bd); padding-top: 14px; }
 .rcp-stat { display: flex; flex-direction: column; gap: 4px; padding: 0 14px; border-inline-end: 1px solid var(--bd); }

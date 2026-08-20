@@ -13,7 +13,6 @@ import "../styling/NotificationBell.css";
 import { useNavigate } from "react-router-dom";
 
 
-// أيقونة + لون حسب مستوى الإشعار (warning / info / success / error)
 const LEVEL_META = {
     warning: { Icon: FiAlertTriangle, className: "warning" },
     info: { Icon: FiInfo, className: "info" },
@@ -27,7 +26,6 @@ function getLevelMeta(level) {
     return LEVEL_META[level] || LEVEL_META.info;
 }
 
-// وقت نسبي بسيط (عربي/إنجليزي)
 function formatRelativeTime(isoString, lang) {
     const then = new Date(isoString).getTime();
     const now = Date.now();
@@ -56,7 +54,7 @@ export default function NotificationBell({ onSeeAll }) {
     const panelRef = useRef(null);
     const btnRef = useRef(null);
     const navigate = useNavigate();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const lang = i18n.language || "ar";
 
     const {
@@ -68,7 +66,6 @@ export default function NotificationBell({ onSeeAll }) {
         markAllAsRead,
     } = useNotifications();
 
-    // إغلاق البوب أب عند الضغط برا
     useEffect(() => {
         function handleClickOutside(e) {
             if (
@@ -138,13 +135,13 @@ export default function NotificationBell({ onSeeAll }) {
                     <div className="aspu-notif-list">
                         {loading && (
                             <div className="aspu-notif-empty">
-                                {lang === "ar" ? "جاري التحميل..." : "Loading..."}
+                                {t('common.loading')}
                             </div>
                         )}
 
                         {!loading && recentNotifications.length === 0 && (
                             <div className="aspu-notif-empty">
-                                {lang === "ar" ? "ولا إشعار لسا" : "No notifications yet"}
+                                {lang === "ar" ? "لا توجد إشعارات بعد" : "No notifications yet"}
                             </div>
                         )}
 

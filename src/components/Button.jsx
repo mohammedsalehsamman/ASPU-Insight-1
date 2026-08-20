@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { FiArrowLeft } from 'react-icons/fi';
 
 export default function Button({ children, onClick, loading, variant = "primary" }) {
   const { t } = useTranslation();
@@ -10,7 +11,7 @@ export default function Button({ children, onClick, loading, variant = "primary"
       className={`auth-btn${variant === "ghost" ? " auth-btn-ghost" : ""}`}
     >
       {loading ? common.loading : children}
-      {!loading && <span className="barr">←</span>}
+      {!loading && <span className="barr"><FiArrowLeft size={14} /></span>}
     </button>
   );
 }

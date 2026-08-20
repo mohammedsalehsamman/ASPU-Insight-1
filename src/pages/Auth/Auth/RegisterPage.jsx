@@ -106,7 +106,6 @@ export default function RegisterPage({ lang, onGoToLogin }) {
 
           <option value="author">{reg.authorOpt}</option>
           <option value="reviewer">{reg.reviewerOpt}</option>
-          <option value="editor">{reg.editorOpt}</option>
         </select>
       </div>
       <div className="auth-field">

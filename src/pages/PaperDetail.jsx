@@ -1,36 +1,29 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { getPaper, downloadPaper, getRecommendations } from '../api/research';
-import { PaperDetailDict, createLocalT } from '../i18n'; 
+import { PaperDetailDict, createLocalT } from '../i18n';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Logo from '../components/Logo';
 import useNavScroll from '../components/shared/useNavScroll';
 import { getFooterContent } from '../components/shared/footerContent';
-import DeletePaperButton from '../components/DeletePaperButton';
 import '../styling/PaperDetail.css';
-import {
-  FaFileAlt, FaSearch, FaFlagCheckered, FaExclamationTriangle,
-  FaLockOpen, FaDownload, FaFolderOpen, FaCheck, FaEdit,
-  FaClipboard,
-} from 'react-icons/fa';
-
-function getStepDotCls(stepIndex, status) {
-  const activeIdx = status === 'pending' ? 1 : 2;
-  if (stepIndex === 0) return 'pd-st-dot--done';
-  if (stepIndex < activeIdx) return 'pd-st-dot--done';
-  if (stepIndex === activeIdx) return 'pd-st-dot--active';
-  return 'pd-st-dot--idle';
-}
+import PaperDetailSkeleton from '../components/PaperDetail/PaperDetailSkeleton';
+import PaperDetailError from '../components/PaperDetail/PaperDetailError';
+import PageHeader from '../components/PaperDetail/PageHeader';
+import FileCard from '../components/PaperDetail/FileCard';
+import RecommendationsSection from '../components/PaperDetail/RecommendationsSection';
+import InfoCard from '../components/PaperDetail/InfoCard';
+import StatusTimeline from '../components/PaperDetail/StatusTimeline';
+import ActionsCard from '../components/PaperDetail/ActionsCard';
 
 export default function PaperDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { i18n } = useTranslation();
-  const lang = i18n.language || 'ar';
+  const { lang } = useLanguage();
   const t = createLocalT(PaperDetailDict, lang);
   const [paper, setPaper] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,21 +42,13 @@ export default function PaperDetail() {
   const [recommendationsError, setRecommendationsError] = useState(null);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
-    root.setAttribute('data-lang', lang);
-    root.setAttribute('lang', lang);
-    root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-  }, [theme, lang]);
-
-  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
     getPaper(id)
       .then((data) => { if (!cancelled) setPaper(data); })
-      .catch((err) => { if (!cancelled) setError(err.message || t('default_error')); })
+      .catch((err) => { if (!cancelled) setError(err); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
@@ -84,7 +69,7 @@ export default function PaperDetail() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setRecommendationsError(err.message || (lang === 'ar' ? 'فشل تحميل الأبحاث المشابهة' : 'Failed to load similar papers'));
+          setRecommendationsError(err);
           setLoadingRecommendations(false);
         }
       });
@@ -118,7 +103,7 @@ export default function PaperDetail() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setDownloadError(err.message || (lang === 'ar' ? 'فشل تحميل الملف' : 'Failed to download file'));
+      setDownloadError(err);
     } finally {
       setDownloading(false);
     }
@@ -131,74 +116,19 @@ export default function PaperDetail() {
   };
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const navProps = { menuOpen, setMenuOpen, hoveredMenu, setHoveredMenu, navScrolled };
 
   if (loading) {
-    return (
-      <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
-        <Navbar
-          menuOpen={menuOpen}
-          setMenuOpen={setMenuOpen}
-          hoveredMenu={hoveredMenu}
-          setHoveredMenu={setHoveredMenu}
-          scrolled={navScrolled}
-          Logo={Logo}
-        />
-        <div className="pd-state-center">
-          <div className="pd-spinner" />
-          <span>{t('loading')}</span>
-        </div>
-      </div>
-    );
+    return <PaperDetailSkeleton theme={theme} lang={lang} dir={dir} t={t} {...navProps} />;
   }
 
   if (error) {
-    return (
-      <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
-        <Navbar
-          menuOpen={menuOpen}
-          setMenuOpen={setMenuOpen}
-          hoveredMenu={hoveredMenu}
-          setHoveredMenu={setHoveredMenu}
-          scrolled={navScrolled}
-          Logo={Logo}
-        />
-        <br/>
-        <div className="pd-state-center">
-          <span className="pd-error-ico"><FaExclamationTriangle /></span>
-          <span className="pd-error-msg">{error}</span>
-          <button className="pd-retry-btn" onClick={() => window.location.reload()}>
-            {t('retry')}
-          </button>
-        </div>
-        <Footer isAr={lang === 'ar'} footer={getFooterContent(lang)} Logo={Logo} />
-      </div>
-    );
+    return <PaperDetailError theme={theme} lang={lang} dir={dir} t={t} error={error} {...navProps} />;
   }
 
   if (!paper) return null;
 
   const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
-
-  const TIMELINE_STEPS = [
-    {
-      name: t('timeline_submitted'),
-      sub: t('timeline_submitted_sub'),
-      icon: <FaFileAlt />,
-    },
-    {
-      name: t('timeline_review'),
-      sub: t('timeline_review_sub'),
-      icon: <FaSearch />,
-    },
-    {
-      name: t('timeline_decision'),
-      sub:
-        paper.status === 'approved' ? t('timeline_decision_approved')
-        : paper.status === 'rejected' ? t('timeline_decision_rejected')
-        : t('timeline_decision_pending'),
-      icon: <FaFlagCheckered />,
-    },
-  ];
 
   return (
     <div className={`pd-root theme-${theme} lang-${lang}`} dir={dir}>
@@ -211,146 +141,31 @@ export default function PaperDetail() {
         Logo={Logo}
       />
 
-      <div className="pd-page-header">
-        <div className="pd-ph-inner">
-
-          <nav className="pd-breadcrumb" aria-label="breadcrumb">
-            <Link to="/">{t('breadcrumb_home')}</Link>
-            <span className="pd-breadcrumb-sep">›</span>
-            <Link to="/papers">{t('breadcrumb_research')}</Link>
-            <span className="pd-breadcrumb-sep">›</span>
-            <span>{t('breadcrumb_details')}</span>
-          </nav>
-
-          <div className="pd-badges">
-            <span className={`pd-status-badge ${st.badgeCls}`}>
-              <span className="pd-badge-dot" />
-              {st.label}
-            </span>
-
-            {paper.is_paid_open_access && (
-              <span className="pd-oa-badge"><FaLockOpen size={12} /> {t('open_access_badge')}</span>
-            )}
-
-            <span className="pd-paper-id"># PAPER-{String(paper.id).padStart(4, '0')}</span>
-          </div>
-
-          <h1 className="pd-title">{paper.title}</h1>
-
-          <div className="pd-author-row">
-            <div className="pd-author-chip">
-              <span className="pd-chip-dot" />
-              <span>{t('author_label')}</span>
-              <span className="pd-chip-email">{paper.author_name}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader paper={paper} status={st} t={t} />
 
       <div className="pd-page-body">
 
         <div className="pd-main-col">
-
           <div className="pd-detail-card">
             <div className="pd-section-label">{t('abstract_label')}</div>
             <p className="pd-abstract-text">{paper.abstract}</p>
           </div>
 
-          <div className="pd-detail-card">
-            <div className="pd-section-label">{t('file_label')}</div>
-            {paper.pdf_file ? (
-              <div className="pd-pdf-available">
-                <div className="pd-pdf-icon"><FaFileAlt /></div>
-                <div className="pd-pdf-info">
-                  <div className="pd-pdf-name">{paper.pdf_file}</div>
-                  <div className="pd-pdf-sub">{t('pdf_attached_sub')}</div>
-                </div>
+          <FileCard
+            paper={paper}
+            lang={lang}
+            t={t}
+            downloading={downloading}
+            downloadError={downloadError}
+            onDownload={handleDownload}
+          />
 
-                <button
-                  className="pd-pdf-download-btn"
-                  onClick={handleDownload}
-                  disabled={downloading}
-                >
-                  <FaDownload size={12} />
-                  {downloading
-                    ? (lang === 'ar' ? 'جارٍ التحميل...' : 'Downloading...')
-                    : t('download')}
-                </button>
-              </div>
-            ) : (
-              <div className="pd-pdf-missing">
-                <span className="pd-pdf-missing-icon"><FaFolderOpen /></span>
-                <span>{t('pdf_missing')}</span>
-              </div>
-            )}
-            {downloadError && (
-              <p style={{ color: '#EF4444', fontSize: 12, marginTop: 8 }}>
-                {downloadError}
-              </p>
-            )}
-          </div>
-
-          {/* ══ أبحاث مشابهة (Recommendations) ══ */}
-          <div className="pd-detail-card">
-            <div className="pd-section-label">
-              {lang === 'ar' ? 'أبحاث مشابهة' : 'Similar Papers'}
-            </div>
-
-            {loadingRecommendations && (
-              <p style={{ fontSize: 13, opacity: 0.7 }}>
-                {lang === 'ar' ? 'جارٍ تحميل الأبحاث المشابهة...' : 'Loading similar papers...'}
-              </p>
-            )}
-
-            {!loadingRecommendations && recommendationsError && (
-              <p style={{ color: '#EF4444', fontSize: 12 }}>{recommendationsError}</p>
-            )}
-
-            {!loadingRecommendations && !recommendationsError && recommendations.length === 0 && (
-              <p style={{ fontSize: 13, opacity: 0.6 }}>
-                {lang === 'ar' ? 'لا توجد أبحاث مشابهة حالياً' : 'No similar papers found'}
-              </p>
-            )}
-
-            {!loadingRecommendations && !recommendationsError && recommendations.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {recommendations.map((rec) => (
-                  <Link
-                    key={rec.id}
-                    to={`/papers/${rec.id}`}
-                    style={{
-                      display: 'block',
-                      padding: '14px 16px',
-                      border: '1px solid var(--border)',
-                      borderRadius: 10,
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'border-color .2s',
-                    }}
-                  >
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
-                      {rec.title}
-                    </div>
-                    <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
-                      {rec.author_name}
-                    </div>
-                    {rec.abstract && (
-                      <div style={{
-                        fontSize: 12,
-                        opacity: 0.6,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}>
-                        {rec.abstract}
-                      </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <RecommendationsSection
+            lang={lang}
+            loading={loadingRecommendations}
+            error={recommendationsError}
+            recommendations={recommendations}
+          />
 
           {paper.status === 'rejected' && paper.rejection_reason && (
             <div className="pd-rejection-box">
@@ -358,95 +173,17 @@ export default function PaperDetail() {
               <p className="pd-rejection-text">{paper.rejection_reason}</p>
             </div>
           )}
-
         </div>
 
         <div className="pd-side-col">
-
-          <div className="pd-meta-card">
-            <div className="pd-section-label">{t('info_label')}</div>
-
-            <div className="pd-meta-row">
-              <span className="pd-meta-key">{t('paper_number')}</span>
-              <span className="pd-meta-val pd-meta-val--gold">#{paper.id}</span>
-            </div>
-
-            <div className="pd-meta-row">
-              <span className="pd-meta-key">{t('status_key')}</span>
-              <span className={`pd-meta-val ${st.metaCls}`}>{st.label}</span>
-            </div>
-
-            <div className="pd-meta-row">
-              <span className="pd-meta-key">{t('access_type')}</span>
-              <span className="pd-meta-val">
-                {paper.is_paid_open_access ? (
-                  <span className="pd-oa-indicator pd-oa-yes"><FaLockOpen size={12} /> {t('open_paid')}</span>
-                ) : (
-                  <span className="pd-oa-indicator pd-oa-no">{t('closed')}</span>
-                )}
-              </span>
-            </div>
-
-            <div className="pd-meta-row">
-              <span className="pd-meta-key">{t('author_key')}</span>
-              <span className="pd-meta-val pd-meta-val--blue">{paper.author_name}</span>
-            </div>
-
-            <div className="pd-meta-row">
-              <span className="pd-meta-key">{t('pdf_key')}</span>
-              <span className="pd-meta-val">
-                {paper.pdf_file ? (
-                  <>{t('available')} <FaCheck size={11} /></>
-                ) : (
-                  t('not_attached')
-                )}
-              </span>
-            </div>
-          </div>
-
-          <div className="pd-meta-card">
-            <div className="pd-section-label">{t('status_track_label')}</div>
-            <div className="pd-status-track">
-              {TIMELINE_STEPS.map((step, i) => {
-                const dotCls = getStepDotCls(i, paper.status);
-
-                return (
-                  <div className="pd-st-step" key={i}>
-                    <div className={`pd-st-dot ${dotCls}`}>
-                      {dotCls === 'pd-st-dot--done' ? <FaCheck /> : step.icon}
-                    </div>
-                    <div className="pd-st-info">
-                      <div className="pd-st-name">{step.name}</div>
-                      <div className="pd-st-sub">{step.sub}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pd-action-card">
-            <div className="pd-section-label">{t('actions_label')}</div>
-
-            <button
-              className="pd-action-btn pd-btn-secondary"
-              onClick={() => navigate(`/papers/${id}/edit`)}
-            >
-              <span><FaEdit /></span>
-              <span>{t('edit_paper')}</span>
-            </button>
-
-            <button
-              className="pd-action-btn pd-btn-secondary"
-              onClick={handleCopyLink}
-            >
-              <span><FaClipboard /></span>
-              <span>{t('copy_link')}</span>
-            </button>
-
-            <DeletePaperButton id={id} redirectTo="/papers" />
-          </div>
-
+          <InfoCard paper={paper} status={st} t={t} />
+          <StatusTimeline paper={paper} t={t} />
+          <ActionsCard
+            id={id}
+            t={t}
+            onEdit={() => navigate(`/papers/${id}/edit`)}
+            onCopyLink={handleCopyLink}
+          />
         </div>
       </div>
 

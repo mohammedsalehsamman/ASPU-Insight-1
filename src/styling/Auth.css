@@ -19,6 +19,20 @@
   --inp-bd: rgba(120,95,40,.18);
 }
 
+[data-theme="dark"] {
+  --bg:     #0A0C0F;
+  --surf:   #13171D;
+  --surf2:  #191E26;
+  --bd:     rgba(180,160,120,.1);
+  --bd2:    rgba(180,160,120,.2);
+  --tx:     #E8E0D0;
+  --tx2:    #8A7F6E;
+  --tx3:    #3E3830;
+  --glow:   rgba(196,165,90,.08);
+  --inp-bg: #171B21;
+  --inp-bd: rgba(180,160,120,.16);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .auth-root {
@@ -529,6 +543,12 @@
   text-align: center;
 }
 
+[data-theme="dark"] .auth-error {
+  background: rgba(239,68,68,.1);
+  border-color: rgba(239,68,68,.3);
+  color: #fca5a5;
+}
+
 .auth-success {
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
@@ -538,6 +558,12 @@
   font-size: 13px;
   margin-bottom: 16px;
   text-align: center;
+}
+
+[data-theme="dark"] .auth-success {
+  background: rgba(34,197,94,.1);
+  border-color: rgba(34,197,94,.3);
+  color: #86efac;
 }
 
 .auth-qr-wrapper {

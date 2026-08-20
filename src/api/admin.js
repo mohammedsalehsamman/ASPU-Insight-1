@@ -2,7 +2,6 @@ import api from './client';
 
 const BASE = '/api/admin/2004-R';
 
-// ══ USERS ══
 export const getUsers = async (params = {}) => {
   const { data } = await api.get(`${BASE}/users/`, { params });
   return data;
@@ -33,7 +32,6 @@ export const adminResendVerification = async (userId) => {
   return data;
 };
 
-// ══ DASHBOARD ══
 export const getDashboardStats = async () => {
   const { data } = await api.get(`${BASE}/dashboard/stats/`);
   return data;
@@ -71,7 +69,6 @@ export const getCommittees = async (params = {}) => {
   return data;
 };
 
-// ══ JOURNAL CONFIGURATION ══
 export const getConfiguration = async () => {
   const { data } = await api.get(`${BASE}/configuration/`);
   return data;
@@ -82,7 +79,6 @@ export const updateConfiguration = async (payload) => {
   return data;
 };
 
-// ══ RESEARCH HISTORY (AUDIT LOG) ══
 export const getResearchHistory = async (paperId) => {
   const { data } = await api.get(`${BASE}/research-history/`, { params: { paper: paperId } });
   return data;

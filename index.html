@@ -3,13 +3,28 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="preconnect" href="https://fonts.googleapis.com"> 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap"
     rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="./src/images/Al-Sham Private University.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>aspu-insight</title>
+  <script>
+    // ← يطبّق الثيم واللغة المحفوظين فوراً قبل أي رسم للصفحة، لمنع "ومضة" الوضع الفاتح
+    //   عند تحميل الصفحة وهي بالوضع الداكن (يشتغل قبل تحميل React نفسه)
+    (function () {
+      try {
+        var theme = localStorage.getItem('aspu:theme') || 'light';
+        var lang = localStorage.getItem('aspu:lang') || 'ar';
+        var root = document.documentElement;
+        root.setAttribute('data-theme', theme);
+        root.setAttribute('lang', lang);
+        root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        root.setAttribute('data-lang', lang);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>

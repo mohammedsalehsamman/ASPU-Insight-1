@@ -1,13 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
-import { LockOpen, Lock, ShieldCheck, FileText, Warning, ArrowClockwise, CheckCircle } from '@phosphor-icons/react';
+import { PiLockOpenDuotone, PiLockDuotone, PiShieldCheckDuotone, PiFileTextDuotone, PiCheckCircleFill } from 'react-icons/pi';
 import AdminLayout from './AdminLayout';
 import { getConfiguration, updateConfiguration } from '../../api/admin';
 import { useAdminLang, adminT } from './adminI18n';
+import { getErrorMessage } from '../../i18n/errorMessages';
+import StateCenter from '../../components/admin/StateCenter';
 
 const MODES = [
   {
     value: 'full_open',
-    icon: LockOpen,
+    icon: PiLockOpenDuotone,
     title: { ar: 'مفتوح بالكامل', en: 'Fully Open' },
     desc: {
       ar: 'كل الأبحاث المنشورة متاحة للقراءة الكاملة والتحميل لأي زائر دون قيود.',
@@ -16,7 +18,7 @@ const MODES = [
   },
   {
     value: 'full_closed',
-    icon: Lock,
+    icon: PiLockDuotone,
     title: { ar: 'مغلق بالكامل', en: 'Fully Closed' },
     desc: {
       ar: 'الوصول لمحتوى الأبحاث مقتصر على المستخدمين المسجَّلين والمصرَّح لهم فقط.',
@@ -25,7 +27,7 @@ const MODES = [
   },
   {
     value: 'hybrid',
-    icon: ShieldCheck,
+    icon: PiShieldCheckDuotone,
     title: { ar: 'هجين', en: 'Hybrid' },
     desc: {
       ar: 'بعض الأبحاث مفتوحة بالكامل (وصول مفتوح مدفوع) والبعض الآخر مقيّد حسب إعداد كل بحث.',
@@ -34,7 +36,7 @@ const MODES = [
   },
   {
     value: 'abstract_only',
-    icon: FileText,
+    icon: PiFileTextDuotone,
     title: { ar: 'الملخص فقط', en: 'Abstract Only' },
     desc: {
       ar: 'يظهر للزوار ملخص البحث فقط، بينما يبقى النص الكامل والملف مقيّدين.',
@@ -46,7 +48,6 @@ const MODES = [
 export default function Settings() {
   const [lang] = useAdminLang();
   const t = (key) => adminT(lang, key);
-  const isAr = lang === 'ar';
 
   const [systemMode, setSystemMode] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export default function Settings() {
       const data = await getConfiguration();
       setSystemMode(data.system_mode);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message);
+      setError(getErrorMessage(err, lang));
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ export default function Settings() {
       await updateConfiguration({ system_mode: systemMode });
       setSaveMsg({ type: 'success', text: t('success') });
     } catch (err) {
-      const msg = err.response?.data ? Object.values(err.response.data).flat().join(' ') : (isAr ? 'فشل الحفظ' : 'Save failed');
+      const msg = err.response?.data ? Object.values(err.response.data).flat().join(' ') : t('settings_save_failed');
       setSaveMsg({ type: 'error', text: msg });
     } finally {
       setSaving(false);
@@ -89,29 +90,12 @@ export default function Settings() {
         <div>
           <div className="admin-page-title">{t('settings')}</div>
           <div className="admin-page-sub">
-            {isAr ? 'التحكم بنمط الوصول العام لمحتوى المجلة الأكاديمية' : 'Control the public access mode of the academic journal content'}
+            {t('settings_page_sub')}
           </div>
         </div>
       </div>
 
-      {loading && (
-        <div className="admin-state-center">
-          <div className="admin-spinner" />
-          <span>{t('loading')}</span>
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="admin-state-center">
-          <Warning size={36} weight="duotone" style={{ color: 'var(--ac)' }} />
-          <span className="admin-empty-title">{t('error')}</span>
-          <span className="admin-empty-sub">{String(error)}</span>
-          <button className="admin-btn admin-btn-primary" onClick={fetchConfig} style={{ marginTop: 6 }}>
-            <ArrowClockwise size={14} weight="bold" />
-            {t('retry')}
-          </button>
-        </div>
-      )}
+      <StateCenter loading={loading} error={error} onRetry={fetchConfig} isEmpty={false} t={t} />
 
       {!loading && !error && (
         <>
@@ -130,9 +114,9 @@ export default function Settings() {
                   style={{ display: 'none' }}
                 />
                 <div className="admin-radio-card-title">
-                  <m.icon size={19} weight="duotone" style={{ color: 'var(--ac)' }} />
+                  <m.icon size={19} style={{ color: 'var(--ac)' }} />
                   {m.title[lang]}
-                  {systemMode === m.value && <CheckCircle size={16} weight="fill" style={{ color: 'var(--ac)', marginInlineStart: 'auto' }} />}
+                  {systemMode === m.value && <PiCheckCircleFill size={16} style={{ color: 'var(--ac)', marginInlineStart: 'auto' }} />}
                 </div>
                 <div className="admin-radio-card-desc">{m.desc[lang]}</div>
               </label>

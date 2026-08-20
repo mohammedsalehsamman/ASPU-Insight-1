@@ -3,6 +3,7 @@ import { isAuthenticated, logout } from '../api/auth';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { FiX, FiMoon, FiSun } from 'react-icons/fi';
 import NotificationBell from "../components/NotificationBell";
 
@@ -24,20 +25,14 @@ export default function Navbar({
 }) {
   const loggedIn = isAuthenticated();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const shared = t('shared', { returnObjects: true });
   const common = t('auth.common', { returnObjects: true });
   const menuT = t('menu', { returnObjects: true });
   const navT = t('nav', { returnObjects: true });
-  const lang = i18n.language || 'ar';
-  const isAr = lang === 'ar';
   const { theme, setTheme } = useTheme();
-
-  const setLang = (l) => {
-    i18n.changeLanguage(l);
-    document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
-    document.documentElement.setAttribute('lang', l);
-  };
+  const { lang, setLang } = useLanguage();
+  const isAr = lang === 'ar';
 
   // القائمة كاملة دائماً بدون حذف أي عنصر — الحماية صارت عبر ProtectedRoute
   const visibleMenuItems = MENU_ITEMS;
@@ -161,7 +156,7 @@ export default function Navbar({
           </div>
         </a>
         <div className="aspu-nav-space" />
-        <NotificationBell />
+        {loggedIn && <NotificationBell />}
         <button
           className={`aspu-nav-menu-btn${menuOpen ? ' is-open' : ''}`}
           onClick={() => setMenuOpen(true)}

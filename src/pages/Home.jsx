@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { MagnifyingGlass, Archive, ShieldCheck, GitPullRequest, Translate, ChartLineUp } from "@phosphor-icons/react";
+import { PiMagnifyingGlassDuotone, PiArchiveDuotone, PiShieldCheckDuotone, PiGitPullRequestDuotone, PiTranslateDuotone, PiChartLineUpDuotone } from "react-icons/pi";
+import { FiArrowRight, FiSearch, FiCheck } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import '../styling/Home.css'
 import { GALLERY_IMAGES } from '../MokData/Data';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer'
 import Logo from '../components/Logo'
-import StatItem from '../components/Home/StatItem';
 import RevealSection from '../components/Home/RevealSection';
-import ScrollHijack from '../components/Home/ScrollHijack';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ASPUInsight() {
   const navigate = useNavigate();
@@ -20,21 +20,10 @@ export default function ASPUInsight() {
   const [rotateVisible, setRotateVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { t, i18n: i18nInst } = useTranslation();
+  const { t } = useTranslation();
   const cursorRef = useRef(null);
-  const lang = i18nInst.language || "ar";
+  const { lang, setLang } = useLanguage();
   const isAr = lang === "ar";
-
-  const setLang = useCallback((l) => {
-    i18nInst.changeLanguage(l);
-    document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
-    document.documentElement.setAttribute("lang", l);
-  }, [i18nInst]);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("dir", isAr ? "rtl" : "ltr");
-    document.documentElement.setAttribute("lang", lang);
-  }, [lang, isAr]);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
@@ -99,12 +88,12 @@ export default function ASPUInsight() {
   const navT = t("nav", { returnObjects: true });
 
   const FEAT_ICONS = [
-    <MagnifyingGlass size={30} weight="duotone" />,
-    <ShieldCheck size={30} weight="duotone" />,
-    <Archive size={30} weight="duotone" />,
-    <GitPullRequest size={30} weight="duotone" />,
-    <ChartLineUp size={30} weight="duotone" />,
-    <Translate size={30} weight="duotone" />,
+    <PiMagnifyingGlassDuotone size={30} />,
+    <PiShieldCheckDuotone size={30} />,
+    <PiArchiveDuotone size={30} />,
+    <PiGitPullRequestDuotone size={30} />,
+    <PiChartLineUpDuotone size={30} />,
+    <PiTranslateDuotone size={30} />,
   ];
 
   const handleSearch = () => {
@@ -165,7 +154,7 @@ export default function ASPUInsight() {
 
           <div className="aspu-hero-btns">
             <a className="aspu-btn-gold" href="/research_review">
-              {h.cta1} <span className="arr">→</span>
+              {h.cta1} <span className="arr"><FiArrowRight /></span>
             </a>
             <a href="/submit" className="aspu-btn-outline">{h.cta2}</a>
           </div>
@@ -177,15 +166,11 @@ export default function ASPUInsight() {
         </div>
       </section>
 
-      <div className="aspu-stats-bar">
-        {stats.map((s, i) => <StatItem key={i} stat={s} />)}
-      </div>
-
       <div className="aspu-search-zone">
         <div className="aspu-s-wrap">
           <p className="aspu-s-ey">{search.eyebrow}</p>
           <div className="aspu-s-box">
-            <span className="aspu-s-ico">⌕</span>
+            <span className="aspu-s-ico"><FiSearch /></span>
             <input
               className="aspu-s-inp"
               type="text"
@@ -223,8 +208,6 @@ export default function ASPUInsight() {
         ))}
       </div>
 
-      <ScrollHijack isAr={isAr} t={t} />
-
       <div className="aspu-gallery-sec">
         <div className="aspu-gallery-inner">
           <div className="aspu-gallery-text">
@@ -238,13 +221,13 @@ export default function ASPUInsight() {
             <div className="aspu-gallery-bullets">
               {gallery.bullets.map((b, i) => (
                 <div key={i} className="aspu-gb-item">
-                  <div className="aspu-gb-dot">{b.icon}</div>
+                  <div className="aspu-gb-dot"><FiCheck /></div>
                   <p><strong>{b.strong}</strong> — {b.text}</p>
                 </div>
               ))}
             </div>
             <a href="/submit" className="aspu-btn-gold">
-              {gallery.cta} <span className="arr">→</span>
+              {gallery.cta} <span className="arr"><FiArrowRight /></span>
             </a>
           </div>
           <div className="aspu-gallery-grid">

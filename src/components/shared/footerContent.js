@@ -1,5 +1,5 @@
-// ← نفس محتوى الفوتر يلي كان مكرر جوا Editor.jsx و EditorAssistant.jsx
-// بيرجع الشكل يلي متوقعه الـ Footer المشترك: { brand, cols, copy, sub }
+// ← نفس محتوى الفوتر يلي كان مكرر جوا Editor.jsx و EditorAssistant.jsx و PaperDetail.jsx
+// بيرجع الشكل يلي متوقعه الـ Footer المشترك: { brand, cols: [{ title, links: [{label, path}] }], copy, sub }
 export function getFooterContent(lang) {
   return {
     brand: lang === 'ar'
@@ -8,21 +8,28 @@ export function getFooterContent(lang) {
     cols: [
       {
         title: lang === 'ar' ? 'الأبحاث' : 'Research',
-        links: lang === 'ar'
-          ? ['آخر الإضافات', 'الأكثر تقييماً', 'حسب التخصص', 'الأرشيف']
-          : ['Latest', 'Top Rated', 'By Discipline', 'Archive'],
+        links: [
+          { label: lang === 'ar' ? 'آخر الإضافات' : 'Latest', path: '/' },
+          { label: lang === 'ar' ? 'الأكثر تقييماً' : 'Top Rated', path: '/research_review' },
+          { label: lang === 'ar' ? 'حسب التخصص' : 'By Discipline', path: '/research_review' },
+          { label: lang === 'ar' ? 'الأرشيف' : 'Archive', path: '/research_review' },
+        ],
       },
       {
         title: lang === 'ar' ? 'للطلبة' : 'Students',
-        links: lang === 'ar'
-          ? ['تقديم بحث', 'إرشادات النشر', 'فحص التشابه']
-          : ['Submit Paper', 'Guidelines', 'Similarity Check'],
+        links: [
+          { label: lang === 'ar' ? 'تقديم بحث' : 'Submit Paper', path: '/submit' },
+          { label: lang === 'ar' ? 'إرشادات النشر' : 'Guidelines', path: '/submit' },
+          { label: lang === 'ar' ? 'فحص التشابه' : 'Similarity Check', path: '/EditorAssistant' },
+        ],
       },
       {
         title: lang === 'ar' ? 'للأساتذة' : 'Faculty',
-        links: lang === 'ar'
-          ? ['لوحة المراجعة', 'تقارير النزاهة', 'إدارة اللجنة']
-          : ['Review Panel', 'Integrity Reports', 'Committee'],
+        links: [
+          { label: lang === 'ar' ? 'لوحة المراجعة' : 'Review Panel', path: '/EditorAssistant' },
+          { label: lang === 'ar' ? 'تقارير النزاهة' : 'Integrity Reports', path: '/EditorAssistant' },
+          { label: lang === 'ar' ? 'إدارة اللجنة' : 'Committee', path: '/Editor' },
+        ],
       },
     ],
     copy: lang === 'ar'

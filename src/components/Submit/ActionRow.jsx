@@ -1,23 +1,23 @@
-import { ArrowLeft } from '@phosphor-icons/react';
+import { PiArrowLeftBold } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
-export default function ActionRow({ loading, handleReset }) {
+export default function ActionRow({ loading, handleReset, t }) {
   return (
     <div className={styles.actionRow}>
       <div className={styles.actionInfo}>
-        <div className={styles.actionTitle}>هل أنت جاهز للإرسال؟</div>
-        <div className={styles.actionSub}>سيتم مراجعة البحث من قبل النظام والمحررين</div>
+        <div className={styles.actionTitle}>{t('action_title')}</div>
+        <div className={styles.actionSub}>{t('action_sub')}</div>
       </div>
       <div className={styles.actionBtns}>
         <button type="button" onClick={handleReset} className={styles.resetBtn} disabled={loading}>
-          إعادة تعيين
+          {t('reset_btn')}
         </button>
         <button type="submit" disabled={loading} className={styles.submitBtn}>
-          {loading ? 'جاري الإرسال...' : (
+          {loading ? t('submitting') : (
             <>
-              تقديم البحث للمراجعة{' '}
+              {t('submit_btn')}{' '}
               <span className={styles.arrow}>
-                <ArrowLeft size={16} weight="bold" />
+                <PiArrowLeftBold size={16} />
               </span>
             </>
           )}

@@ -1,15 +1,15 @@
 import styles from '../../styling/Submit.module.css';
 
 const RTYPE_OPTIONS = [
-  { value: 'technical', label: 'بحث علمي / تقني', badge: 'للجميع', badgeClass: 'rbBoth' },
-  { value: 'master', label: "رسالة ماجستير", badge: 'طالب', badgeClass: 'rbStu' },
-  { value: 'phd', label: 'رسالة دكتوراه', badge: 'طالب', badgeClass: 'rbStu' },
+  { value: 'technical', labelKey: 'rtype_technical', badgeKey: 'rtype_badge_both', badgeClass: 'rbBoth' },
+  { value: 'master', labelKey: 'rtype_master', badgeKey: 'rtype_badge_student', badgeClass: 'rbStu' },
+  { value: 'phd', labelKey: 'rtype_phd', badgeKey: 'rtype_badge_student', badgeClass: 'rbStu' },
 ];
 
-export default function RtypeSelector({ rtype, setRtype }) {
+export default function RtypeSelector({ rtype, setRtype, t }) {
   return (
     <div>
-      <div className={styles.filterLabel}>نوع البحث</div>
+      <div className={styles.filterLabel}>{t('rtype_label')}</div>
       <div className={styles.rtypeGrid}>
         {RTYPE_OPTIONS.map((r) => (
           <label
@@ -23,8 +23,8 @@ export default function RtypeSelector({ rtype, setRtype }) {
               checked={rtype === r.value}
               onChange={() => setRtype(r.value)}
             />
-            <span className={styles.rtypeText}>{r.label}</span>
-            <span className={`${styles.rtypeBadge} ${styles[r.badgeClass]}`}>{r.badge}</span>
+            <span className={styles.rtypeText}>{t(r.labelKey)}</span>
+            <span className={`${styles.rtypeBadge} ${styles[r.badgeClass]}`}>{t(r.badgeKey)}</span>
           </label>
         ))}
       </div>

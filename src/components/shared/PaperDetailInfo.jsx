@@ -1,5 +1,6 @@
 import { getStatus } from './statusHelpers';
 import { downloadPaper } from '../../api/research';
+import { FiFileText, FiDownload } from 'react-icons/fi';
 
 // ← الجزء الثابت جوا لوحة التفاصيل: العنوان، صف الباحث، الشبكة المعلوماتية،
 //   الكلمات المفتاحية، الملخص، وملف الـ PDF — مطابق بالصفحتين
@@ -64,8 +65,8 @@ export default function PaperDetailInfo({ activePaper, lang, t, isReviewed }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
             {activePaper.ai_keywords.map((kw, i) => (
               <span key={i} style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--border)',
+                background: 'var(--surf2)',
+                border: '1px solid var(--bd)',
                 borderRadius: '20px',
                 padding: '4px 12px',
                 fontSize: '12px',
@@ -84,10 +85,7 @@ export default function PaperDetailInfo({ activePaper, lang, t, isReviewed }) {
         <div className="dp-pdf-block">
           <div className="dp-pdf-bar">
             <div className="dp-pdf-ico">
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--ac)" strokeWidth="1.8">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <FiFileText size={18} color="var(--ac)" />
             </div>
             <span className="dp-pdf-name">
               {activePaper.pdf_file.split('/').pop()}
@@ -97,9 +95,7 @@ export default function PaperDetailInfo({ activePaper, lang, t, isReviewed }) {
               className="dp-pdf-dl"
               onClick={handleDownloadPdf}
             >
-              <svg width="12" height="12" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                <path d="M8 2v8M4 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <FiDownload size={12} />
               {t('download')}
             </button>
           </div>

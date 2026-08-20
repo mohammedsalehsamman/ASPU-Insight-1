@@ -9,6 +9,7 @@ import QRPage from "./Auth/QRPage";
 import OTPPage from "./Auth/OTPPage";
 import SuccessBox from "../../components/SuccessBox";
 import "../../styling/auth.css";
+import { FiCheck } from "react-icons/fi";
 
 export default function Auth() {
   const [step, setStep] = useState("login");
@@ -107,7 +108,7 @@ export default function Auth() {
 
   if (step === "done") return sharedLayout(
     <div className="auth-done">
-      <div className="auth-done-ring">✓</div>
+      <div className="auth-done-ring"><FiCheck size={30} /></div>
       <p className="auth-done-title">{t('auth.done.title')}</p>
       <p className="auth-done-desc">{t('auth.done.desc')}</p>
     </div>

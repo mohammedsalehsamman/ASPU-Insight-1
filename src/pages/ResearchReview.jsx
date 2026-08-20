@@ -11,6 +11,7 @@ import Sidebar from '../components/ResearchReview/Sidebar';
 import ResultsBar from '../components/ResearchReview/ResultsBar';
 import EmptyState, { LoadingState, ErrorState } from '../components/ResearchReview/EmptyState';
 import PapersGrid from '../components/ResearchReview/PapersGrid';
+import { getErrorMessage } from '../i18n/errorMessages';
 
 /* ════════════════════════════════════════
    MAIN COMPONENT
@@ -69,7 +70,7 @@ export default function ResearchReview() {
         setPapers(Array.isArray(data) ? data : (data.results ?? []));
       }
     } catch (err) {
-      setError(err.message || 'خطأ في جلب البيانات');
+      setError(getErrorMessage(err, i18n.language));
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { ToastProvider } from './context/ToastContext';
 import ResearchReview from './pages/ResearchReview';
 import PaperDetail from './pages/PaperDetail';
 import Profile from './pages/Profile';
@@ -20,12 +23,16 @@ import AdminReviews from './pages/admin/Reviews';
 import AdminSettings from './pages/admin/Settings';
 import EditPaper from './pages/EditPaper';
 import AllNotifications from "./pages/AllNotifications";
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
     <ThemeProvider>
+      <LanguageProvider>
+      <ToastProvider>
       <AuthProvider>
         <Router>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
@@ -34,7 +41,14 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/research_review" element={<ResearchReview />} />
             <Route path="/papers/:id" element={<PaperDetail />} />
-            <Route path="/papers/:id/edit" element={<EditPaper />} />
+            <Route
+              path="/papers/:id/edit"
+              element={
+                <ProtectedRoute redirectTo="/auth">
+                  <EditPaper />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/Profile"
@@ -47,7 +61,7 @@ function App() {
             <Route
               path="/EditorAssistant"
               element={
-                <ProtectedRoute redirectTo="/auth">
+                <ProtectedRoute redirectTo="/auth" requiredRole="assistant_editor">
                   <EditorAssistant />
                 </ProtectedRoute>
               }
@@ -55,7 +69,7 @@ function App() {
             <Route
               path="/Editor"
               element={
-                <ProtectedRoute redirectTo="/auth">
+                <ProtectedRoute redirectTo="/auth" requiredRole="editor">
                   <Editor />
                 </ProtectedRoute>
               }
@@ -111,9 +125,13 @@ function App() {
               }
             />
             <Route path="/notifications" element={<AllNotifications />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
+          </ErrorBoundary>
         </Router>
       </AuthProvider>
+      </ToastProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

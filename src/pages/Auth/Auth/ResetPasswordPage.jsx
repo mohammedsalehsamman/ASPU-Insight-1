@@ -10,7 +10,7 @@ import EyeBtn from "../../../components/EyeBtn";
 import TopBar from "../../../components/TopBar";
 import AccentPanel from "../../../components/AccentPanel";
 import "../../../styling/Auth.css";
-import { Lock } from '@phosphor-icons/react';
+import { PiLock } from 'react-icons/pi';
 
 
 export default function ResetPasswordPage() {
@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="auth-root" dir={lang === "ar" ? "rtl" : "ltr"} data-theme="light">
+    <div className="auth-root" dir={lang === "ar" ? "rtl" : "ltr"}>
       <main className="auth-page">
         <div className="auth-container">
           <div className="auth-form-panel">
@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
                 <div className="auth-fields">
                   <ErrorBox message={error} />
                   <InputBox
-                    icon={<Lock size={18} />}
+                    icon={<PiLock size={18} />}
                     label={t("auth.resetPassword.newPassword")}
                     type={showPw ? "text" : "password"}
                     value={newPassword}
@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
                     extra={<EyeBtn show={showPw} onToggle={() => setShowPw(p => !p)} />}
                   />
                   <InputBox
-                    icon={<Lock size={18} />}
+                    icon={<PiLock size={18} />}
                     label={t("auth.resetPassword.confirmPassword")}
                     type={showPw2 ? "text" : "password"}
                     value={confirmPassword}

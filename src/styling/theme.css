@@ -1,0 +1,67 @@
+/* ══════════════════════════════════════
+   ASPU Insight — Theme Variables
+   يستخدم data-theme الموجود على <html>
+   ══════════════════════════════════════ */
+
+:root,
+[data-theme="light"] {
+  /* خلفيات */
+  --aspu-bg: #FAF6EE;
+  --aspu-bg-elevated: #FFFFFF;
+  --aspu-bg-subtle: #F2ECDD;
+
+  /* نصوص */
+  --aspu-text: #1A1A1A;
+  --aspu-text-muted: #6B6458;
+  --aspu-text-inverse: #FFFFFF;
+
+  /* حدود */
+  --aspu-border: #E5DDC8;
+  --aspu-border-strong: #C9BFA3;
+
+  /* ألوان الهوية */
+  --aspu-gold: #C4A55A;
+  --aspu-steel: #5A8FA0;
+
+  /* حالات */
+  --aspu-success: #4C8B5A;
+  --aspu-warning: #C97A2B;
+  --aspu-danger: #B84B4B;
+
+  /* ظلال */
+  --aspu-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] {
+  /* خلفيات */
+  --aspu-bg: #14181C;
+  --aspu-bg-elevated: #1D2226;
+  --aspu-bg-subtle: #23282D;
+
+  /* نصوص */
+  --aspu-text: #EDEAE2;
+  --aspu-text-muted: #9A9488;
+  --aspu-text-inverse: #14181C;
+
+  /* حدود */
+  --aspu-border: #2C3237;
+  --aspu-border-strong: #3A4147;
+
+  /* ألوان الهوية — نفسها تقريباً بس ممكن تفتحها شوي للتباين */
+  --aspu-gold: #D4B76A;
+  --aspu-steel: #6FA5B8;
+
+  /* حالات */
+  --aspu-success: #5FA96E;
+  --aspu-warning: #DB8F45;
+  --aspu-danger: #D06565;
+
+  /* ظلال */
+  --aspu-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* انتقال سلس بين الثيمين بدل التغيير المفاجئ */
+body,
+body * {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
