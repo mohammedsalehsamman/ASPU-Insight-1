@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { login as apiLogin, logout as apiLogout, getProfile, isAuthenticated, getCurrentUser } from '../api/auth';
+import { getErrorMessage } from '../i18n/errorMessages';
 
 const AuthContext = createContext(null);
 
@@ -32,10 +33,7 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       return data;
     } catch (err) {
-      const msg = err.response?.data
-        ? Object.values(err.response.data).flat().join(' ')
-        : 'فشل تسجيل الدخول. تحقق من بياناتك.';
-      setError(msg);
+      setError(getErrorMessage(err));
       throw err;
     }
   }, []);

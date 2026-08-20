@@ -1,7 +1,7 @@
-import { CaretDown } from '@phosphor-icons/react';
+import { PiCaretDown } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
-export default function DetailsSection({ openSection, toggleSection, title, setTitle, abstract, setAbstract }) {
+export default function DetailsSection({ openSection, toggleSection, title, setTitle, abstract, setAbstract, t }) {
   return (
     <div className={styles.section}>
       <button
@@ -11,11 +11,11 @@ export default function DetailsSection({ openSection, toggleSection, title, setT
         aria-expanded={openSection === 1}
       >
         <span className={styles.sectionTitleText}>
-          تفاصيل البحث
-          <span className={styles.sectionSubtitle}>العنوان والخلاصة</span>
+          {t('details_title')}
+          <span className={styles.sectionSubtitle}>{t('details_subtitle')}</span>
         </span>
         <span className={`${styles.chevron} ${openSection === 1 ? styles.open : ''}`}>
-          <CaretDown size={14} />
+          <PiCaretDown size={14} />
         </span>
       </button>
 
@@ -23,7 +23,7 @@ export default function DetailsSection({ openSection, toggleSection, title, setT
         <div>
           <div className={styles.inputGroup}>
             <label htmlFor="title">
-              عنوان البحث <span className={styles.required}>*</span>
+              {t('title_field_label')} <span className={styles.required}>*</span>
             </label>
             <input
               type="text"
@@ -31,7 +31,7 @@ export default function DetailsSection({ openSection, toggleSection, title, setT
               maxLength={150}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="أدخل عنوان البحث كاملاً..."
+              placeholder={t('title_placeholder')}
               required
             />
             <span className={styles.charCount}>{title.length}/150</span>
@@ -39,7 +39,7 @@ export default function DetailsSection({ openSection, toggleSection, title, setT
 
           <div className={styles.inputGroup}>
             <label htmlFor="abstract">
-              الخلاصة (Abstract) <span className={styles.required}>*</span>
+              {t('abstract_field_label')} <span className={styles.required}>*</span>
             </label>
             <textarea
               id="abstract"
@@ -47,7 +47,7 @@ export default function DetailsSection({ openSection, toggleSection, title, setT
               rows={6}
               value={abstract}
               onChange={(e) => setAbstract(e.target.value)}
-              placeholder="اكتب خلاصة البحث هنا..."
+              placeholder={t('abstract_placeholder')}
               required
             />
             <span className={styles.charCount}>{abstract.length}/1000</span>

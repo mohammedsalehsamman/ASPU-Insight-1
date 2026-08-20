@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getPaper, updatePaper } from '../api/research';
 import '../styling/EditPaper.css';
-import { FaSave, FaTimes, FaFileUpload } from 'react-icons/fa';
+import { getErrorMessage } from '../i18n/errorMessages';
+import { EditPaperDict, createLocalT } from '../i18n';
+import { useLanguage } from '../context/LanguageContext';
+import EditPaperForm from '../components/EditPaper/EditPaperForm';
 
 export default function EditPaper() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = createLocalT(EditPaperDict, lang);
 
   const [form, setForm] = useState({
     title: '',
@@ -38,7 +43,7 @@ export default function EditPaper() {
         setCurrentPdfName(data.pdf_file ? data.pdf_file.split('/').pop() : '');
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || 'حدث خطأ في جلب البيانات');
+        if (!cancelled) setError(err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -62,7 +67,7 @@ export default function EditPaper() {
     setSaveError(null);
 
     if (!form.title.trim() || !form.abstract.trim()) {
-      setSaveError('يرجى تعبئة العنوان والملخص');
+      setSaveError(t('required_fields'));
       return;
     }
 
@@ -77,13 +82,7 @@ export default function EditPaper() {
       await updatePaper(id, payload);
       navigate(`/papers/${id}`);
     } catch (err) {
-      const msg = err?.response?.data;
-      if (typeof msg === 'object') {
-        const first = Object.values(msg).flat()[0];
-        setSaveError(typeof first === 'string' ? first : 'فشل حفظ التعديلات');
-      } else {
-        setSaveError('فشل حفظ التعديلات، حاول مرة أخرى');
-      }
+      setSaveError(getErrorMessage(err, lang));
     } finally {
       setSaving(false);
     }
@@ -93,7 +92,7 @@ export default function EditPaper() {
     return (
       <div className="ep-state-center">
         <div className="ep-spinner" />
-        <span>جاري التحميل…</span>
+        <span>{t('loading')}</span>
       </div>
     );
   }
@@ -101,9 +100,9 @@ export default function EditPaper() {
   if (error) {
     return (
       <div className="ep-state-center">
-        <span className="ep-error-msg">{error}</span>
+        <span className="ep-error-msg">{getErrorMessage(error, lang)}</span>
         <button className="ep-retry-btn" onClick={() => window.location.reload()}>
-          إعادة المحاولة
+          {t('retry')}
         </button>
       </div>
     );
@@ -111,70 +110,17 @@ export default function EditPaper() {
 
   return (
     <div className="ep-page">
-      <div className="ep-card">
-        <div className="ep-header">
-          <h1 className="ep-title">تعديل البحث</h1>
-          <Link to={`/papers/${id}`} className="ep-cancel-link">
-            <FaTimes size={12} /> إلغاء
-          </Link>
-        </div>
-
-        {saveError && <div className="ep-error-box">{saveError}</div>}
-
-        <form className="ep-form" onSubmit={handleSubmit}>
-          <div className="ep-field">
-            <label className="ep-label">عنوان البحث</label>
-            <input
-              type="text"
-              className="ep-input"
-              value={form.title}
-              onChange={handleChange('title')}
-              placeholder="اكتب عنوان البحث"
-            />
-          </div>
-
-          <div className="ep-field">
-            <label className="ep-label">الملخص</label>
-            <textarea
-              className="ep-textarea"
-              rows={6}
-              value={form.abstract}
-              onChange={handleChange('abstract')}
-              placeholder="اكتب ملخص البحث"
-            />
-          </div>
-
-          <div className="ep-field ep-field-row">
-            <label className="ep-checkbox-row">
-              <input
-                type="checkbox"
-                checked={form.is_paid_open_access}
-                onChange={handleChange('is_paid_open_access')}
-              />
-              <span>وصول مفتوح مدفوع</span>
-            </label>
-          </div>
-
-          <div className="ep-field">
-            <label className="ep-label">ملف PDF</label>
-            <label className="ep-file-drop">
-              <FaFileUpload />
-              <span>{pdfFile ? pdfFile.name : (currentPdfName || 'اختر ملف PDF جديد (اختياري)')}</span>
-              <input type="file" accept="application/pdf" onChange={handleFileChange} hidden />
-            </label>
-          </div>
-
-          <div className="ep-actions">
-            <button type="submit" className="ep-save-btn" disabled={saving}>
-              <FaSave size={13} />
-              {saving ? 'جارٍ الحفظ…' : 'حفظ التعديلات'}
-            </button>
-            <Link to={`/papers/${id}`} className="ep-cancel-btn">
-              إلغاء
-            </Link>
-          </div>
-        </form>
-      </div>
+      <EditPaperForm
+        id={id}
+        form={form}
+        onChange={handleChange}
+        pdfFile={pdfFile}
+        currentPdfName={currentPdfName}
+        onFileChange={handleFileChange}
+        saving={saving}
+        saveError={saveError}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { MagnifyingGlass, SlidersHorizontal, CaretDown } from '@phosphor-icons/react';
+import { PiMagnifyingGlassDuotone, PiSlidersHorizontal, PiCaretDownBold } from 'react-icons/pi';
+import { useTranslation } from 'react-i18next';
 
 export default function Sidebar({
   search, setSearch,
@@ -7,21 +8,23 @@ export default function Sidebar({
   sideOpen, setSideOpen,
   onReset,
 }) {
+  const { t } = useTranslation();
+  const rr = t('researchReview', { returnObjects: true });
+
   return (
     <>
       <button className="filter-toggle" onClick={() => setSideOpen(o => !o)}>
-        <CaretDown
+        <PiCaretDownBold
           size={16}
-          weight="bold"
           style={{ transition: 'transform .3s', transform: sideOpen ? 'rotate(180deg)' : 'none' }}
         />
       </button>
 
       <aside className={`sidebar ${sideOpen ? 'mobile-open' : ''}`}>
         <div>
-          <div className="filter-label">ابحث...</div>
+          <div className="filter-label">{rr.searchLabel}</div>
           <div className="sf-search">
-            <MagnifyingGlass size={15} weight="duotone" className="sf-ico" />
+            <PiMagnifyingGlassDuotone size={15} className="sf-ico" />
             <input
               type="text"
               value={search}

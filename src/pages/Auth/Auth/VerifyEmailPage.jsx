@@ -37,7 +37,7 @@ export default function VerifyEmailPage() {
   }, []);
 
   return (
-    <div className="auth-root" dir={lang === "ar" ? "rtl" : "ltr"} data-theme="light">
+    <div className="auth-root" dir={lang === "ar" ? "rtl" : "ltr"}>
       <TopBar lang={lang} setLang={setLang} />
       <main className="auth-page">
         <div className="auth-container">

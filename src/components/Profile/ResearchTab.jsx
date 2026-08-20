@@ -1,6 +1,8 @@
 import { FaPen, FaSearch, FaStar, FaFileAlt } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 export default function ResearchTab({ papers, loading, error, isAr }) {
+    const { t } = useTranslation();
     const statusLabel = (status) => {
         switch (status) {
             case "published": return isAr ? "منشور" : "Published";
@@ -21,7 +23,7 @@ export default function ResearchTab({ papers, loading, error, isAr }) {
         return (
             <div>
                 <div className="section-label">{isAr ? "الأبحاث المنشورة" : "Published Research"}</div>
-                <div className="info-card">{isAr ? "جارٍ التحميل..." : "Loading..."}</div>
+                <div className="info-card">{t('common.loading')}</div>
             </div>
         );
     }

@@ -4,7 +4,7 @@ import { BsHourglassSplit } from 'react-icons/bs';
 import { AiOutlineExclamationCircle, AiOutlineFrown } from 'react-icons/ai';
 
 export default function PapersSection({
-  t, lang, filtered, loading, error,
+  t, lang, filtered, loading, error, errorMessage,
   activeFilter, setActiveFilter, searchQuery, setSearchQuery, onOpenDetail,
 }) {
   return (
@@ -52,7 +52,7 @@ export default function PapersSection({
           <div className="empty-state">
             <div className="empty-ico"><AiOutlineExclamationCircle size={28} /></div>
             <div className="empty-title">{t('error')}</div>
-            <p className="empty-sub">{error.message}</p>
+            <p className="empty-sub">{errorMessage}</p>
           </div>
         )}
 

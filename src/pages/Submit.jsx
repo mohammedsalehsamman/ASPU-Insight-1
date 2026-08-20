@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPaper } from '../api/research';
 import { getProfile } from '../api/auth';
+import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
+import { getErrorMessage } from '../i18n/errorMessages';
+import { SubmitDict, createLocalT } from '../i18n';
 import styles from '../styling/Submit.module.css';
 import Navbar from '../components/Navbar.jsx';
 import Logo from '../components/Logo.jsx';
-import { CaretDown } from '@phosphor-icons/react';
-import PublisherInfo, { ROLE_LABELS } from '../components/Submit/PublisherInfo';
+import { PiCaretDown, PiClipboardText } from 'react-icons/pi';
+import PublisherInfo, { ROLE_KEYS } from '../components/Submit/PublisherInfo';
 import StepsList from '../components/Submit/StepsList';
 import RtypeSelector, { RTYPE_OPTIONS } from '../components/Submit/RtypeSelector';
 import DisciplineSelector, { DISCIPLINE_OPTIONS } from '../components/Submit/DisciplineSelector';
@@ -16,6 +20,11 @@ import ActionRow from '../components/Submit/ActionRow';
 import SuccessOverlay from '../components/Submit/SuccessOverlay';
 
 const Submit = () => {
+  const { lang } = useLanguage();
+  const isAr = lang === 'ar';
+  const t = createLocalT(SubmitDict, lang);
+  const { showError } = useToast();
+
   const [title, setTitle] = useState('');
   const [abstract, setAbstract] = useState('');
   const [keywordInput, setKeywordInput] = useState('');
@@ -57,6 +66,7 @@ const Submit = () => {
         setPublisher(data.role || '');
       } catch (err) {
         console.error(err);
+        showError(err);
       } finally {
         setProfileLoading(false);
       }
@@ -100,7 +110,7 @@ const Submit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !abstract || !file) {
-      setError('الرجاء تعبئة الحقول الأساسية ورفع ملف البحث.');
+      setError(t('err_required'));
       return;
     }
 
@@ -124,7 +134,7 @@ const Submit = () => {
       handleReset();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'حدث خطأ أثناء إرسال البحث، يرجى المحاولة لاحقاً.');
+      setError(getErrorMessage(err, lang) || t('err_generic'));
     } finally {
       setLoading(false);
     }
@@ -139,12 +149,12 @@ const Submit = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const roleLabel = ROLE_LABELS[publisher] || publisher || '';
-  const rtypeLabel = RTYPE_OPTIONS.find((r) => r.value === rtype)?.label || '';
-  const discLabel = DISCIPLINE_OPTIONS.find((d) => d.value === discipline)?.name || '';
+  const roleLabel = t(ROLE_KEYS[publisher]) || publisher || '';
+  const rtypeLabel = t(RTYPE_OPTIONS.find((r) => r.value === rtype)?.labelKey) || '';
+  const discLabel = t(DISCIPLINE_OPTIONS.find((d) => d.value === discipline)?.nameKey) || '';
 
   return (
-    <div className={styles.pageContainer} dir="rtl" lang="ar">
+    <div className={styles.pageContainer} dir={isAr ? 'rtl' : 'ltr'} lang={lang}>
       <Navbar
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
@@ -159,19 +169,19 @@ const Submit = () => {
         <div className={styles.heroGrid} aria-hidden="true" />
         <div className={styles.heroInner}>
           <nav className={`${styles.rr} ${styles.breadcrumb}`} aria-label="Breadcrumb">
-            <a href="/">الرئيسية</a>
+            <a href="/">{t('breadcrumb_home')}</a>
             <span className={styles.crumbSep}>›</span>
-            <a href="/research_review">الأبحاث</a>
+            <a href="/research_review">{t('breadcrumb_research')}</a>
             <span className={styles.crumbSep}>›</span>
-            <span>نشر بحث جديد</span>
+            <span>{t('breadcrumb_current')}</span>
           </nav>
           <h1 className={`${styles.bb} ${styles.formTitle} ${styles.heroTitle}`}>
-            نشر بحث
+            {t('hero_title_l1')}
             <br />
-            جديد
+            {t('hero_title_l2')}
           </h1>
           <p className={styles.formSubtitle}>
-            قم بتعبئة بيانات البحث ورفع الملف بصيغة PDF ليتم مراجعته من قبل النظام والمحررين.
+            {t('hero_sub')}
           </p>
         </div>
       </header>
@@ -185,17 +195,17 @@ const Submit = () => {
               className={styles.filterToggle}
               onClick={() => setSidebarMobileOpen((v) => !v)}
             >
-              <span>📋 معلومات البحث</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><PiClipboardText size={15} /> {t('sidebar_toggle')}</span>
               <span className={`${styles.ftArrow} ${sidebarMobileOpen ? styles.open : ''}`}>
-                <CaretDown size={16} />
+                <PiCaretDown size={16} />
               </span>
             </button>
 
             <div className={`${styles.sidebar} ${sidebarMobileOpen ? styles.mobileOpen : ''}`}>
-              <PublisherInfo profile={profile} profileLoading={profileLoading} />
-              <StepsList openSection={openSection} />
-              <RtypeSelector rtype={rtype} setRtype={setRtype} />
-              <DisciplineSelector discipline={discipline} setDiscipline={setDiscipline} />
+              <PublisherInfo profile={profile} profileLoading={profileLoading} t={t} />
+              <StepsList openSection={openSection} t={t} />
+              <RtypeSelector rtype={rtype} setRtype={setRtype} t={t} />
+              <DisciplineSelector discipline={discipline} setDiscipline={setDiscipline} t={t} />
             </div>
           </aside>
 
@@ -212,6 +222,7 @@ const Submit = () => {
                 setTitle={setTitle}
                 abstract={abstract}
                 setAbstract={setAbstract}
+                t={t}
               />
 
 
@@ -224,6 +235,7 @@ const Submit = () => {
                 handleFileDrop={handleFileDrop}
                 dragOver={dragOver}
                 setDragOver={setDragOver}
+                t={t}
               />
 
               <SummaryBox
@@ -231,9 +243,10 @@ const Submit = () => {
                 rtypeLabel={rtypeLabel}
                 discLabel={discLabel}
                 file={file}
+                t={t}
               />
 
-              <ActionRow loading={loading} handleReset={handleReset} />
+              <ActionRow loading={loading} handleReset={handleReset} t={t} />
 
             </form>
           </div>
@@ -242,7 +255,7 @@ const Submit = () => {
 
       {/* شاشة النجاح المنبثقة (Overlay) */}
       {showSuccess && (
-        <SuccessOverlay successRef={successRef} onClose={() => setShowSuccess(false)} />
+        <SuccessOverlay successRef={successRef} onClose={() => setShowSuccess(false)} t={t} />
       )}
     </div>
   );

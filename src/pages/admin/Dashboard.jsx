@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Warning, ArrowClockwise } from '@phosphor-icons/react';
 import AdminLayout from './AdminLayout';
 import { getDashboardStats } from '../../api/admin';
 import { useAdminLang, adminT } from './adminI18n';
+import StateCenter from '../../components/admin/StateCenter';
+import { getErrorMessage } from '../../i18n/errorMessages';
 
 /* تسميات ودّية للحقول المعروفة داخل كل مجموعة إحصائيات — أي حقل غير معروف يُعرض باسمه كما هو */
 const LABELS = {
@@ -57,7 +58,6 @@ function isPlainObject(v) {
 export default function Dashboard() {
   const [lang] = useAdminLang();
   const t = (key) => adminT(lang, key);
-  const isAr = lang === 'ar';
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function Dashboard() {
       const data = await getDashboardStats();
       setStats(data);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message);
+      setError(getErrorMessage(err, lang));
     } finally {
       setLoading(false);
     }
@@ -86,29 +86,12 @@ export default function Dashboard() {
         <div>
           <div className="admin-page-title">{t('dashboard')}</div>
           <div className="admin-page-sub">
-            {isAr ? 'نظرة عامة شاملة على أداء المجلة الأكاديمية' : 'A comprehensive overview of journal performance'}
+            {t('dashboard_page_sub')}
           </div>
         </div>
       </div>
 
-      {loading && (
-        <div className="admin-state-center">
-          <div className="admin-spinner" />
-          <span>{t('loading')}</span>
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="admin-state-center">
-          <Warning size={36} weight="duotone" style={{ color: 'var(--ac)' }} />
-          <span className="admin-empty-title">{t('error')}</span>
-          <span className="admin-empty-sub">{String(error)}</span>
-          <button className="admin-btn admin-btn-primary" onClick={fetchStats} style={{ marginTop: 6 }}>
-            <ArrowClockwise size={14} weight="bold" />
-            {t('retry')}
-          </button>
-        </div>
-      )}
+      <StateCenter loading={loading} error={error} onRetry={fetchStats} isEmpty={false} t={t} />
 
       {!loading && !error && stats && sections.length === 0 && (
         <div className="admin-state-center">

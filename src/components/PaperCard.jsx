@@ -1,13 +1,16 @@
 import { FaLockOpen, FaFilePdf, FaFolderOpen, FaArrowLeft } from 'react-icons/fa';
-
-const STATUS_CONFIG = {
-  pending:  { ar: 'قيد المراجعة', cls: 'rr-sb-pending'  },
-  approved: { ar: 'منشور',        cls: 'rr-sb-approved' },
-  rejected: { ar: 'مرفوض',        cls: 'rr-sb-rejected' },
-};
+import { useTranslation } from 'react-i18next';
 
 export default function PaperCard({ paper, onClick }) {
-  const st = STATUS_CONFIG[paper.status] ?? STATUS_CONFIG.pending;
+  const { t } = useTranslation();
+  const rr = t('researchReview', { returnObjects: true });
+  const statusCls = {
+    pending: 'rr-sb-pending',
+    approved: 'rr-sb-approved',
+    published: 'rr-sb-approved',
+    rejected: 'rr-sb-rejected',
+  };
+  const statusKey = statusCls[paper.status] ? paper.status : 'pending';
 
   return (
     <div className="rc-paper" onClick={onClick} role="button" tabIndex={0}
@@ -15,13 +18,13 @@ export default function PaperCard({ paper, onClick }) {
 
       <div className="rcp-top">
         <div className="rcp-tags">
-          <span className={`rr-status-badge ${st.cls}`}>
+          <span className={`rr-status-badge ${statusCls[statusKey]}`}>
             <span className="rr-badge-dot" />
-            {st.ar}
+            {rr.status[statusKey]}
           </span>
           {paper.is_paid_open_access && (
             <span className="rr-oa-badge">
-              <FaLockOpen size={11} /> مفتوح
+              <FaLockOpen size={11} /> {rr.openAccessBadge}
             </span>
           )}
         </div>
@@ -41,11 +44,11 @@ export default function PaperCard({ paper, onClick }) {
       <div className="rr-card-footer">
         <span className="rr-pdf-indicator">
           {paper.pdf_file
-            ? <><FaFilePdf size={14} /> PDF متوفر</>
-            : <><FaFolderOpen size={14} /> لا يوجد PDF</>}
+            ? <><FaFilePdf size={14} /> {rr.pdfAvailable}</>
+            : <><FaFolderOpen size={14} /> {rr.noPdf}</>}
         </span>
         <span className="rr-view-more">
-          عرض التفاصيل
+          {rr.viewMore}
           <FaArrowLeft size={13} />
         </span>
       </div>

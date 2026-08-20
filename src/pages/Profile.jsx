@@ -21,8 +21,10 @@ import ProfileSkeleton from "../components/Profile/ProfileSkeleton";
 import ProfileError from "../components/Profile/ProfileError";
 import EditField from "../components/Profile/EditField";
 import ChangePasswordModal from "../components/Profile/ChangePasswordModal";
+import { getErrorMessage } from "../i18n/errorMessages";
 import InfoTab from "../components/Profile/InfoTab";
 import ResearchTab from "../components/Profile/ResearchTab";
+import { useLanguage } from "../context/LanguageContext";
 
 
 /* ══ RESOLVE MEDIA URL ══ */
@@ -48,13 +50,8 @@ function generateActivityGrid() {
 
 /* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
-    const { t, i18n, ready } = useTranslation();
-    const lang = i18n.language || "ar";
-    const setLang = (l) => {
-        i18n.changeLanguage(l);
-        document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
-        document.documentElement.setAttribute("lang", l);
-    };
+    const { t, ready } = useTranslation();
+    const { lang, setLang } = useLanguage();
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [hoveredMenu, setHoveredMenu] = useState(null);
@@ -99,7 +96,7 @@ export default function StudentProfile() {
             const data = await getMyInvitations();
             setInvitations(Array.isArray(data) ? data : []);
         } catch (err) {
-            setInvitationsError(err?.response?.data?.detail || err.message || "Unknown error");
+            setInvitationsError(getErrorMessage(err, lang));
         } finally {
             setInvitationsLoading(false);
         }
@@ -121,7 +118,7 @@ export default function StudentProfile() {
             const data = await getProfile();
             setProfile(data);
         } catch (err) {
-            setError(err?.response?.data?.detail || err.message || "Unknown error");
+            setError(getErrorMessage(err, lang));
         } finally {
             setLoading(false);
         }
@@ -134,7 +131,7 @@ export default function StudentProfile() {
             const data = await getPapers();
             setPapers(Array.isArray(data) ? data : []);
         } catch (err) {
-            setPapersError(err?.response?.data?.detail || err.message || "Unknown error");
+            setPapersError(getErrorMessage(err, lang));
         } finally {
             setPapersLoading(false);
         }
@@ -244,12 +241,6 @@ export default function StudentProfile() {
         setAvatarPreview(URL.createObjectURL(file));
         setSaveError("");
     };
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-lang", lang);
-        document.documentElement.setAttribute("lang", lang);
-        document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
-    }, [lang]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);

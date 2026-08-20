@@ -1350,8 +1350,10 @@ body::after {
 
 .aspu-r-stars {
   color: var(--ac);
-  font-size: 12px;
-  letter-spacing: -1px
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
 }
 
 .aspu-gallery-sec {

@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  SquaresFour,
-  Users as UsersIco,
-  FileText,
-  Gavel,
-  GearSix,
-  SignOut,
-  Moon,
-  Sun,
-  List,
-  X,
-} from '@phosphor-icons/react';
+  PiSquaresFourDuotone,
+  PiUsersDuotone as UsersIco,
+  PiFileTextDuotone,
+  PiGavelDuotone,
+  PiGearSixDuotone,
+  PiSignOutBold,
+  PiMoonBold,
+  PiSunBold,
+  PiListBold,
+  PiXBold,
+} from 'react-icons/pi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Logo from '../../components/Logo';
@@ -20,11 +20,11 @@ import '../../styling/admin/AdminLayout.css';
 import '../../styling/admin/AdminShared.css';
 
 const NAV_ITEMS = [
-  { to: '/admin', end: true, icon: SquaresFour, key: 'dashboard' },
+  { to: '/admin', end: true, icon: PiSquaresFourDuotone, key: 'dashboard' },
   { to: '/admin/users', icon: UsersIco, key: 'users' },
-  { to: '/admin/papers', icon: FileText, key: 'papers' },
-  { to: '/admin/reviews', icon: Gavel, key: 'reviews' },
-  { to: '/admin/settings', icon: GearSix, key: 'settings' },
+  { to: '/admin/papers', icon: PiFileTextDuotone, key: 'papers' },
+  { to: '/admin/reviews', icon: PiGavelDuotone, key: 'reviews' },
+  { to: '/admin/settings', icon: PiGearSixDuotone, key: 'settings' },
 ];
 
 export default function AdminLayout({ children }) {
@@ -46,7 +46,7 @@ export default function AdminLayout({ children }) {
       {/* Mobile topbar */}
       <div className="admin-mobile-bar">
         <button className="admin-burger" onClick={() => setSidebarOpen((o) => !o)}>
-          {sidebarOpen ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
+          {sidebarOpen ? <PiXBold size={20} /> : <PiListBold size={20} />}
         </button>
         <div className="admin-mobile-brand">
           <Logo size={26} />
@@ -74,7 +74,7 @@ export default function AdminLayout({ children }) {
               className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
             >
-              <item.icon size={19} weight="duotone" />
+              <item.icon size={19} />
               <span>{t(item.key)}</span>
             </NavLink>
           ))}
@@ -83,10 +83,10 @@ export default function AdminLayout({ children }) {
         <div className="admin-sidebar-foot">
           <div className="admin-toggle-row">
             <button className={`admin-tpill-btn ${theme === 'light' ? 'on' : ''}`} onClick={() => setTheme('light')}>
-              <Sun size={14} weight="bold" />
+              <PiSunBold size={14} />
             </button>
             <button className={`admin-tpill-btn ${theme === 'dark' ? 'on' : ''}`} onClick={() => setTheme('dark')}>
-              <Moon size={14} weight="bold" />
+              <PiMoonBold size={14} />
             </button>
             <span className="admin-toggle-sep" />
             <button className={`admin-tpill-btn ${lang === 'ar' ? 'on' : ''}`} onClick={() => setLang('ar')}>ع</button>
@@ -96,13 +96,13 @@ export default function AdminLayout({ children }) {
           <div className="admin-user-row">
             <div className="admin-user-avatar">{(user?.full_name || 'A').charAt(0).toUpperCase()}</div>
             <div className="admin-user-info">
-              <div className="admin-user-name">{user?.full_name || (isAr ? 'مدير النظام' : 'Administrator')}</div>
+              <div className="admin-user-name">{user?.full_name || t('admin_role_fallback')}</div>
               <div className="admin-user-email">{user?.email}</div>
             </div>
           </div>
 
           <button className="admin-logout-btn" onClick={handleLogout}>
-            <SignOut size={16} weight="bold" />
+            <PiSignOutBold size={16} />
             {t('logout')}
           </button>
         </div>

@@ -1,16 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  MagnifyingGlass,
-  Warning,
-  ArrowClockwise,
-  PencilSimple,
-  CheckCircle,
-  EnvelopeSimple,
-  Prohibit,
-  ArrowCounterClockwise,
-  CaretLeft,
-  CaretRight,
-} from '@phosphor-icons/react';
+  PiPencilSimpleBold,
+  PiCheckCircleBold,
+  PiEnvelopeSimpleBold,
+  PiProhibitBold,
+  PiArrowCounterClockwiseBold,
+} from 'react-icons/pi';
 import AdminLayout from './AdminLayout';
 import {
   getUsers,
@@ -20,79 +15,15 @@ import {
   adminResendVerification,
 } from '../../api/admin';
 import { useAdminLang, adminT } from './adminI18n';
-
-const ROLES = ['admin', 'editor', 'reviewer', 'assistant_editor', 'author', 'reader'];
-
-const ROLE_LABELS = {
-  ar: { admin: 'أدمن', editor: 'محرر', reviewer: 'مراجع', assistant_editor: 'مساعد محرر', author: 'باحث', reader: 'قارئ' },
-  en: { admin: 'Admin', editor: 'Editor', reviewer: 'Reviewer', assistant_editor: 'Assistant Editor', author: 'Author', reader: 'Reader' },
-};
-
-/* ── Edit user modal ── */
-function EditUserModal({ user, lang, onClose, onSaved }) {
-  const t = (key) => adminT(lang, key);
-  const [role, setRole] = useState(user.role);
-  const [isActive, setIsActive] = useState(!!user.is_active);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      const updated = await updateUser(user.user_id ?? user.id, { role, is_active: isActive });
-      onSaved(updated ?? { ...user, role, is_active: isActive });
-    } catch (err) {
-      const msg = err.response?.data ? Object.values(err.response.data).flat().join(' ') : (lang === 'ar' ? 'فشل الحفظ' : 'Save failed');
-      setError(msg);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="admin-modal-overlay" onClick={onClose}>
-      <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="admin-modal-title">
-          {lang === 'ar' ? 'تعديل المستخدم' : 'Edit User'}
-        </div>
-
-        <div className="admin-field">
-          <label>{user.full_name || user.email}</label>
-        </div>
-
-        <div className="admin-field">
-          <label>{t('role')}</label>
-          <select className="admin-select" value={role} onChange={(e) => setRole(e.target.value)} disabled={saving}>
-            {ROLES.map((r) => (
-              <option key={r} value={r}>{ROLE_LABELS[lang][r]}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="admin-field">
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} disabled={saving} />
-            {t('active')}
-          </label>
-        </div>
-
-        {error && <p className="admin-msg admin-msg-error">{error}</p>}
-
-        <div className="admin-modal-actions">
-          <button className="admin-btn" onClick={onClose} disabled={saving}>{t('cancel')}</button>
-          <button className="admin-btn admin-btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? t('saving') : t('save')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { getErrorMessage } from '../../i18n/errorMessages';
+import StateCenter from '../../components/admin/StateCenter';
+import Pagination from '../../components/admin/Pagination';
+import SearchBox from '../../components/admin/SearchBox';
+import EditUserModal, { ROLES, ROLE_LABELS } from '../../components/admin/EditUserModal';
 
 export default function Users() {
   const [lang] = useAdminLang();
-  const t = (key) => adminT(lang, key);
+  const t = (key, vars) => adminT(lang, key, vars);
   const isAr = lang === 'ar';
 
   const [users, setUsers] = useState([]);
@@ -137,7 +68,7 @@ export default function Users() {
         setPrevUrl(data.previous ?? null);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || err.message);
+      setError(getErrorMessage(err, lang));
     } finally {
       setLoading(false);
     }
@@ -155,7 +86,7 @@ export default function Users() {
   const handleToggleActive = async (u) => {
     const id = getId(u);
     const willDisable = u.is_active;
-    if (willDisable && !window.confirm(isAr ? `هل أنت متأكد من تعطيل ${u.full_name || u.email}؟` : `Disable ${u.full_name || u.email}?`)) return;
+    if (willDisable && !window.confirm(t('disable_confirm', { name: u.full_name || u.email }))) return;
 
     setRowBusyId(id);
     setRowMsg(null);
@@ -167,7 +98,7 @@ export default function Users() {
       }
       setUsers((prev) => prev.map((x) => (getId(x) === id ? { ...x, is_active: !willDisable } : x)));
     } catch (err) {
-      setRowMsg({ id, type: 'error', text: isAr ? 'فشل تنفيذ الإجراء' : 'Action failed' });
+      setRowMsg({ id, type: 'error', text: t('action_failed') });
     } finally {
       setRowBusyId(null);
     }
@@ -180,7 +111,7 @@ export default function Users() {
       await adminVerifyEmail(id);
       setUsers((prev) => prev.map((x) => (getId(x) === id ? { ...x, email_verified: true } : x)));
     } catch {
-      setRowMsg({ id, type: 'error', text: isAr ? 'فشل التوثيق' : 'Verification failed' });
+      setRowMsg({ id, type: 'error', text: t('verification_failed') });
     } finally {
       setRowBusyId(null);
     }
@@ -191,9 +122,9 @@ export default function Users() {
     setRowBusyId(id);
     try {
       await adminResendVerification(id);
-      setRowMsg({ id, type: 'success', text: isAr ? 'تم إرسال رابط التوثيق' : 'Verification email sent' });
+      setRowMsg({ id, type: 'success', text: t('verification_sent') });
     } catch {
-      setRowMsg({ id, type: 'error', text: isAr ? 'فشل الإرسال' : 'Failed to send' });
+      setRowMsg({ id, type: 'error', text: t('send_failed') });
     } finally {
       setRowBusyId(null);
     }
@@ -205,71 +136,39 @@ export default function Users() {
         <div>
           <div className="admin-page-title">{t('users')}</div>
           <div className="admin-page-sub">
-            {isAr ? 'إدارة كل مستخدمي المنصة، أدوارهم، وحالة حساباتهم' : 'Manage all platform users, their roles, and account status'}
+            {t('users_page_sub')}
           </div>
         </div>
       </div>
 
       <div className="admin-filter-bar">
-        <div className="admin-search-box">
-          <MagnifyingGlass size={15} weight="duotone" />
-          <input
-            type="text"
-            placeholder={t('search_ph')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchBox value={search} onChange={setSearch} placeholder={t('search_ph')} />
 
         <select className="admin-select" value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="all">{isAr ? 'كل الأدوار' : 'All Roles'}</option>
+          <option value="all">{t('all_roles')}</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[lang][r]}</option>)}
         </select>
 
         <select className="admin-select" value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)}>
-          <option value="all">{isAr ? 'كل الحالات' : 'All Statuses'}</option>
+          <option value="all">{t('all_statuses')}</option>
           <option value="true">{t('active')}</option>
           <option value="false">{t('inactive')}</option>
         </select>
 
         <select className="admin-select" value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value)}>
-          <option value="all">{isAr ? 'كل حالات التوثيق' : 'All Verification'}</option>
+          <option value="all">{t('all_verification')}</option>
           <option value="true">{t('verified')}</option>
           <option value="false">{t('not_verified')}</option>
         </select>
 
         <select className="admin-select" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-          <option value="-date_joined">{isAr ? 'الأحدث أولاً' : 'Newest First'}</option>
-          <option value="date_joined">{isAr ? 'الأقدم أولاً' : 'Oldest First'}</option>
-          <option value="full_name">{isAr ? 'الاسم (أ-ي)' : 'Name (A-Z)'}</option>
+          <option value="-date_joined">{t('newest_first')}</option>
+          <option value="date_joined">{t('oldest_first')}</option>
+          <option value="full_name">{t('name_asc')}</option>
         </select>
       </div>
 
-      {loading && (
-        <div className="admin-state-center">
-          <div className="admin-spinner" />
-          <span>{t('loading')}</span>
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="admin-state-center">
-          <Warning size={36} weight="duotone" style={{ color: 'var(--ac)' }} />
-          <span className="admin-empty-title">{t('error')}</span>
-          <span className="admin-empty-sub">{String(error)}</span>
-          <button className="admin-btn admin-btn-primary" onClick={fetchUsers} style={{ marginTop: 6 }}>
-            <ArrowClockwise size={14} weight="bold" />
-            {t('retry')}
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && users.length === 0 && (
-        <div className="admin-state-center">
-          <span className="admin-empty-title">{t('no_results')}</span>
-          <span className="admin-empty-sub">{t('no_results_sub')}</span>
-        </div>
-      )}
+      <StateCenter loading={loading} error={error} onRetry={fetchUsers} isEmpty={users.length === 0} t={t} />
 
       {!loading && !error && users.length > 0 && (
         <>
@@ -281,7 +180,7 @@ export default function Users() {
                   <th>{t('email')}</th>
                   <th>{t('role')}</th>
                   <th>{t('status')}</th>
-                  <th>{isAr ? 'التوثيق' : 'Verification'}</th>
+                  <th>{t('verification_col')}</th>
                   <th>{t('actions')}</th>
                 </tr>
               </thead>
@@ -313,7 +212,7 @@ export default function Users() {
                       <td>
                         <div className="admin-table-actions">
                           <button className="admin-btn admin-btn-sm" onClick={() => setEditingUser(u)} disabled={busy} title={t('edit')}>
-                            <PencilSimple size={13} weight="bold" />
+                            <PiPencilSimpleBold size={13} />
                           </button>
                           <button
                             className={`admin-btn admin-btn-sm ${u.is_active ? 'admin-btn-danger' : ''}`}
@@ -321,15 +220,15 @@ export default function Users() {
                             disabled={busy}
                             title={u.is_active ? t('inactive') : t('active')}
                           >
-                            {u.is_active ? <Prohibit size={13} weight="bold" /> : <ArrowCounterClockwise size={13} weight="bold" />}
+                            {u.is_active ? <PiProhibitBold size={13} /> : <PiArrowCounterClockwiseBold size={13} />}
                           </button>
                           {!u.email_verified && (
                             <>
                               <button className="admin-btn admin-btn-sm" onClick={() => handleVerifyEmail(u)} disabled={busy} title={t('verified')}>
-                                <CheckCircle size={13} weight="bold" />
+                                <PiCheckCircleBold size={13} />
                               </button>
-                              <button className="admin-btn admin-btn-sm" onClick={() => handleResend(u)} disabled={busy} title={isAr ? 'إعادة إرسال' : 'Resend'}>
-                                <EnvelopeSimple size={13} weight="bold" />
+                              <button className="admin-btn admin-btn-sm" onClick={() => handleResend(u)} disabled={busy} title={t('resend')}>
+                                <PiEnvelopeSimpleBold size={13} />
                               </button>
                             </>
                           )}
@@ -343,21 +242,15 @@ export default function Users() {
             </table>
           </div>
 
-          {(nextUrl || prevUrl) && (
-            <div className="admin-pagination">
-              <button className="admin-btn admin-btn-sm" disabled={!prevUrl} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                {isAr ? <CaretRight size={14} /> : <CaretLeft size={14} />}
-                {t('prev')}
-              </button>
-              <span style={{ fontSize: 13, color: 'var(--tx2)' }}>
-                {count != null ? (isAr ? `${count} مستخدم` : `${count} users`) : ''}
-              </span>
-              <button className="admin-btn admin-btn-sm" disabled={!nextUrl} onClick={() => setPage((p) => p + 1)}>
-                {t('next')}
-                {isAr ? <CaretLeft size={14} /> : <CaretRight size={14} />}
-              </button>
-            </div>
-          )}
+          <Pagination
+            isAr={isAr}
+            t={t}
+            hasPrev={!!prevUrl}
+            hasNext={!!nextUrl}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => p + 1)}
+            countLabel={count != null ? t('users_count', { count }) : ''}
+          />
         </>
       )}
 

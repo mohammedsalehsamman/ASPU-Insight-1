@@ -1,3 +1,5 @@
+import { FiCheckCircle } from 'react-icons/fi';
+
 // ← قسم الـ Hero (البادج + العنوان + الإحصائيات) — نفس الشكل بالضبط بالصفحتين
 // الفرق الوحيد هو نص role_badge (مساعد محرر / محرر) وهو جاي من t('role') أصلاً
 export default function HeroSection({ lang, t, displayName, papers, statPending, statNoted }) {
@@ -10,7 +12,7 @@ export default function HeroSection({ lang, t, displayName, papers, statPending,
       <div className="hero-inner">
         <div className="role-badge">
           {t('role')}
-          <span className="badge-active">● ACTIVE</span>
+          <span className="badge-active"><FiCheckCircle size={12} /> ACTIVE</span>
         </div>
         <h1 className="hero-title">
           {lang === 'ar' ? (

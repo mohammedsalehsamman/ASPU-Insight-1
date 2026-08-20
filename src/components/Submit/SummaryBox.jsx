@@ -1,31 +1,31 @@
-import { CheckCircle } from '@phosphor-icons/react';
+import { PiCheckCircleFill } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
-export default function SummaryBox({ roleLabel, rtypeLabel, discLabel, file }) {
+export default function SummaryBox({ roleLabel, rtypeLabel, discLabel, file, t }) {
   return (
     <div className={styles.summaryBox}>
-      <div className={styles.summaryTitle}>ملخص الطلب</div>
+      <div className={styles.summaryTitle}>{t('summary_title')}</div>
       <div className={styles.summaryRow}>
-        <span>نوع الناشر</span>
+        <span>{t('summary_publisher_type')}</span>
         <strong>{roleLabel}</strong>
       </div>
       <div className={styles.summaryRow}>
-        <span>نوع البحث</span>
+        <span>{t('summary_research_type')}</span>
         <strong>{rtypeLabel}</strong>
       </div>
       <div className={styles.summaryRow}>
-        <span>التخصص</span>
+        <span>{t('summary_discipline')}</span>
         <strong>{discLabel}</strong>
       </div>
       <div className={styles.summaryDivider} />
       <div className={styles.summaryRow}>
-        <span>ملف البحث</span>
+        <span>{t('summary_file')}</span>
         {file ? (
           <strong className={styles.summaryOk}>
-            <CheckCircle size={14} weight="fill" /> {file.name}
+            <PiCheckCircleFill size={14} /> {file.name}
           </strong>
         ) : (
-          <span className={styles.summaryMuted}>لم يُرفع بعد</span>
+          <span className={styles.summaryMuted}>{t('summary_not_uploaded')}</span>
         )}
       </div>
     </div>

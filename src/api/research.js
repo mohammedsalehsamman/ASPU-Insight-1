@@ -4,82 +4,61 @@ import {
   getIEEEReportDetail as getIEEEReportDetailFromAi,
 } from './aiService';
 
-//خالص
 export const getPapers = async (params = {}) => {
   const { data } = await api.get('/api/research/researchAspu2004/papers/', { params });
   return data;
 };
 
-//خالص
 export const createPaper = async (payload) => {
-  // ← ما منحدّد Content-Type يدوياً: axios/المتصفح بيحسبوها تلقائياً مع الـ boundary الصحيح لـ FormData
   const { data } = await api.post('/api/research/researchAspu2004/papers/', payload);
   return data;
 };
 
-//خالص
 export const getPaper = async (id) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${id}`);
   return data;
 };
 
-//خالص
 export const updatePaper = async (id, payload) => {
   const { data } = await api.put(`/api/research/researchAspu2004/papers/${id}/`, payload);
   return data;
 };
 
-// حذف بحث
 export const deletePaper = async (id) => {
   const { data } = await api.delete(`/api/research/researchAspu2004/papers/${id}/`);
   return data;
 };
 
-// ══ ASSISTANT REVIEW ══
-
-// جلب نتيجة مراجعة الذكاء الاصطناعي لبحث معين
 export const getAssistantReview = async (paperId) => {
   const { data } = await api.get(`/api/research/papers/${paperId}/assistant-review/`);
   return data;
 };
 
-//خالص
 export const requestAssistantReview = async (paperId, payload = {}) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/assistant-review/`, payload);
   return data;
 };
 
-// ══ EDITOR REVIEW — INITIAL ══
-
-//خالص
 export const getEditorReviewInitial = async (paperId) => {
   const { data } = await api.get(`/api/research/papers/${paperId}/editor-review/initial/`);
   return data;
 };
 
-//خالص
 export const submitEditorReviewInitial = async (paperId, payload) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/editor-review/initial/`, payload);
   return data;
 };
 
-// ══ EDITOR REVIEW — FINAL ══
-
-// جلب المراجعة النهائية من المحرر
 export const getEditorReviewFinal = async (paperId) => {
   const { data } = await api.get(`/api/research/papers/${paperId}/editor-review/final/`);
   return data;
 };
 
-// إرسال المراجعة النهائية من المحرر
 export const submitEditorReviewFinal = async (paperId, payload) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/editor-review/final/`, payload);
   return data;
 };
 
-// ══ PUBLISH ══
-
-// نشر البحث (بعد اكتمال المراجعة)
 export const publishPaper = async (paperId) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/publish/`);
   return data;
@@ -87,17 +66,11 @@ export const publishPaper = async (paperId) => {
 
 
 
-// ══ AUTHOR DASHBOARD ══
-
-// جلب داشبورد المؤلف
 export const getAuthorDashboard = async () => {
   const { data } = await api.get('/api/research/researchAspu2004/author/dashboard/');
   return data;
 };
 
-// ══ DOWNLOAD ══
-
-// تحميل ملف البحث
 export const downloadPaper = async (id) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${id}/download/`, {
     responseType: 'blob',
@@ -105,23 +78,16 @@ export const downloadPaper = async (id) => {
   return data;
 };
 
-// ══ PLAGIARISM REPORT ══
-
-// جلب تقرير الانتحال
 export const getPlagiarismReport = async (paperId) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/plagiarism-report/`);
   return data;
 };
 
-// ══ SUBMIT ASSISTANT REPORT ══
-
-//خالص
 export const submitAssistantReport = async (paperId, payload) => {
   const { data } = await api.post(`/api/research/papers/${paperId}/assistant-review/`, payload);
   return data;
 };
 
-// جلب المراجعين المتاحين لبحث معين
 export const getAvailableReviewers = async (paperId) => {
   const { data } = await api.get( 
     `/api/v1/committees-app/papers/${paperId}/available-reviewers/`
@@ -129,7 +95,6 @@ export const getAvailableReviewers = async (paperId) => {
   return data;
 };
 
-// إنشاء لجنة للبحث
 export const createCommittee = async (paperId, payload = {}) => {
   const { data } = await api.post(
     `/api/v1/committees-app/papers/${paperId}/committee/create/`,
@@ -138,9 +103,6 @@ export const createCommittee = async (paperId, payload = {}) => {
   return data;
 };
 
-// ══ SMART SEARCH ══
-
-// بحث دلالي (semantic search) بدل البحث النصي العادي
 export const smartSearchPapers = async (query) => {
   const { data } = await api.get('/api/research/researchAspu2004/papers/smart-search/', {
     params: { q: query },
@@ -148,9 +110,6 @@ export const smartSearchPapers = async (query) => {
   return data;
 };
 
-// ══ KEYWORD SUGGESTIONS ══
-
-// اقتراح كلمات مفتاحية لبحث معين
 export const suggestKeywords = async (paperId) => {
   const { data } = await api.post('/api/ai/ai2004-R/keywords/suggest/', {
     paper_id: paperId,
@@ -158,12 +117,10 @@ export const suggestKeywords = async (paperId) => {
   return data;
 };
 
-// ══ IEEE CHECK ══
 
 export const getIEEEReports = async () => getIEEEReportsFromAi();
 export const getIEEEReportDetail = async (id) => getIEEEReportDetailFromAi(id);
 
-// أضف هاد جنب باقي دوال IEEE
 export const deleteIEEEReport = async (id) => {
   const { data } = await api.delete(`/api/ai/ai2004-R/ieee/reports/${id}/`);
   return data;
@@ -174,51 +131,36 @@ export const submitIEEECheck = async (formData) => {
   return data;
 };
 
-// ══ CLAIM TO EVIDENCE (تحليل الادعاءات والأدلة) ══
-
-// تشغيل التحليل على ملف بحث (multipart: document_file)
 export const submitClaimEvidenceAnalysis = async (formData) => {
   const { data } = await api.post('/api/ai/ai2004-R/claim-evidence/analyze/', formData);
   return data;
 };
 
-// جلب كل تقارير تحليل الادعاءات والأدلة
 export const getClaimEvidenceReports = async () => {
   const { data } = await api.get('/api/ai/ai2004-R/claim-evidence/reports/');
   return data;
 };
 
-// جلب تفاصيل تقرير تحليل ادعاءات وأدلة معيّن
 export const getClaimEvidenceReportDetail = async (id) => {
   const { data } = await api.get(`/api/ai/ai2004-R/claim-evidence/reports/${id}/`);
   return data;
 };
 
-// حذف تقرير تحليل ادعاءات وأدلة
 export const deleteClaimEvidenceReport = async (id) => {
   const { data } = await api.delete(`/api/ai/ai2004-R/claim-evidence/reports/${id}/`);
   return data;
 };
 
-/* ══════════════════════════════════════════════════
-   جلب حالة اللجنة الكاملة لبحث معيّن (أعضاء + ردودهم + قراراتهم)
-   يستخدم لعرض تقدّم التحكيم للمحرر بعد إرسال البحث للجنة
-══════════════════════════════════════════════════ */
 export async function getCommitteeStatus(paperId) {
     const { data } = await api.get(`/api/v1/committees-app/papers/${paperId}/committee/`);
     return data;
 }
-// ══ METADATA QUALITY SCORE ══
 
-// جلب درجة جودة الميتاداتا لبحث معين
 export const getMetadataScore = async (paperId) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/metadata-quality/`);
   return data;
 };
 
-// ══ RECOMMENDATIONS (أبحاث مشابهة) ══
-
-// جلب الأبحاث المشابهة لبحث معين
 export const getRecommendations = async (paperId) => {
   const { data } = await api.get(`/api/research/researchAspu2004/papers/${paperId}/recommendations/`);
   return data;

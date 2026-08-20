@@ -1,17 +1,17 @@
-import { CheckCircle } from '@phosphor-icons/react';
+import { PiCheckCircleFill } from 'react-icons/pi';
 import styles from '../../styling/Submit.module.css';
 
-export default function SuccessOverlay({ successRef, onClose }) {
+export default function SuccessOverlay({ successRef, onClose, t }) {
   return (
     <div className={styles.overlay}>
       <div className={styles.overlayCard}>
         <div className={styles.successCheck}>
-          <CheckCircle size={36} weight="fill" />
+          <PiCheckCircleFill size={36} />
         </div>
-        <h3>تم تقديم البحث بنجاح!</h3>
-        <p>تم تسجيل البحث في نظام ASPU Insight بنجاح وجاري تحويله إلى نظام مراجعة الذكاء الاصطناعي.</p>
+        <h3>{t('success_title')}</h3>
+        <p>{t('success_msg')}</p>
         <button onClick={onClose} className={styles.closeOverlayBtn}>
-          موافق
+          {t('success_ok')}
         </button>
       </div>
     </div>

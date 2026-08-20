@@ -1,3 +1,5 @@
+import { FiChevronLeft } from 'react-icons/fi';
+
 export default function DetailPanelShell({ open, onClose, activePaper, lang, t, children }) {
   return (
     <>
@@ -7,9 +9,7 @@ export default function DetailPanelShell({ open, onClose, activePaper, lang, t, 
           <>
             <div className="dp-header">
               <button className="dp-back-btn" onClick={onClose}>
-                <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 12L6 8l4-4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <FiChevronLeft size={16} />
               </button>
               <span className="dp-header-title">{t('details')}</span>
               <span className="dp-dept-tag">
