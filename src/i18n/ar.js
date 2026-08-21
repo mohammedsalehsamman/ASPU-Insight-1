@@ -1,4 +1,7 @@
 export const ar = {
+  splash: {
+    tagline: "المجلة الأكاديمية الرقمية",
+  },
   notFound: {
     kicker: "الصفحة غير موجودة",
     title: "يبدو أنك وصلت إلى طريق مسدود",

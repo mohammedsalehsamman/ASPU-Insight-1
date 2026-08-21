@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
-import { AuthProvider } from './context/AuthContext';
+import LoadingScreen from './components/LoadingScreen';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
@@ -25,14 +27,19 @@ import EditPaper from './pages/EditPaper';
 import AllNotifications from "./pages/AllNotifications";
 import NotFound from './pages/NotFound';
 
-function App() {
+function AppContent() {
+  const { loading: authLoading } = useAuth();
+  const [splashDone, setSplashDone] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) setSplashDone(true);
+  }, [authLoading]);
+
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-      <ToastProvider>
-      <AuthProvider>
-        <Router>
-          <ErrorBoundary>
+    <>
+      {!splashDone && <LoadingScreen />}
+      <Router>
+        <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
@@ -127,10 +134,21 @@ function App() {
             <Route path="/notifications" element={<AllNotifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </ErrorBoundary>
-        </Router>
-      </AuthProvider>
-      </ToastProvider>
+        </ErrorBoundary>
+      </Router>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

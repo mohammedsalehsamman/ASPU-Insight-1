@@ -15,8 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import "../../styling/EditorAssistant.css"
 import { EditorAssistantDict, createLocalT } from "../../i18n";
 import useNavScroll from '../../components/shared/useNavScroll';
-import { getFooterContent } from '../../components/shared/footerContent';
 import HeroSection from '../../components/shared/HeroSection';
+
 import PapersTabList from '../../components/assistant/PapersTabList';
 import IeeeReportsTabList from '../../components/assistant/IeeeReportsTabList';
 import ClaimsReportsTabList from '../../components/assistant/ClaimsReportsTabList';

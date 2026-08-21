@@ -441,8 +441,6 @@ export default function Editor() {
     setCommitteePanelOpen(false);
   }
 
-  /* ── تحديد دور المحكّم: بدون / أساسي / احتياطي ──
-     كل محكّم بيكون بس بحالة وحدة (primary أو substitute أو ولا وحدة) */
   function setReviewerRole(userId, role) {
     setPrimaryReviewerIds(prev => prev.filter(id => id !== userId));
     setSubstituteReviewerIds(prev => prev.filter(id => id !== userId));
@@ -451,7 +449,6 @@ export default function Editor() {
     } else if (role === 'substitute') {
       setSubstituteReviewerIds(prev => [...prev, userId]);
     }
-    // أي تعديل يدوي بعد الاقتراح الذكي بيلغي "علامة الاقتراح المطبّق"
     setLastSuggestionApplied(false);
   }
 
@@ -461,7 +458,6 @@ export default function Editor() {
     return 'none';
   }
 
-  /* ── الاقتراح الذكي للجنة ── */
   function suggestCommitteeSmart() {
     if (!availableReviewers || availableReviewers.length === 0) return;
 
