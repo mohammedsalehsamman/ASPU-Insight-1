@@ -1,4 +1,7 @@
 export const en = {
+  splash: {
+    tagline: "The Digital Academic Journal",
+  },
   notFound: {
     kicker: "Page not found",
     title: "This path leads nowhere",

@@ -32,11 +32,9 @@ export default function PaperDetail() {
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const navScrolled = useNavScroll();
 
-  // ← حالة زر التحميل الفعلي (API /download/)
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
 
-  // ← حالة الأبحاث المشابهة (recommendations)
   const [recommendations, setRecommendations] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [recommendationsError, setRecommendationsError] = useState(null);
@@ -54,7 +52,6 @@ export default function PaperDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
-  /* ── جلب الأبحاث المشابهة (GET /recommendations/) ── */
   useEffect(() => {
     let cancelled = false;
     setLoadingRecommendations(true);
@@ -81,7 +78,6 @@ export default function PaperDetail() {
     navigator.clipboard.writeText(window.location.href);
   };
 
-  /* ── تحميل ملف البحث عبر الـ API الحقيقي (blob) ── */
   async function handleDownload() {
     if (!paper) return;
     setDownloading(true);
@@ -89,7 +85,6 @@ export default function PaperDetail() {
     try {
       const blob = await downloadPaper(paper.id);
 
-      // استخراج اسم الملف من مسار pdf_file إن وجد، وإلا اسم افتراضي
       const fileName = paper.pdf_file
         ? paper.pdf_file.split('/').pop()
         : `paper-${paper.id}.pdf`;
@@ -151,14 +146,16 @@ export default function PaperDetail() {
             <p className="pd-abstract-text">{paper.abstract}</p>
           </div>
 
-          <FileCard
-            paper={paper}
-            lang={lang}
-            t={t}
-            downloading={downloading}
-            downloadError={downloadError}
-            onDownload={handleDownload}
-          />
+          {paper.is_paid_open_access && (
+            <FileCard
+              paper={paper}
+              lang={lang}
+              t={t}
+              downloading={downloading}
+              downloadError={downloadError}
+              onDownload={handleDownload}
+            />
+          )}
 
           <RecommendationsSection
             lang={lang}
